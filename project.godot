@@ -14,7 +14,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Voyageur du Reve - Prototype"
+config/name="Dream Dive"
 run/main_scene="res://scenes/exploration/Map.tscn"
 config/features=PackedStringArray("4.7")
 
