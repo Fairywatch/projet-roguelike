@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/voix_murmurante.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/hurtbox.gd" id="2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/mobs/voix_murmurante/idle.png" id="3"]
+
+[sub_resource type="CircleShape2D" id="MobShape"]
+radius = 18
+
+[node name="VoixMurmurante" type="CharacterBody2D"]
+script = ExtResource("1")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+scale = Vector2(2, 2)
+texture = ExtResource("3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("MobShape")
+
+[node name="Hurtbox" type="Area2D" parent="."]
+monitoring = false
+script = ExtResource("2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+shape = SubResource("MobShape")

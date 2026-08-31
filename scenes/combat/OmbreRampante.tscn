@@ -1,0 +1,35 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/ombre_rampante.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/combat/hurtbox.gd" id="2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/mobs/ombre_rampante/idle.png" id="3"]
+
+[sub_resource type="RectangleShape2D" id="MobShape"]
+size = Vector2(40, 40)
+
+[sub_resource type="CircleShape2D" id="AttackShape"]
+radius = 48
+
+[node name="OmbreRampante" type="CharacterBody2D"]
+script = ExtResource("1")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+scale = Vector2(2, 2)
+texture = ExtResource("3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("MobShape")
+
+[node name="Hurtbox" type="Area2D" parent="."]
+monitoring = false
+script = ExtResource("2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+shape = SubResource("MobShape")
+
+[node name="AttackHitbox" type="Area2D" parent="."]
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackHitbox"]
+shape = SubResource("AttackShape")
+disabled = true
