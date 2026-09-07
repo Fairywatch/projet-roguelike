@@ -54,7 +54,19 @@ offset_top = 8
 offset_right = 400
 offset_bottom = 60
 theme_override_font_sizes/font_size = 14
-text = "Fleches: deplacement | Espace: attaque | Maj: dash (i-frames)\nEchap: retour a la carte (debug)"
+text = "Fleches: deplacement | Espace: attaque | Maj: dash (i-frames) | E: objet actif\nEchap: retour a la carte (debug)"
+
+[node name="ItemMessageLabel" type="Label" parent="UI"]
+visible = false
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -220
+offset_top = 64
+offset_right = 220
+offset_bottom = 88
+theme_override_font_sizes/font_size = 15
+horizontal_alignment = 1
+text = ""
 
 [node name="HPLabel" type="Label" parent="UI"]
 offset_left = 12
@@ -111,3 +123,12 @@ color = Color(0.2, 0.2, 0.2, 0.8)
 offset_right = 100
 offset_bottom = 16
 color = Color(0.4, 0.85, 0.9, 1)
+
+[node name="ItemsLabel" type="Label" parent="UI"]
+offset_left = 12
+offset_top = 172
+offset_right = 620
+offset_bottom = 212
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 3
+text = "Objets: aucun"
