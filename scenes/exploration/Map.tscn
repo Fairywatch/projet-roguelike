@@ -48,3 +48,12 @@ theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 autowrap_mode = 3
 text = ""
+
+[node name="ItemsLabel" type="Label" parent="UI"]
+offset_left = 12
+offset_top = 36
+offset_right = 620
+offset_bottom = 76
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 3
+text = "Objets: aucun"

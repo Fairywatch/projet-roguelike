@@ -20,6 +20,7 @@ var base_color: Color
 var player: Node2D
 
 func _ready() -> void:
+	add_to_group("mobs")
 	base_color = sprite.modulate
 	player = get_tree().get_first_node_in_group("player")
 	_on_ready()
@@ -95,10 +96,10 @@ func _start_cooldown() -> void:
 		return
 	state = State.CHASE
 
-func take_hit() -> void:
+func take_hit(damage: int = 1) -> void:
 	if state == State.DEAD:
 		return
-	hp -= 1
+	hp -= damage
 	hp_changed.emit(hp)
 	if hp <= 0:
 		_die()
@@ -117,3 +118,22 @@ func _die() -> void:
 
 func _on_death() -> void:
 	pass
+
+func apply_slow(duration: float, factor: float) -> void:
+	if state == State.DEAD:
+		return
+	chase_speed *= factor
+	await get_tree().create_timer(duration).timeout
+	if state != State.DEAD:
+		chase_speed /= factor
+
+func stun(duration: float) -> void:
+	if state == State.DEAD:
+		return
+	state = State.COOLDOWN
+	sprite.modulate = Color(0.55, 0.6, 1.0, 1)
+	await get_tree().create_timer(duration).timeout
+	if state == State.DEAD:
+		return
+	sprite.modulate = base_color
+	state = State.CHASE

@@ -2,6 +2,7 @@ extends Node
 
 const DEATH_SETBACK_FLOORS := 5
 const MIN_FLOOR_INDEX := -10
+const ACTIVE_MAX_CHARGES := 3
 
 var return_map_path := "res://scenes/exploration/Map.tscn"
 var return_position: Vector2 = Vector2.ZERO
@@ -11,6 +12,10 @@ var floor_data_by_index: Dictionary = {}
 var guardian_fight: bool = false
 var negative_dive_available: bool = true
 var pending_message: String = ""
+
+var passive_items: Dictionary = {}
+var active_item_id: String = ""
+var active_charges: int = 0
 
 func get_or_create_floor_data(index: int) -> Dictionary:
 	if not floor_data_by_index.has(index):
@@ -36,6 +41,7 @@ func apply_death_setback() -> void:
 			floor_data_by_index.erase(key)
 	floor_index = new_index
 	return_position = Vector2.ZERO
+	reset_run_items()
 
 func apply_negative_death() -> void:
 	for key in floor_data_by_index.keys():
@@ -45,6 +51,7 @@ func apply_negative_death() -> void:
 	negative_dive_available = false
 	return_position = Vector2.ZERO
 	pending_message = "Tu t'es perdu dans les profondeurs... le passage s'est refermé pour de bon."
+	reset_run_items()
 
 func complete_negative_run() -> void:
 	for key in floor_data_by_index.keys():
@@ -52,4 +59,32 @@ func complete_negative_run() -> void:
 			floor_data_by_index.erase(key)
 	floor_index = 0
 	return_position = Vector2.ZERO
-	pending_message = "Tu remontes des profondeurs avec un lourd butin... (loot a venir)"
+	var bonus_id: String = Items.PASSIVES.pick_random()["id"]
+	add_passive_item(bonus_id)
+	var bonus_name: String = Items.find_passive(bonus_id)["name"]
+	pending_message = "Tu remontes des profondeurs avec un lourd butin : %s !" % bonus_name
+
+func add_passive_item(id: String) -> void:
+	passive_items[id] = passive_items.get(id, 0) + 1
+
+func set_active_item(id: String) -> void:
+	active_item_id = id
+	active_charges = ACTIVE_MAX_CHARGES
+
+func reset_run_items() -> void:
+	passive_items.clear()
+	active_item_id = ""
+	active_charges = 0
+
+func inventory_summary() -> String:
+	if passive_items.is_empty() and active_item_id == "":
+		return "Objets: aucun"
+	var parts: Array = []
+	for id in passive_items.keys():
+		var item := Items.find_passive(id)
+		parts.append("%s x%d" % [item.get("name", id), passive_items[id]])
+	var text := "Objets: " + (", ".join(parts) if not parts.is_empty() else "aucun")
+	if active_item_id != "":
+		var active_item := Items.find_active(active_item_id)
+		text += " | Actif: %s (%d)" % [active_item.get("name", active_item_id), active_charges]
+	return text

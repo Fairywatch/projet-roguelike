@@ -10,6 +10,7 @@ const FloorExitScene := preload("res://scenes/exploration/FloorExit.tscn")
 @onready var encounter_timer: Timer = $EncounterTimer
 @onready var floor_label: Label = $UI/FloorLabel
 @onready var message_label: Label = $UI/MessageLabel
+@onready var items_label: Label = $UI/ItemsLabel
 
 func _ready() -> void:
 	var floor_meta := GameState.get_or_create_floor_data(GameState.floor_index)
@@ -22,6 +23,7 @@ func _ready() -> void:
 	background.setup(floor_data.floor_cells, FloorGenerator.GRID_WIDTH, FloorGenerator.GRID_HEIGHT, floor_meta["intensity"])
 	_spawn_floor_exit(floor_data)
 	floor_label.text = "Etage: %d" % GameState.floor_index
+	items_label.text = GameState.inventory_summary()
 
 	if GameState.return_position != Vector2.ZERO:
 		player.global_position = GameState.return_position
