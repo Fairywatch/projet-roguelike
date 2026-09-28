@@ -4,6 +4,7 @@ const DEATH_SETBACK_FLOORS := 5
 const MIN_FLOOR_INDEX := -10
 const ACTIVE_MAX_CHARGES := 3
 const TOWER_FLOOR_COUNT := 10
+const ACTIVE_DROP_WEIGHT := 0.25
 const DIFFICULTY_PER_FLOOR := 0.08
 const PROFOND_DIFFICULTY_BONUS := 0.15
 
@@ -26,6 +27,8 @@ func get_or_create_floor_data(index: int) -> Dictionary:
 			"seed": randi(),
 			"family": randi() % 2,
 			"intensity": randi() % 2,
+			"wins": 0,
+			"opened_chests": [],
 		}
 	return floor_data_by_index[index]
 
@@ -86,6 +89,17 @@ func complete_negative_run() -> void:
 	add_passive_item(bonus_id)
 	var bonus_name: String = Items.find_passive(bonus_id)["name"]
 	pending_message = "Tu remontes des profondeurs avec un lourd butin : %s !" % bonus_name
+
+func roll_item_id() -> String:
+	if active_item_id == "" and randf() < ACTIVE_DROP_WEIGHT:
+		return Items.ACTIVES.pick_random()["id"]
+	return Items.PASSIVES.pick_random()["id"]
+
+func grant_item(id: String) -> void:
+	if Items.find_active(id).is_empty():
+		add_passive_item(id)
+	else:
+		set_active_item(id)
 
 func add_passive_item(id: String) -> void:
 	passive_items[id] = passive_items.get(id, 0) + 1

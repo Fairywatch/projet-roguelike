@@ -2,7 +2,6 @@ extends Node2D
 
 const BAR_WIDTH := 100.0
 const DROP_CHANCE := 0.45
-const ACTIVE_DROP_WEIGHT := 0.25
 const TELEGRAPH_BONUS_PER_STACK := 0.25
 
 const GuardianMobScene := preload("res://scenes/combat/OmbreRampante.tscn")
@@ -94,17 +93,13 @@ func _on_mob_hp_changed(hp: int) -> void:
 func _maybe_drop_item() -> void:
 	if not is_boss_fight and randf() >= DROP_CHANCE:
 		return
-	var grant_active: bool = GameState.active_item_id == "" and randf() < ACTIVE_DROP_WEIGHT
-	var id: String
-	if grant_active:
-		id = Items.ACTIVES.pick_random()["id"]
-	else:
-		id = Items.PASSIVES.pick_random()["id"]
-	player.obtain_item(id)
+	player.obtain_item(GameState.roll_item_id())
 
 func _on_mob_died() -> void:
 	var was_guardian := GameState.guardian_fight
 	GameState.guardian_fight = false
+	if not was_guardian:
+		GameState.current_floor()["wins"] += 1
 	mob_label.text = "Gardien vaincu !" if was_guardian else "Mob vaincu !"
 	_maybe_drop_item()
 	await get_tree().create_timer(1.4).timeout

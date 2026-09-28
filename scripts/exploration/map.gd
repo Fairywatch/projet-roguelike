@@ -4,6 +4,7 @@ const ENCOUNTER_CHANCE_PARADOXAL := 0.04
 const ENCOUNTER_CHANCE_PROFOND := 0.07
 const FAMILY_NAMES := ["Sommeil paradoxal", "Sommeil profond"]
 const FloorExitScene := preload("res://scenes/exploration/FloorExit.tscn")
+const ChestScene := preload("res://scenes/exploration/Chest.tscn")
 
 @onready var player: CharacterBody2D = $Player
 @onready var flash: ColorRect = $UI/ScreenFlash
@@ -15,6 +16,7 @@ const FloorExitScene := preload("res://scenes/exploration/FloorExit.tscn")
 @onready var items_label: Label = $UI/ItemsLabel
 
 var encounter_chance := ENCOUNTER_CHANCE_PARADOXAL
+var message_serial := 0
 
 func _ready() -> void:
 	var floor_meta := GameState.get_or_create_floor_data(GameState.floor_index)
@@ -26,6 +28,7 @@ func _ready() -> void:
 	_build_walls(floor_data)
 	background.setup(floor_data.floor_cells, FloorGenerator.GRID_WIDTH, FloorGenerator.GRID_HEIGHT, floor_meta["intensity"])
 	_spawn_floor_exit(floor_data)
+	_spawn_chests(floor_data)
 	floor_label.text = "Etage: %d / %d - %s" % [GameState.floor_index, GameState.TOWER_FLOOR_COUNT - 1, FAMILY_NAMES[floor_meta["family"]]]
 	encounter_chance = ENCOUNTER_CHANCE_PROFOND if floor_meta["family"] == FloorGenerator.Family.PROFOND else ENCOUNTER_CHANCE_PARADOXAL
 	items_label.text = GameState.inventory_summary()
@@ -38,10 +41,17 @@ func _ready() -> void:
 	encounter_timer.timeout.connect(_on_encounter_timer_timeout)
 
 	if GameState.pending_message != "":
-		message_label.text = GameState.pending_message
-		message_label.visible = true
+		_show_message(GameState.pending_message)
 		GameState.pending_message = ""
-		await get_tree().create_timer(4.0).timeout
+
+func _show_message(text: String) -> void:
+	message_serial += 1
+	var serial := message_serial
+	message_label.text = text
+	message_label.visible = true
+	items_label.text = GameState.inventory_summary()
+	await get_tree().create_timer(4.0).timeout
+	if serial == message_serial:
 		message_label.visible = false
 
 func _build_walls(floor_data) -> void:
@@ -68,6 +78,16 @@ func _spawn_floor_exit(floor_data) -> void:
 		descent.force_descend = true
 		descent.position = _cell_to_world(floor_data.secondary_cell)
 		generated_root.add_child(descent)
+
+# Le dernier coffre de l'etage est scelle : il faut gagner des combats sur l'etage pour l'ouvrir.
+func _spawn_chests(floor_data) -> void:
+	for i in floor_data.chest_cells.size():
+		var chest: Area2D = ChestScene.instantiate()
+		chest.chest_id = i
+		chest.sealed = i == floor_data.chest_cells.size() - 1
+		chest.position = _cell_to_world(floor_data.chest_cells[i])
+		chest.message.connect(_show_message)
+		generated_root.add_child(chest)
 
 func _cell_to_world(cell: Vector2i) -> Vector2:
 	var half := FloorGenerator.CELL_SIZE / 2.0

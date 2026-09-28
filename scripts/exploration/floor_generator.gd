@@ -8,6 +8,7 @@ const GRID_WIDTH := 32
 const GRID_HEIGHT := 19
 const CELL_SIZE := 100
 const MAX_ROOM_ATTEMPTS := 400
+const CHEST_COUNT := 2
 
 class FloorData:
 	var family: int
@@ -16,6 +17,7 @@ class FloorData:
 	var spawn_cell: Vector2i = Vector2i.ZERO
 	var exit_cell: Vector2i = Vector2i.ZERO
 	var secondary_cell: Vector2i = Vector2i.ZERO
+	var chest_cells: Array = []
 
 static func generate(family: int, intensity: int, rng: RandomNumberGenerator) -> FloorData:
 	var data := FloorData.new()
@@ -78,6 +80,14 @@ static func generate(family: int, intensity: int, rng: RandomNumberGenerator) ->
 			if dist2 > farthest_dist2:
 				farthest_dist2 = dist2
 				data.secondary_cell = center
+
+		var candidates: Array = []
+		for room in rooms:
+			var center: Vector2i = room.position + room.size / 2
+			if center not in [data.spawn_cell, data.exit_cell, data.secondary_cell]:
+				candidates.append(center)
+		while data.chest_cells.size() < CHEST_COUNT and not candidates.is_empty():
+			data.chest_cells.append(candidates.pop_at(rng.randi_range(0, candidates.size() - 1)))
 
 	return data
 
