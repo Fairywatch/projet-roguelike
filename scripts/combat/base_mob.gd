@@ -43,6 +43,13 @@ func empower_as_guardian() -> void:
 	$CollisionShape2D.shape = bigger_shape
 	$Hurtbox/CollisionShape2D.shape = bigger_shape
 
+# Les telegraphes ne sont pas touches : la lisibilite reste la meme a tous les paliers.
+func apply_difficulty(mult: float) -> void:
+	hp = ceili(hp * mult)
+	var tempo := sqrt(mult)
+	chase_speed *= tempo
+	cooldown_duration /= tempo
+
 func _physics_process(_delta: float) -> void:
 	if state == State.DEAD or player == null:
 		return

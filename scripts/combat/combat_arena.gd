@@ -48,6 +48,8 @@ func _ready() -> void:
 
 	if GameState.guardian_fight:
 		mob.empower_as_guardian()
+	mob.apply_difficulty(GameState.difficulty())
+	if GameState.guardian_fight:
 		mob_label.text = "Gardien PV: %d" % mob.hp
 	else:
 		mob_label.text = "Mob PV: %d" % mob.hp
