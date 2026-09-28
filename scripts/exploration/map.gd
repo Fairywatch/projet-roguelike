@@ -1,6 +1,8 @@
 extends Node2D
 
-const ENCOUNTER_CHANCE := 0.05
+const ENCOUNTER_CHANCE_PARADOXAL := 0.04
+const ENCOUNTER_CHANCE_PROFOND := 0.07
+const FAMILY_NAMES := ["Sommeil paradoxal", "Sommeil profond"]
 const FloorExitScene := preload("res://scenes/exploration/FloorExit.tscn")
 
 @onready var player: CharacterBody2D = $Player
@@ -12,6 +14,8 @@ const FloorExitScene := preload("res://scenes/exploration/FloorExit.tscn")
 @onready var message_label: Label = $UI/MessageLabel
 @onready var items_label: Label = $UI/ItemsLabel
 
+var encounter_chance := ENCOUNTER_CHANCE_PARADOXAL
+
 func _ready() -> void:
 	var floor_meta := GameState.get_or_create_floor_data(GameState.floor_index)
 
@@ -22,7 +26,8 @@ func _ready() -> void:
 	_build_walls(floor_data)
 	background.setup(floor_data.floor_cells, FloorGenerator.GRID_WIDTH, FloorGenerator.GRID_HEIGHT, floor_meta["intensity"])
 	_spawn_floor_exit(floor_data)
-	floor_label.text = "Etage: %d" % GameState.floor_index
+	floor_label.text = "Etage: %d / %d - %s" % [GameState.floor_index, GameState.TOWER_FLOOR_COUNT - 1, FAMILY_NAMES[floor_meta["family"]]]
+	encounter_chance = ENCOUNTER_CHANCE_PROFOND if floor_meta["family"] == FloorGenerator.Family.PROFOND else ENCOUNTER_CHANCE_PARADOXAL
 	items_label.text = GameState.inventory_summary()
 
 	if GameState.return_position != Vector2.ZERO:
@@ -71,7 +76,7 @@ func _cell_to_world(cell: Vector2i) -> Vector2:
 func _on_encounter_timer_timeout() -> void:
 	if player.frozen or player.velocity.length() < 10.0:
 		return
-	if randf() < ENCOUNTER_CHANCE:
+	if randf() < encounter_chance:
 		_trigger_encounter()
 
 func _trigger_encounter() -> void:

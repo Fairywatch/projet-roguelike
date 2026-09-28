@@ -3,6 +3,9 @@ extends Node
 const DEATH_SETBACK_FLOORS := 5
 const MIN_FLOOR_INDEX := -10
 const ACTIVE_MAX_CHARGES := 3
+const TOWER_FLOOR_COUNT := 10
+const DIFFICULTY_PER_FLOOR := 0.08
+const PROFOND_DIFFICULTY_BONUS := 0.15
 
 var return_map_path := "res://scenes/exploration/Map.tscn"
 var return_position: Vector2 = Vector2.ZERO
@@ -25,6 +28,26 @@ func get_or_create_floor_data(index: int) -> Dictionary:
 			"intensity": randi() % 2,
 		}
 	return floor_data_by_index[index]
+
+func current_floor() -> Dictionary:
+	return get_or_create_floor_data(floor_index)
+
+# Palier (numero d'etage, profondeur comprise pour les etages negatifs) + surcouche de type.
+func difficulty() -> float:
+	var family: int = current_floor()["family"]
+	var bonus := PROFOND_DIFFICULTY_BONUS if family == FloorGenerator.Family.PROFOND else 0.0
+	return 1.0 + abs(floor_index) * DIFFICULTY_PER_FLOOR + bonus
+
+func is_last_floor() -> bool:
+	return floor_index == TOWER_FLOOR_COUNT - 1
+
+func complete_tower() -> void:
+	floor_data_by_index.clear()
+	floor_index = 0
+	negative_dive_available = true
+	return_position = Vector2.ZERO
+	reset_run_items()
+	pending_message = "Le reveur se reveille... Nuit terminee ! Une nouvelle nuit commence."
 
 func advance_floor() -> void:
 	floor_index += 1

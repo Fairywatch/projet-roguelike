@@ -26,6 +26,8 @@ func _on_body_entered(body: Node2D) -> void:
 		GameState.complete_negative_run()
 	elif going_down:
 		GameState.descend_floor()
+	elif GameState.is_last_floor():
+		GameState.complete_tower()
 	else:
 		GameState.advance_floor()
 	SceneTransition.change_scene(GameState.return_map_path)
