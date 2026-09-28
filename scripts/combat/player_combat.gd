@@ -76,13 +76,9 @@ func _apply_passive_stack(id: String, count: int) -> void:
 			extra_lives += count
 
 func obtain_item(id: String) -> void:
-	var is_active: bool = not Items.find_active(id).is_empty()
-	if is_active:
-		GameState.set_active_item(id)
-	else:
-		GameState.add_passive_item(id)
-		_apply_all_passive_items()
-		hp = min(hp, max_hp)
+	GameState.grant_item(id)
+	_apply_all_passive_items()
+	hp = min(hp, max_hp)
 	var item := Items.find(id)
 	item_message.emit("Objet obtenu : %s" % item.get("name", id))
 
