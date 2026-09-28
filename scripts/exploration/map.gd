@@ -69,10 +69,17 @@ func _ready() -> void:
 
 	encounter_timer.timeout.connect(_on_encounter_timer_timeout)
 	_refresh_hud()
+	GameState.save_run()
 
 	if GameState.pending_message != "":
 		_show_message(GameState.pending_message)
 		GameState.pending_message = ""
+
+func _notification(what: int) -> void:
+	# GameState sauvegarde avant nous (il est plus haut dans l'arbre) : on resauvegarde avec la position.
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		GameState.return_position = player.global_position
+		GameState.save_run()
 
 func _process(delta: float) -> void:
 	encounter_pause = max(0.0, encounter_pause - delta)

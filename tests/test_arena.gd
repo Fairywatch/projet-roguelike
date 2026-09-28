@@ -12,6 +12,10 @@ func _press(keycode: Key) -> void:
 
 func _initialize() -> void:
 	var gs = root.get_node("GameState")
+	await process_frame  # laisse GameState._ready (chargement de la sauvegarde) passer avant la mise en place
+	# Fichier a part : les tests ne touchent pas a la vraie sauvegarde du joueur.
+	gs.save_path = "user://test_run.save"
+	gs.new_run()
 	gs.floor_index = 0
 	gs.new_run()
 

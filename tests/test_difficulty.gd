@@ -3,6 +3,10 @@ extends SceneTree
 
 func _initialize() -> void:
 	var gs = root.get_node("GameState")
+	await process_frame  # laisse GameState._ready (chargement de la sauvegarde) passer avant la mise en place
+	# Fichier a part : les tests ne touchent pas a la vraie sauvegarde du joueur.
+	gs.save_path = "user://test_run.save"
+	gs.new_run()
 
 	gs.floor_index = 0
 	gs.floor_data_by_index[0] = {"seed": 1, "family": FloorGenerator.Family.PARADOXAL, "intensity": 0}
@@ -83,6 +87,23 @@ func _initialize() -> void:
 		assert(small.floor_cells.size() < big.floor_cells.size())
 		assert(small.exit_cell != small.spawn_cell and small.secondary_cell not in [small.spawn_cell, small.exit_cell])
 		assert(not small.chest_cells.is_empty())
+
+	# Sauvegarde de partie : tout l'etat de la run survit a un redemarrage du jeu.
+	gs.new_run()
+	gs.floor_index = 4
+	gs.current_floor()["ground_items"].append({"id": "cafe_serre", "pos": Vector2(120, 340)})
+	gs.take_item("plume_de_reve")
+	gs.take_item("plume_de_reve")
+	gs.take_item("oreiller_volant")
+	gs.active_charges = 1
+	gs.save_run()
+	gs.new_run()
+	gs.run_started = false
+	gs.load_run()
+	assert(gs.run_started and gs.floor_index == 4)
+	assert(gs.passive_items == {"plume_de_reve": 2} and gs.mod("max_hp") == 2)
+	assert(gs.active_item_id == "oreiller_volant" and gs.active_charges == 1)
+	assert(gs.floor_data_by_index[4]["ground_items"][0]["pos"] == Vector2(120, 340))
 
 	# Parametres : une option coupee le reste apres rechargement.
 	var saved: bool = Settings.enabled("screen_shake")

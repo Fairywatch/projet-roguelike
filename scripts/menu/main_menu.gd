@@ -37,6 +37,7 @@ func _ready() -> void:
 
 	message_label.text = GameState.menu_message
 	GameState.menu_message = ""
+	GameState.save_run()
 	if GameState.run_started:
 		_add_button("Continuer  (etage %d)" % GameState.floor_index, _continue)
 	_add_button("Nouvelle nuit", _new_run)

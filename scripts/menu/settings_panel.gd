@@ -30,6 +30,14 @@ func _ready() -> void:
 		check.add_theme_font_size_override("font_size", 12)
 		check.toggled.connect(func(on): Settings.set_option(option, on))
 		box.add_child(check)
+		# Lance depuis l'editeur, le jeu est integre a l'onglet "Jeu" : pas de plein ecran possible.
+		if option == "fullscreen" and Engine.is_embedded_in_editor():
+			check.disabled = true
+			var note := Label.new()
+			note.text = "Indisponible quand le jeu tourne dans l'onglet Jeu de l'editeur"
+			note.add_theme_font_size_override("font_size", 9)
+			note.modulate = Color(1, 1, 1, 0.6)
+			box.add_child(note)
 
 	var back := Button.new()
 	back.text = "Retour"

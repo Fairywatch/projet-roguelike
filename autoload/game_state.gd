@@ -9,6 +9,15 @@ const DIFFICULTY_PER_FLOOR := 0.08
 const PROFOND_DIFFICULTY_BONUS := 0.15
 
 const MENU_PATH := "res://scenes/menu/MainMenu.tscn"
+const SAVE_VERSION := 1
+# Etat de la partie sauvegarde entre deux sessions (voir save_run / load_run).
+const SAVED_FIELDS := [
+	"floor_index", "floor_data_by_index", "negative_dive_available", "return_position",
+	"run_started", "passive_items", "active_item_id", "active_charges", "next_fight_bonus_hp",
+	"pending_ground_item",
+]
+
+var save_path := "user://run.save"
 
 var return_map_path := "res://scenes/exploration/Map.tscn"
 var return_position: Vector2 = Vector2.ZERO
@@ -33,6 +42,37 @@ var pending_ground_item: String = ""
 
 func _ready() -> void:
 	Settings.load_settings()
+	load_run()
+
+# Fermeture de la fenetre : on garde la partie (la carte met d'abord a jour la position du joueur).
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		save_run()
+
+# Sauvegarde a l'arrivee sur la carte ou au menu, et a la fermeture du jeu. Un combat en cours
+# n'est pas sauvegarde : on reprend juste avant la rencontre.
+func save_run() -> void:
+	var data := {"version": SAVE_VERSION}
+	for field in SAVED_FIELDS:
+		data[field] = get(field)
+	var file := FileAccess.open(save_path, FileAccess.WRITE)
+	if file == null:
+		push_warning("Sauvegarde impossible : %s" % error_string(FileAccess.get_open_error()))
+		return
+	file.store_var(data)
+
+func load_run() -> void:
+	if not FileAccess.file_exists(save_path):
+		return
+	var file := FileAccess.open(save_path, FileAccess.READ)
+	var data = file.get_var() if file else null
+	if not (data is Dictionary) or data.get("version") != SAVE_VERSION:
+		push_warning("Sauvegarde illisible ou d'une ancienne version, ignoree.")
+		return
+	for field in SAVED_FIELDS:
+		if data.has(field):
+			set(field, data[field])
+	_recompute_mods()
 
 func get_or_create_floor_data(index: int) -> Dictionary:
 	if not floor_data_by_index.has(index):
