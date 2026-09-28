@@ -1,21 +1,56 @@
 class_name Items
 extends RefCounted
 
+# Objets passifs : cumulables sans limite. Chaque passif est decrit par ses effets ("mods"),
+# additionnes pour tous les exemplaires possedes (voir GameState.mod()). Ajouter un passif =
+# ajouter une ligne ici, sans code, tant qu'il n'utilise que des effets existants :
+#   max_hp, damage (entiers) ; speed, dash_cooldown, attack_cooldown, dash_length (fractions,
+#   ex. 0.1 = +10 %) ; reach, knockback (pixels) ; heal_on_hit, heal_on_kill, crit, evasion
+#   (chances) ; iframes (secondes) ; extra_lives, shield, thorns, active_recharge (entiers) ;
+#   slow_on_hit, dash_trail (drapeaux) ; enemy_hp, enemy_speed, enemy_cooldown, telegraph,
+#   drop_chance, encounter_rate (fractions).
 const PASSIVES := [
-	{"id": "plume_de_reve", "name": "Plume de reve", "desc": "+1 PV max"},
-	{"id": "sablier_fele", "name": "Sablier fele", "desc": "Dash se recharge plus vite"},
-	{"id": "larme_de_crocodile", "name": "Larme de crocodile", "desc": "Chance de soin en touchant un ennemi"},
-	{"id": "coup_de_barre", "name": "Coup de barre", "desc": "Le dash laisse une trainee blessante"},
-	{"id": "grelot_du_sommeil", "name": "Grelot du sommeil", "desc": "Les ennemis touches sont ralentis"},
-	{"id": "oeil_qui_traine", "name": "Oeil qui traine", "desc": "Les telegraphes ennemis durent plus longtemps"},
-	{"id": "croque_mort_au_chomage", "name": "Croque-mort au chomage", "desc": "Survit a un coup fatal (par combat)"},
-	{"id": "pacte_dombre", "name": "Pacte d'ombre", "desc": "+Degats, -1 PV max"},
+	{"id": "plume_de_reve", "name": "Plume de reve", "desc": "+1 PV max", "mods": {"max_hp": 1}},
+	{"id": "sablier_fele", "name": "Sablier fele", "desc": "Dash recharge 15 % plus vite", "mods": {"dash_cooldown": -0.15}},
+	{"id": "larme_de_crocodile", "name": "Larme de crocodile", "desc": "15 % de chance de soin en frappant", "mods": {"heal_on_hit": 0.15}},
+	{"id": "coup_de_barre", "name": "Coup de barre", "desc": "Le dash laisse une trainee blessante", "mods": {"dash_trail": 1}},
+	{"id": "grelot_du_sommeil", "name": "Grelot du sommeil", "desc": "Les ennemis touches sont ralentis", "mods": {"slow_on_hit": 1}},
+	{"id": "oeil_qui_traine", "name": "Oeil qui traine", "desc": "Telegraphes ennemis 25 % plus longs", "mods": {"telegraph": 0.25}},
+	{"id": "croque_mort_au_chomage", "name": "Croque-mort au chomage", "desc": "Survit a un coup fatal par combat", "mods": {"extra_lives": 1}},
+	{"id": "pacte_dombre", "name": "Pacte d'ombre", "desc": "+1 degat, -1 PV max", "mods": {"damage": 1, "max_hp": -1}},
+	{"id": "chaussons_de_velours", "name": "Chaussons de velours", "desc": "+12 % de vitesse", "mods": {"speed": 0.12}},
+	{"id": "oreiller_de_plumes", "name": "Oreiller de plumes", "desc": "+2 PV max, -8 % de vitesse", "mods": {"max_hp": 2, "speed": -0.08}},
+	{"id": "doudou_protecteur", "name": "Doudou protecteur", "desc": "Bloque le premier coup de chaque combat", "mods": {"shield": 1}},
+	{"id": "cafe_serre", "name": "Cafe serre", "desc": "Attaque 20 % plus rapide", "mods": {"attack_cooldown": -0.2}},
+	{"id": "bras_de_morphee", "name": "Bras de Morphee", "desc": "Attaque plus longue", "mods": {"reach": 10}},
+	{"id": "coup_de_foudre", "name": "Coup de foudre", "desc": "15 % de coups critiques (degats x2)", "mods": {"crit": 0.15}},
+	{"id": "mouton_compteur", "name": "Mouton compteur", "desc": "+15 % de chance de butin", "mods": {"drop_chance": 0.15}},
+	{"id": "veilleuse", "name": "Veilleuse", "desc": "25 % de rencontres en moins", "mods": {"encounter_rate": -0.25}},
+	{"id": "ronflement_sonore", "name": "Ronflement sonore", "desc": "Les coups repoussent les ennemis", "mods": {"knockback": 22}},
+	{"id": "somnambule", "name": "Somnambule", "desc": "Dash 30 % plus long", "mods": {"dash_length": 0.3}},
+	{"id": "couverture_lestee", "name": "Couverture lestee", "desc": "Invincibilite plus longue apres un coup", "mods": {"iframes": 0.4}},
+	{"id": "marchand_de_sable", "name": "Marchand de sable", "desc": "Ennemis 15 % moins resistants", "mods": {"enemy_hp": -0.15}},
+	{"id": "berceuse_inversee", "name": "Berceuse inversee", "desc": "Ennemis 10 % plus lents", "mods": {"enemy_speed": -0.1}},
+	{"id": "reve_lucide", "name": "Reve lucide", "desc": "25 % de chance de soin en tuant", "mods": {"heal_on_kill": 0.25}},
+	{"id": "cauchemar_apprivoise", "name": "Cauchemar apprivoise", "desc": "+1 degat, ennemis 10 % plus rapides", "mods": {"damage": 1, "enemy_speed": 0.1}},
+	{"id": "pile_rechargeable", "name": "Pile rechargeable", "desc": "L'objet actif regagne une charge de plus", "mods": {"active_recharge": 1}},
+	{"id": "tisane_de_camomille", "name": "Tisane de camomille", "desc": "+1 PV max, 5 % de soin en frappant", "mods": {"max_hp": 1, "heal_on_hit": 0.05}},
+	{"id": "poussiere_detoile", "name": "Poussiere d'etoile", "desc": "+10 % de critiques, +5 % de vitesse", "mods": {"crit": 0.1, "speed": 0.05}},
+	{"id": "pyjama_en_soie", "name": "Pyjama en soie", "desc": "+5 % de vitesse, dash 10 % plus rapide", "mods": {"speed": 0.05, "dash_cooldown": -0.1}},
+	{"id": "pyjama_a_epines", "name": "Pyjama a epines", "desc": "Blesse les ennemis proches quand on est touche", "mods": {"thorns": 1}},
+	{"id": "miroir_de_poche", "name": "Miroir de poche", "desc": "15 % de chance d'esquiver un coup", "mods": {"evasion": 0.15}},
+	{"id": "attrape_reves", "name": "Attrape-reves", "desc": "8 % d'esquive, +10 % de butin", "mods": {"evasion": 0.08, "drop_chance": 0.1}},
+	{"id": "billes_perdues", "name": "Billes perdues", "desc": "Attaque 10 % plus rapide et plus longue", "mods": {"attack_cooldown": -0.1, "reach": 5}},
+	{"id": "montre_a_gousset", "name": "Montre a gousset", "desc": "Ennemis attaquent 15 % moins souvent", "mods": {"enemy_cooldown": 0.15}},
 ]
 
+# Objets actifs : un seul a la fois, utilise avec E en combat.
 const ACTIVES := [
-	{"id": "sept_ans_de_malheur", "name": "Sept Ans de Malheur", "desc": "Invincibilite bref + leurre"},
-	{"id": "mouchoir_usage", "name": "Mouchoir usage", "desc": "Soigne 1 PV (charges limitees)"},
+	{"id": "sept_ans_de_malheur", "name": "Sept Ans de Malheur", "desc": "Invincibilite breve + leurre"},
+	{"id": "mouchoir_usage", "name": "Mouchoir usage", "desc": "Soigne 1 PV"},
 	{"id": "reveil_strident", "name": "Reveil strident", "desc": "Etourdit les ennemis proches"},
+	{"id": "oreiller_volant", "name": "Oreiller volant", "desc": "2 degats a tous les ennemis proches"},
+	{"id": "tasse_de_cafe", "name": "Tasse de cafe", "desc": "Dash recharge et +50 % de vitesse 4 s"},
 ]
 
 static func find_passive(id: String) -> Dictionary:
@@ -29,6 +64,9 @@ static func find_active(id: String) -> Dictionary:
 		if item["id"] == id:
 			return item
 	return {}
+
+static func is_active(id: String) -> bool:
+	return not find_active(id).is_empty()
 
 static func find(id: String) -> Dictionary:
 	var passive := find_passive(id)

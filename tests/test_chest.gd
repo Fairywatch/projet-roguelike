@@ -27,12 +27,14 @@ func _initialize() -> void:
 	await process_frame
 	chest._on_body_entered(player)
 	assert(gs.current_floor()["opened_chests"].is_empty())
-	assert(gs.passive_items.is_empty() and gs.active_item_id == "")
+	assert(gs.passive_count() == 0 and gs.current_floor()["ground_items"].is_empty())
 
 	gs.current_floor()["wins"] = chest.SEAL_WINS_REQUIRED
 	chest._on_body_entered(player)
 	assert(gs.current_floor()["opened_chests"] == [0])
-	assert(gs.passive_items.size() + int(gs.active_item_id != "") == 1)
+	# L'objet n'est pas donne directement : il est pose au sol, a prendre ou non.
+	assert(gs.passive_count() == 0 and not gs.has_active_item())
+	assert(gs.current_floor()["ground_items"].size() == 1)
 
 	chest._on_body_entered(player)
 	assert(gs.current_floor()["opened_chests"] == [0])

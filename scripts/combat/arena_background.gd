@@ -2,16 +2,29 @@ extends Node2D
 
 const ARENA_WIDTH := 900
 const ARENA_HEIGHT := 540
-const CELL_SIZE := 60
-const COLOR_A := Color(0.18, 0.08, 0.1, 1)
-const COLOR_B := Color(0.22, 0.1, 0.12, 1)
-const BORDER_COLOR := Color(1, 1, 1, 0.6)
+const CELL_SIZE := 100
+const EDGE_SHADE := 40
+
+var floor_textures: Array = []
+var cell_seed := 0
+
+func setup(family: int, intensity: int) -> void:
+	floor_textures = DreamTheme.floor_textures(DreamTheme.theme_name(family, intensity))
+	cell_seed = randi()
+	queue_redraw()
 
 func _draw() -> void:
-	var cols := ARENA_WIDTH / CELL_SIZE
-	var rows := ARENA_HEIGHT / CELL_SIZE
-	for y in rows:
-		for x in cols:
-			var color := COLOR_A if (x + y) % 2 == 0 else COLOR_B
-			draw_rect(Rect2(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE), color)
-	draw_rect(Rect2(0, 0, ARENA_WIDTH, ARENA_HEIGHT), BORDER_COLOR, false, 4.0)
+	if floor_textures.is_empty():
+		return
+	for y in ceili(float(ARENA_HEIGHT) / CELL_SIZE):
+		for x in ceili(float(ARENA_WIDTH) / CELL_SIZE):
+			var tex: Texture2D = floor_textures[hash(Vector3i(x, y, cell_seed)) % floor_textures.size()]
+			var rect := Rect2(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+			var clipped := rect.intersection(Rect2(0, 0, ARENA_WIDTH, ARENA_HEIGHT))
+			var src := Rect2(Vector2.ZERO, clipped.size / 2.0)
+			draw_texture_rect_region(tex, clipped, src)
+	# Bords assombris : l'arene semble posee au milieu du reve.
+	for i in EDGE_SHADE / 4:
+		var a := 0.5 * (1.0 - float(i) / (EDGE_SHADE / 4))
+		var r := Rect2(i * 4, i * 4, ARENA_WIDTH - i * 8, ARENA_HEIGHT - i * 8)
+		draw_rect(r, Color(0, 0, 0, a * 0.35), false, 4.0)

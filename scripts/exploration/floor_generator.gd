@@ -4,13 +4,16 @@ extends RefCounted
 enum Family { PARADOXAL, PROFOND }
 enum Intensity { REVE, CAUCHEMAR }
 
-const GRID_WIDTH := 32
-const GRID_HEIGHT := 19
+# Taille de la grille selon l'avancee dans la tour : petits etages au debut, grands a la fin.
+const MIN_GRID := Vector2i(16, 10)
+const MAX_GRID := Vector2i(34, 20)
+const MIN_ROOMS := 6
 const CELL_SIZE := 100
 const MAX_ROOM_ATTEMPTS := 400
 const CHEST_COUNT := 2
 
 class FloorData:
+	var size: Vector2i
 	var family: int
 	var intensity: int
 	var floor_cells: Dictionary = {}
@@ -19,25 +22,31 @@ class FloorData:
 	var secondary_cell: Vector2i = Vector2i.ZERO
 	var chest_cells: Array = []
 
-static func generate(family: int, intensity: int, rng: RandomNumberGenerator) -> FloorData:
+static func generate(family: int, intensity: int, rng: RandomNumberGenerator, size_ratio: float = 1.0) -> FloorData:
 	var data := FloorData.new()
 	data.family = family
 	data.intensity = intensity
+	data.size = Vector2i(Vector2(MIN_GRID).lerp(Vector2(MAX_GRID), clampf(size_ratio, 0.0, 1.0)).round())
+	var area_ratio := float(data.size.x * data.size.y) / (MAX_GRID.x * MAX_GRID.y)
 
 	var room_count: int
 	var room_min: int
 	var room_max: int
 	var corridor_width: int
 	if family == Family.PARADOXAL:
-		room_count = rng.randi_range(15, 20)
+		room_count = rng.randi_range(16, 22)
 		room_min = 2
 		room_max = 3
 		corridor_width = 1
 	else:
-		room_count = rng.randi_range(8, 12)
+		room_count = rng.randi_range(9, 13)
 		room_min = 3
 		room_max = 5
 		corridor_width = 2
+
+	room_count = maxi(MIN_ROOMS, roundi(room_count * area_ratio))
+	# Les grandes salles du sommeil profond ne tiennent pas dans un petit etage.
+	room_max = room_min + roundi((room_max - room_min) * clampf(size_ratio, 0.0, 1.0))
 
 	var rooms: Array = []
 	var attempts := 0
@@ -45,8 +54,8 @@ static func generate(family: int, intensity: int, rng: RandomNumberGenerator) ->
 		attempts += 1
 		var w := rng.randi_range(room_min, room_max)
 		var h := rng.randi_range(room_min, room_max)
-		var x := rng.randi_range(1, GRID_WIDTH - w - 1)
-		var y := rng.randi_range(1, GRID_HEIGHT - h - 1)
+		var x := rng.randi_range(1, data.size.x - w - 1)
+		var y := rng.randi_range(1, data.size.y - h - 1)
 		var rect := Rect2i(x, y, w, h)
 		if not _overlaps_any(rect, rooms, 1):
 			rooms.append(rect)
@@ -114,5 +123,5 @@ static func _carve_cell(data: FloorData, center: Vector2i, width: int) -> void:
 	for dx in range(-half, half + 1):
 		for dy in range(-half, half + 1):
 			var cell := center + Vector2i(dx, dy)
-			if cell.x >= 0 and cell.x < GRID_WIDTH and cell.y >= 0 and cell.y < GRID_HEIGHT:
+			if cell.x > 0 and cell.x < data.size.x - 1 and cell.y > 0 and cell.y < data.size.y - 1:
 				data.floor_cells[cell] = true
