@@ -3,6 +3,15 @@ extends Node2D
 const ENCOUNTER_CHANCE_PARADOXAL := 0.04
 const ENCOUNTER_CHANCE_PROFOND := 0.07
 const FAMILY_NAMES := ["Sommeil paradoxal", "Sommeil profond"]
+const DECOR_CHANCE := 0.16
+const DECOR_OFFSET := 30.0
+const PLAYER_LIGHT_RADIUS := 260.0
+const MESSAGE_DURATION := 4.0
+# Effets des decors (voir _on_decor_touched).
+const CONSUMABLE_DECOR := ["etoile", "lune", "horloge", "bulle", "champignon", "cristal"]
+const GUIDE_DURATION := 10.0
+const CLOCK_PAUSE := 15.0
+const CRYSTAL_ITEM_CHANCE := 0.3
 const FloorExitScene := preload("res://scenes/exploration/FloorExit.tscn")
 const ChestScene := preload("res://scenes/exploration/Chest.tscn")
 
@@ -17,50 +26,80 @@ const ChestScene := preload("res://scenes/exploration/Chest.tscn")
 
 var encounter_chance := ENCOUNTER_CHANCE_PARADOXAL
 var message_serial := 0
+var exit_position := Vector2.ZERO
+var guide_timer := 0.0
+var encounter_pause := 0.0
+var guide_arrow := Polygon2D.new()
 
 func _ready() -> void:
-	var floor_meta := GameState.get_or_create_floor_data(GameState.floor_index)
+	var floor_meta := GameState.current_floor()
+	DreamTheme.set_family(floor_meta["family"])
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = floor_meta["seed"]
-	var floor_data := FloorGenerator.generate(floor_meta["family"], floor_meta["intensity"], rng)
+	var size_ratio := float(abs(GameState.floor_index)) / (GameState.TOWER_FLOOR_COUNT - 1)
+	var floor_data := FloorGenerator.generate(floor_meta["family"], floor_meta["intensity"], rng, size_ratio)
 
 	_build_walls(floor_data)
-	background.setup(floor_data.floor_cells, FloorGenerator.GRID_WIDTH, FloorGenerator.GRID_HEIGHT, floor_meta["intensity"])
+	background.setup(floor_data.floor_cells, floor_data.size, floor_meta["family"], floor_meta["intensity"], floor_meta["seed"])
 	_spawn_floor_exit(floor_data)
 	_spawn_chests(floor_data)
-	floor_label.text = "Etage: %d / %d - %s" % [GameState.floor_index, GameState.TOWER_FLOOR_COUNT - 1, FAMILY_NAMES[floor_meta["family"]]]
+	_spawn_decor(floor_data, floor_meta["seed"])
+	_setup_ambience(floor_data)
+	floor_label.text = "Etage %d / %d  -  %s" % [GameState.floor_index, GameState.TOWER_FLOOR_COUNT - 1, FAMILY_NAMES[floor_meta["family"]]]
 	encounter_chance = ENCOUNTER_CHANCE_PROFOND if floor_meta["family"] == FloorGenerator.Family.PROFOND else ENCOUNTER_CHANCE_PARADOXAL
-	items_label.text = GameState.inventory_summary()
+	encounter_chance *= maxf(0.2, 1.0 + GameState.mod("encounter_rate"))
+	$UI.add_child(InventoryPanel.new())
 
 	if GameState.return_position != Vector2.ZERO:
 		player.global_position = GameState.return_position
 	else:
 		player.global_position = _cell_to_world(floor_data.spawn_cell)
 
+	if GameState.pending_ground_item != "":
+		floor_meta["ground_items"].append({"id": GameState.pending_ground_item, "pos": player.global_position + Vector2(70, 0)})
+		GameState.pending_ground_item = ""
+	for entry in floor_meta["ground_items"]:
+		_spawn_pickup(entry)
+
+	guide_arrow.polygon = PackedVector2Array([Vector2(44, 0), Vector2(32, -7), Vector2(32, 7)])
+	guide_arrow.color = Color(1, 0.95, 0.7, 0.9)
+	guide_arrow.visible = false
+	player.add_child(guide_arrow)
+
 	encounter_timer.timeout.connect(_on_encounter_timer_timeout)
+	_refresh_hud()
 
 	if GameState.pending_message != "":
 		_show_message(GameState.pending_message)
 		GameState.pending_message = ""
+
+func _process(delta: float) -> void:
+	encounter_pause = max(0.0, encounter_pause - delta)
+	guide_timer = max(0.0, guide_timer - delta)
+	guide_arrow.visible = guide_timer > 0.0
+	guide_arrow.rotation = (exit_position - player.global_position).angle()
+
+func _refresh_hud() -> void:
+	items_label.text = "%s\nPassifs : %d  (Tab)" % [GameState.active_summary(), GameState.passive_count()]
 
 func _show_message(text: String) -> void:
 	message_serial += 1
 	var serial := message_serial
 	message_label.text = text
 	message_label.visible = true
-	items_label.text = GameState.inventory_summary()
-	await get_tree().create_timer(4.0).timeout
+	_refresh_hud()
+	await get_tree().create_timer(MESSAGE_DURATION).timeout
 	if serial == message_serial:
 		message_label.visible = false
 
 func _build_walls(floor_data) -> void:
 	var shared_shape := RectangleShape2D.new()
 	shared_shape.size = Vector2(FloorGenerator.CELL_SIZE, FloorGenerator.CELL_SIZE)
-	for y in FloorGenerator.GRID_HEIGHT:
-		for x in FloorGenerator.GRID_WIDTH:
+	for y in floor_data.size.y:
+		for x in floor_data.size.x:
 			var cell := Vector2i(x, y)
-			if not floor_data.floor_cells.has(cell):
+			if not floor_data.floor_cells.has(cell) and _touches_floor(floor_data, cell):
 				var wall := StaticBody2D.new()
 				var shape := CollisionShape2D.new()
 				shape.shape = shared_shape
@@ -68,9 +107,17 @@ func _build_walls(floor_data) -> void:
 				wall.position = _cell_to_world(cell)
 				generated_root.add_child(wall)
 
+# Seuls les murs au contact du sol ont besoin d'une collision.
+func _touches_floor(floor_data, cell: Vector2i) -> bool:
+	for dir in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		if floor_data.floor_cells.has(cell + dir):
+			return true
+	return false
+
 func _spawn_floor_exit(floor_data) -> void:
 	var exit: Area2D = FloorExitScene.instantiate()
-	exit.position = _cell_to_world(floor_data.exit_cell)
+	exit_position = _cell_to_world(floor_data.exit_cell)
+	exit.position = exit_position
 	generated_root.add_child(exit)
 
 	if GameState.floor_index == 0 and GameState.negative_dive_available:
@@ -87,23 +134,140 @@ func _spawn_chests(floor_data) -> void:
 		chest.sealed = i == floor_data.chest_cells.size() - 1
 		chest.position = _cell_to_world(floor_data.chest_cells[i])
 		chest.message.connect(_show_message)
+		chest.item_dropped.connect(_spawn_pickup)
 		generated_root.add_child(chest)
+
+# entry vit dans current_floor()["ground_items"] : l'objet reste au sol entre deux combats.
+func _spawn_pickup(entry: Dictionary) -> void:
+	var pickup := ItemPickup.new()
+	pickup.item_id = entry["id"]
+	pickup.position = entry["pos"]
+	pickup.taken.connect(func(_p, taken_id, old_id): _on_ground_item_taken(entry, taken_id, old_id))
+	generated_root.add_child(pickup)
+
+func _on_ground_item_taken(entry: Dictionary, taken_id: String, old_id: String) -> void:
+	var item := Items.find(taken_id)
+	var text := "Tu prends %s (%s)" % [item["name"], item["desc"]]
+	if old_id == "":
+		GameState.current_floor()["ground_items"].erase(entry)
+	else:
+		entry["id"] = old_id
+		text += " et laisses %s au sol" % Items.find(old_id)["name"]
+	_show_message(text + ".")
+
+# Decors places a partir de la graine de l'etage pour rester identiques entre deux combats.
+func _spawn_decor(floor_data, floor_seed: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = floor_seed + 1
+	var reserved: Array = [floor_data.spawn_cell, floor_data.exit_cell, floor_data.secondary_cell] + floor_data.chest_cells
+	var names: Array = DreamTheme.DECOR[floor_data.family]
+	var used: Array = GameState.current_floor()["used_decor"]
+	var cells: Array = floor_data.floor_cells.keys()
+	cells.sort()
+	var decor_id := 0
+	for cell in cells:
+		if cell in reserved or rng.randf() >= DECOR_CHANCE:
+			continue
+		var decor_name: String = names[rng.randi() % names.size()]
+		var offset := Vector2(rng.randf_range(-DECOR_OFFSET, DECOR_OFFSET), rng.randf_range(-DECOR_OFFSET, DECOR_OFFSET)).round()
+		decor_id += 1
+		if decor_id in used and decor_name in CONSUMABLE_DECOR:
+			continue
+		var decor := DreamDecor.new()
+		decor.decor_name = decor_name
+		decor.decor_id = decor_id
+		decor.family = floor_data.family
+		decor.lit = decor_id in used
+		decor.position = _cell_to_world(cell) + offset
+		decor.touched.connect(_on_decor_touched)
+		generated_root.add_child(decor)
+
+func _on_decor_touched(decor: DreamDecor) -> void:
+	match decor.decor_name:
+		"etoile":
+			GameState.next_fight_bonus_hp += 1
+			_consume(decor, Color(1, 0.9, 0.5), "Etoile filante : +1 PV au prochain combat !")
+		"lune":
+			guide_timer = GUIDE_DURATION
+			_consume(decor, Color(1, 0.95, 0.8), "La lune t'indique le chemin du portail...")
+		"horloge":
+			encounter_pause = CLOCK_PAUSE
+			_consume(decor, Color(1, 0.8, 0.4), "Le temps se fige : aucune rencontre pendant %d s." % CLOCK_PAUSE)
+		"bulle":
+			_consume(decor, Color(0.7, 0.9, 1), "")
+		"bougie":
+			if not decor.lit:
+				_mark_used(decor)
+				decor.light_up()
+		"champignon":
+			_consume(decor, Color(0.4, 1, 0.85), "Des spores t'endorment plus profondement...")
+			_trigger_encounter()
+		"cristal":
+			var text := "Le cristal se brise."
+			if randf() < CRYSTAL_ITEM_CHANCE:
+				var entry := {"id": GameState.roll_item_id(), "pos": decor.position}
+				GameState.current_floor()["ground_items"].append(entry)
+				_spawn_pickup(entry)
+				text = "Le cristal se brise et libere %s !" % Items.find(entry["id"])["name"]
+			_consume(decor, Color(0.75, 0.55, 1), text)
+
+func _consume(decor: DreamDecor, color: Color, text: String) -> void:
+	_mark_used(decor)
+	decor.vanish(color)
+	if text != "":
+		_show_message(text)
+
+func _mark_used(decor: DreamDecor) -> void:
+	GameState.current_floor()["used_decor"].append(decor.decor_id)
+
+func _setup_ambience(floor_data) -> void:
+	var ambient := CanvasModulate.new()
+	ambient.color = DreamTheme.ambient_color(floor_data.family, floor_data.intensity)
+	add_child(ambient)
+	player.add_child(DreamTheme.make_light(Color(1, 0.95, 0.85), PLAYER_LIGHT_RADIUS, 0.9))
+	player.add_child(DreamTheme.make_ambient_particles(floor_data.family))
+	var camera: Camera2D = player.get_node("Camera2D")
+	camera.limit_right = floor_data.size.x * FloorGenerator.CELL_SIZE
+	camera.limit_bottom = floor_data.size.y * FloorGenerator.CELL_SIZE
+
+# E pres d'un objet au sol est gere par ItemPickup ; sinon on rappelle l'objet actif.
+# Echap : retour au menu, la partie continue ou on l'a laissee.
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not (event is InputEventKey) or not event.pressed or event.echo:
+		return
+	if event.physical_keycode == KEY_ESCAPE and not player.frozen:
+		player.frozen = true
+		GameState.return_position = player.global_position
+		SceneTransition.change_scene(GameState.MENU_PATH)
+		return
+	if event.physical_keycode != KEY_E:
+		return
+	if not GameState.has_active_item():
+		_show_message("Aucun objet actif. Tab : voir tes objets passifs.")
+		return
+	var item := Items.find_active(GameState.active_item_id)
+	_show_message("%s s'utilise en combat avec E (%d/%d charges)." % [item["name"], GameState.active_charges, GameState.ACTIVE_MAX_CHARGES])
 
 func _cell_to_world(cell: Vector2i) -> Vector2:
 	var half := FloorGenerator.CELL_SIZE / 2.0
 	return Vector2(cell.x * FloorGenerator.CELL_SIZE + half, cell.y * FloorGenerator.CELL_SIZE + half)
 
 func _on_encounter_timer_timeout() -> void:
-	if player.frozen or player.velocity.length() < 10.0:
+	if player.frozen or player.velocity.length() < 10.0 or encounter_pause > 0.0:
 		return
 	if randf() < encounter_chance:
 		_trigger_encounter()
 
 func _trigger_encounter() -> void:
+	if player.frozen:
+		return
 	player.frozen = true
 	var tween := create_tween()
-	tween.tween_property(flash, "modulate:a", 1.0, 0.08)
-	tween.tween_property(flash, "modulate:a", 0.0, 0.4)
+	if Settings.enabled("flashes"):
+		tween.tween_property(flash, "modulate:a", 1.0, 0.08)
+		tween.tween_property(flash, "modulate:a", 0.0, 0.4)
+	else:
+		tween.tween_interval(0.3)
 	await tween.finished
 	GameState.return_position = player.global_position
 	SceneTransition.change_scene("res://scenes/combat/CombatArena.tscn")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/combat/combat_arena.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/combat/arena_background.gd" id="2"]
@@ -9,6 +9,19 @@ size = Vector2(964, 32)
 
 [sub_resource type="RectangleShape2D" id="WallShapeV"]
 size = Vector2(32, 604)
+
+[sub_resource type="StyleBoxFlat" id="MessagePanel"]
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+bg_color = Color(0.06, 0.04, 0.12, 0.85)
+border_width_bottom = 1
+border_color = Color(0.6, 0.5, 0.9, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
 
 [node name="CombatArena" type="Node2D"]
 script = ExtResource("1")
@@ -43,92 +56,103 @@ shape = SubResource("WallShapeV")
 [node name="PlayerCombat" parent="." instance=ExtResource("3")]
 position = Vector2(450, 270)
 
-[node name="MobSpawn" type="Marker2D" parent="."]
-position = Vector2(220, 270)
-
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="Instructions" type="Label" parent="UI"]
-offset_left = 12
-offset_top = 8
-offset_right = 400
-offset_bottom = 60
-theme_override_font_sizes/font_size = 14
-text = "Fleches: deplacement | Espace: attaque | Maj: dash (i-frames) | E: objet actif\nEchap: retour a la carte (debug)"
-
-[node name="ItemMessageLabel" type="Label" parent="UI"]
-visible = false
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -220
-offset_top = 64
-offset_right = 220
-offset_bottom = 88
-theme_override_font_sizes/font_size = 15
-horizontal_alignment = 1
-text = ""
-
-[node name="HPLabel" type="Label" parent="UI"]
-offset_left = 12
-offset_top = 64
-offset_right = 200
-offset_bottom = 88
-theme_override_font_sizes/font_size = 16
-text = "PV: 3"
-
-[node name="MobLabel" type="Label" parent="UI"]
-offset_left = 12
-offset_top = 92
-offset_right = 300
-offset_bottom = 116
-theme_override_font_sizes/font_size = 16
-text = "Mob PV: 3"
-
-[node name="AttackBarLabel" type="Label" parent="UI"]
-offset_left = 12
-offset_top = 124
-offset_right = 88
-offset_bottom = 144
+[node name="HPBarLabel" type="Label" parent="UI"]
+offset_left = 10.0
+offset_top = 6.0
+offset_right = 40.0
+offset_bottom = 24.0
 theme_override_font_sizes/font_size = 13
-text = "Attaque"
+text = "PV"
 
-[node name="AttackBarBack" type="ColorRect" parent="UI"]
-offset_left = 90
-offset_top = 124
-offset_right = 190
-offset_bottom = 140
-color = Color(0.2, 0.2, 0.2, 0.8)
+[node name="HPBarBack" type="ColorRect" parent="UI"]
+offset_left = 42.0
+offset_top = 8.0
+offset_right = 142.0
+offset_bottom = 22.0
+color = Color(0.12, 0.06, 0.1, 0.9)
 
-[node name="AttackBarFill" type="ColorRect" parent="UI/AttackBarBack"]
-offset_right = 100
-offset_bottom = 16
-color = Color(0.9, 0.7, 0.2, 1)
+[node name="HPBarFill" type="ColorRect" parent="UI/HPBarBack"]
+offset_right = 100.0
+offset_bottom = 14.0
+color = Color(0.9, 0.25, 0.32, 1)
+
+[node name="HPText" type="Label" parent="UI/HPBarBack"]
+offset_right = 100.0
+offset_bottom = 14.0
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "3 / 3"
 
 [node name="DashBarLabel" type="Label" parent="UI"]
-offset_left = 12
-offset_top = 148
-offset_right = 88
-offset_bottom = 168
-theme_override_font_sizes/font_size = 13
+offset_left = 10.0
+offset_top = 24.0
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 10
 text = "Dash"
 
 [node name="DashBarBack" type="ColorRect" parent="UI"]
-offset_left = 90
-offset_top = 148
-offset_right = 190
-offset_bottom = 164
-color = Color(0.2, 0.2, 0.2, 0.8)
+offset_left = 42.0
+offset_top = 28.0
+offset_right = 142.0
+offset_bottom = 34.0
+color = Color(0.12, 0.1, 0.16, 0.9)
 
 [node name="DashBarFill" type="ColorRect" parent="UI/DashBarBack"]
-offset_right = 100
-offset_bottom = 16
+offset_right = 100.0
+offset_bottom = 6.0
 color = Color(0.4, 0.85, 0.9, 1)
 
-[node name="ItemsLabel" type="Label" parent="UI"]
-offset_left = 12
-offset_top = 172
-offset_right = 620
-offset_bottom = 212
-theme_override_font_sizes/font_size = 13
-autowrap_mode = 3
-text = "Objets: aucun"
+[node name="MobLabel" type="Label" parent="UI"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 6.0
+offset_right = 120.0
+offset_bottom = 26.0
+theme_override_font_sizes/font_size = 15
+horizontal_alignment = 1
+text = "Ennemis : 0"
+
+[node name="ActiveLabel" type="Label" parent="UI"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -300.0
+offset_top = 6.0
+offset_right = -10.0
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 2
+text = "Aucun objet actif"
+
+[node name="ItemMessageLabel" type="Label" parent="UI"]
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -220.0
+offset_top = 34.0
+offset_right = 220.0
+offset_bottom = 56.0
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("MessagePanel")
+horizontal_alignment = 1
+vertical_alignment = 1
+text = ""
+
+[node name="Instructions" type="Label" parent="UI"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -20.0
+offset_right = 630.0
+offset_bottom = -4.0
+theme_override_font_sizes/font_size = 10
+modulate = Color(1, 1, 1, 0.7)
+text = "Fleches : deplacement  |  Espace : attaque  |  Maj : dash  |  E : objet actif  |  Tab : objets passifs"
