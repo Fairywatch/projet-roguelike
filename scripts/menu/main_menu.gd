@@ -43,9 +43,8 @@ func _ready() -> void:
 	coins_label.text = "Pieces : %d" % GameState.coins
 	if GameState.run_started:
 		var mode := "  -  %s" % GameState.format_time(GameState.time_left) if GameState.speedrun else ""
-		_add_button("Continuer  (%s, etage %d%s)" % [GameState.tower()["name"], GameState.floor_index, mode], _go)
-	_add_button("Nouvelle nuit", _open_panel.bind(TowerPanel))
-	_add_button("Boutique", _open_panel.bind(ShopPanel))
+		_add_button("Continuer  (%s, etage %d%s)" % [Towers.title(GameState.tower_index), GameState.floor_index, mode], _go)
+	_add_button("Choisir une nuit", SceneTransition.change_scene.bind(GameState.HUB_PATH, SceneTransition.Style.DEFAULT))
 	_add_button("Parametres", _open_panel.bind(SettingsPanel))
 	_add_button("Quitter", get_tree().quit)
 	buttons.get_child(0).grab_focus()
@@ -74,18 +73,12 @@ func _open_panel(panel_script: GDScript) -> void:
 	buttons.visible = false
 	var panel: MenuPanel = panel_script.new()
 	panel.closed.connect(_close_panel)
-	if panel is TowerPanel:
-		panel.tower_chosen.connect(_start_tower)
 	$UI.add_child(panel)
 
 func _close_panel() -> void:
 	coins_label.text = "Pieces : %d" % GameState.coins
 	buttons.visible = true
 	buttons.get_child(0).grab_focus()
-
-func _start_tower(index: int, speedrun: bool) -> void:
-	GameState.new_run(index, speedrun)
-	_go()
 
 func _go() -> void:
 	for button in buttons.get_children():

@@ -540,6 +540,79 @@ QUEST_ITEM = ([
 ], {"Y": rgba(255, 215, 110)})
 
 
+# --- Hub : les 7 tours de la semaine ----------------------------------------------
+# Du lundi au dimanche, la tour s'assombrit, grandit, se tord et ses fenetres s'eteignent.
+DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+
+
+def tower_sprite(day):
+    k = day / (len(DAYS) - 1)  # 0 = lundi, 1 = dimanche
+    rng = random.Random(100 + day)
+    wall = mix((176, 190, 236), (58, 22, 40), k)
+    wall_dark = shade(wall, 0.7)
+    roof = mix((236, 196, 120), (120, 24, 36), k)
+    lit = mix((255, 236, 150), (200, 60, 50), k)
+    w, body_h, roof_h = 20, 34 + day * 3, 12
+    h = body_h + roof_h
+    img = Image.new("RGBA", (w + 12, h + 2), (0, 0, 0, 0))
+    px = img.load()
+    lean = k * 5  # decalage max du sommet (tour tordue)
+
+    def put(x, y, c):
+        sx = x + 6 + int(round(lean * (1 - y / h)))
+        if 0 <= sx < img.width and 0 <= y < img.height:
+            px[sx, y] = c + (255,)
+
+    for y in range(roof_h):  # toit pointu
+        half = int((y + 1) / roof_h * (w / 2 + 2))
+        for x in range(w // 2 - half, w // 2 + half):
+            put(x, y, roof if x < w // 2 else shade(roof, 0.75))
+    for y in range(roof_h, h):  # corps en briques
+        for x in range(w):
+            c = wall if x < w * 0.65 else wall_dark
+            if (y - roof_h) % 6 == 0 or (x + (3 if (y - roof_h) // 6 % 2 else 0)) % 7 == 0:
+                c = shade(c, 0.85)
+            put(x, y, c)
+    windows = max(1, 5 - day // 2)  # moins de fenetres allumees au fil de la semaine
+    for i in range(3):
+        wy = roof_h + 5 + i * 9
+        if wy + 4 >= h - 10:
+            break
+        for j, wx in enumerate((4, 12)):
+            on = (i * 2 + j) < windows and rng.random() > k * 0.4
+            for dy in range(4):
+                for dx in range(3):
+                    put(wx + dx, wy + dy, lit if on else (20, 14, 24))
+    for y in range(h - 9, h):  # porte en arc
+        for x in range(7, 13):
+            if y > h - 8 or 8 <= x <= 11:
+                put(x, y, (24, 14, 20))
+    return outline(img, (18, 10, 24))
+
+
+def outline(img, color):
+    px = img.load()
+    w, h = img.size
+    solid = {(x, y) for x in range(w) for y in range(h) if px[x, y][3] > 0}
+    for x, y in solid:
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            n = (x + dx, y + dy)
+            if n not in solid and 0 <= n[0] < w and 0 <= n[1] < h:
+                px[n] = color + (255,)
+    return img
+
+
+PADLOCK = ([
+    "..kkkk..",
+    ".k....k.",
+    ".k....k.",
+    "GGGGGGGG",
+    "GGGkkGGG",
+    "GGGkkGGG",
+    "GGGGGGGG",
+], {"k": rgba(150, 150, 170), "G": rgba(220, 170, 70)})
+
+
 def save(img, *parts):
     path = os.path.join(ROOT, *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -566,6 +639,10 @@ def main():
     for name, (rows, pal) in NPCS.items():
         save(from_ascii(rows, pal), "npcs", f"{name}.png")
     save(from_ascii(*QUEST_ITEM), "props", "quest_item.png")
+
+    for day, name in enumerate(DAYS):
+        save(tower_sprite(day), "hub", f"tower_{name}.png")
+    save(from_ascii(*PADLOCK), "hub", "padlock.png")
 
     frames = player_frames()
     save(frames[0], "player", "idle.png")
