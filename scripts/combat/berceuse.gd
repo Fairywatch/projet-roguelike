@@ -14,6 +14,7 @@ func _on_attack_begin() -> void:
 	if player == null:
 		return
 	var direction := (player.global_position - global_position).normalized()
+	Sound.play("shoot", -8.0, 0.1)
 	var projectile: Area2D = ProjectileScene.instantiate()
 	get_tree().current_scene.add_child(projectile)
 	projectile.global_position = global_position + direction * 26.0

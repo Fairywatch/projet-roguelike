@@ -13,6 +13,8 @@ const LABELS := {
 	"flashes": "Flashs lumineux",
 	"ambient_particles": "Particules d'ambiance",
 	"fullscreen": "Plein ecran",
+	"music": "Musique",
+	"sfx": "Effets sonores",
 }
 
 static var values := {
@@ -21,6 +23,8 @@ static var values := {
 	"flashes": true,
 	"ambient_particles": true,
 	"fullscreen": false,
+	"music": true,
+	"sfx": true,
 }
 
 static func enabled(option: String) -> bool:
@@ -42,6 +46,7 @@ static func load_settings() -> void:
 	apply()
 
 static func apply() -> void:
+	Sound.refresh_music()
 	if DisplayServer.get_name() == "headless":
 		return
 	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if values["fullscreen"] else DisplayServer.WINDOW_MODE_WINDOWED
