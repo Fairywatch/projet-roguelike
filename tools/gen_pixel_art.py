@@ -469,6 +469,77 @@ ITEM_ICONS = {
 }
 
 
+# Habitants du reve qui donnent des quetes (voir scripts/exploration/npc.gd).
+NPCS = {
+    "hibou": ([
+        "..B........B..",
+        "..BB......BB..",
+        "..BBBBBBBBBB..",
+        ".BBWWBBBBWWBB.",
+        ".BWYYWBBWYYWB.",
+        ".BWYkWBBWkYWB.",
+        ".BBWWBOOBWWBB.",
+        ".BBBBBOOBBBBB.",
+        ".bBWWWWWWWWBb.",
+        ".bBWbWWWWbWBb.",
+        ".bBWWWWWWWWBb.",
+        ".bBWbWWWWbWBb.",
+        "..bBWWWWWWBb..",
+        "..bbBBBBBBbb..",
+        "....OO..OO....",
+    ], {"B": rgba(140, 100, 70), "b": rgba(90, 60, 45), "W": rgba(230, 215, 180), "Y": rgba(255, 220, 90),
+        "k": rgba(30, 20, 20), "O": rgba(230, 140, 60)}),
+    "lapin": ([
+        "...W.....W....",
+        "..WPW...WPW...",
+        "..WPW...WPW...",
+        "..WPW...WPW...",
+        "..WWW...WWW...",
+        "..WWWWWWWWW...",
+        ".WWWWWWWWWWW..",
+        ".WWEWWWWWEWW..",
+        ".WWWWWPWWWWW..",
+        "..WWWWWWWWW...",
+        "...RRRRRRR....",
+        "..RRRGGRRRRR..",
+        "..RRGGGGRRRR..",
+        "..RRRGGRRRRR..",
+        "..wRRRRRRRRw..",
+        "...WWW..WWW...",
+    ], {"W": rgba(240, 235, 244), "w": rgba(190, 185, 205), "P": rgba(240, 170, 190), "E": rgba(40, 20, 40),
+        "R": rgba(180, 60, 70), "G": rgba(240, 200, 90)}),
+    "marchande": ([
+        "....MMMM......",
+        "...MMMMm......",
+        "..MMMm........",
+        "..MMk.........",
+        "..MMM.........",
+        "..MMMm........",
+        "...MMMMm......",
+        "....MMMM......",
+        "...CCCCCC.....",
+        "..CCSCCCCC....",
+        ".CCCCCCSCCC...",
+        ".CCSCCCCCCC...",
+        ".CCCCCCCCSC...",
+        "CCCCCSCCCCCC..",
+        "cCCCCCCCCCCc..",
+        "ccccccccccccc.",
+    ], {"M": rgba(250, 240, 190), "m": rgba(200, 185, 130), "k": rgba(40, 30, 50), "C": rgba(80, 66, 150),
+        "c": rgba(48, 40, 104), "S": rgba(255, 230, 120)}),
+}
+QUEST_ITEM = ([
+    "..YYY...",
+    ".Y...Y..",
+    ".Y...Y..",
+    "..YYY...",
+    "...Y....",
+    "...YY...",
+    "...Y....",
+    "...YY...",
+], {"Y": rgba(255, 215, 110)})
+
+
 def save(img, *parts):
     path = os.path.join(ROOT, *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -491,6 +562,10 @@ def main():
     save(portal(), "props", "portal.png")
     for name, (rows, pal) in ITEM_ICONS.items():
         save(from_ascii(rows, pal), "props", f"{name}.png")
+
+    for name, (rows, pal) in NPCS.items():
+        save(from_ascii(rows, pal), "npcs", f"{name}.png")
+    save(from_ascii(*QUEST_ITEM), "props", "quest_item.png")
 
     frames = player_frames()
     save(frames[0], "player", "idle.png")

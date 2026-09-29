@@ -9,6 +9,7 @@ const DIFFICULTY_PER_FLOOR := 0.08
 const LOOT_WINS_CAP := 4
 const BOSS_LOOT_BONUS := 0.3
 const SEALED_CHEST_LOOT_BONUS := 0.25
+const QUEST_LOOT_BONUS := 0.3
 const PROFOND_DIFFICULTY_BONUS := 0.15
 
 const MENU_PATH := "res://scenes/menu/MainMenu.tscn"
