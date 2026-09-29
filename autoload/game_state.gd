@@ -17,6 +17,9 @@ const COINS_PER_QUEST := 2
 const SHOP_SIZE := 3
 const SHOP_PRICES := [15, 35, 80]  # commun, rare, legendaire
 const SHOP_QUALITY := 0.5
+# Mode speedrun (GDD section 6) : un chrono pour toute la nuit, qui ne tourne qu'en jeu.
+const SPEEDRUN_SECONDS_PER_FLOOR := 75.0
+const GAMEPLAY_SCENES := ["Map", "CombatArena"]
 
 const MENU_PATH := "res://scenes/menu/MainMenu.tscn"
 const SAVE_VERSION := 1
@@ -24,7 +27,7 @@ const SAVE_VERSION := 1
 const SAVED_FIELDS := [
 	"floor_index", "floor_data_by_index", "negative_dive_available", "return_position",
 	"run_started", "passive_items", "active_item_id", "active_charges", "next_fight_bonus_hp",
-	"pending_ground_item", "tower_index",
+	"pending_ground_item", "tower_index", "speedrun", "time_left", "run_time",
 ]
 const META_FIELDS := ["coins", "unlocked_towers", "start_bag", "shop_offers", "best_times"]
 
@@ -35,6 +38,9 @@ var return_map_path := "res://scenes/exploration/Map.tscn"
 var return_position: Vector2 = Vector2.ZERO
 
 var tower_index: int = 0
+var speedrun: bool = false
+var time_left: float = 0.0
+var run_time: float = 0.0
 var floor_index: int = 0
 var floor_data_by_index: Dictionary = {}
 var guardian_fight: bool = false
@@ -136,8 +142,28 @@ func floor_count() -> int:
 func is_last_floor() -> bool:
 	return floor_index == floor_count() - 1
 
-func new_run(index: int = tower_index) -> void:
+func _process(delta: float) -> void:
+	var scene := get_tree().current_scene
+	if scene and scene.name in GAMEPLAY_SCENES and tick_speedrun(delta):
+		SceneTransition.change_scene(MENU_PATH)
+
+# Avance le chrono ; renvoie true quand le temps est ecoule (la nuit est alors terminee).
+func tick_speedrun(delta: float) -> bool:
+	if not (run_started and speedrun):
+		return false
+	run_time += delta
+	time_left -= delta
+	if time_left > 0.0:
+		return false
+	_end_run()
+	menu_message = "Le reveil sonne ! Le reveur s'est reveille avant la fin de %s." % tower()["name"]
+	return true
+
+func new_run(index: int = tower_index, speedrun_mode: bool = false) -> void:
 	tower_index = index
+	speedrun = speedrun_mode
+	time_left = floor_count() * SPEEDRUN_SECONDS_PER_FLOOR
+	run_time = 0.0
 	floor_data_by_index.clear()
 	floor_index = 0
 	negative_dive_available = true
@@ -155,19 +181,33 @@ func new_run(index: int = tower_index) -> void:
 func after_combat_scene() -> String:
 	return return_map_path if run_started else MENU_PATH
 
-func complete_tower() -> void:
+static func format_time(seconds: float) -> String:
+	var total := maxi(0, ceili(seconds))
+	return "%d:%02d" % [total / 60, total % 60]
+
+func _end_run() -> void:
 	floor_data_by_index.clear()
 	floor_index = 0
 	negative_dive_available = true
+	guardian_fight = false
 	return_position = Vector2.ZERO
 	reset_run_items()
 	run_started = false
+	shop_offers.clear()
+
+func complete_tower() -> void:
+	_end_run()
 	coins += tower()["reward"]
 	menu_message = "Le reveur se reveille... %s terminee ! +%d pieces." % [tower()["name"], tower()["reward"]]
+	if speedrun:
+		var id: String = tower()["id"]
+		menu_message += " Temps : %s." % format_time(run_time)
+		if run_time < best_times.get(id, INF):
+			best_times[id] = run_time
+			menu_message += " Nouveau record !"
 	if tower_index + 1 < Towers.LIST.size() and unlocked_towers <= tower_index + 1:
 		unlocked_towers = tower_index + 2
 		menu_message += " Nouvelle nuit debloquee : %s !" % Towers.get_tower(tower_index + 1)["name"]
-	shop_offers.clear()
 
 # Chaque portail est garde par un boss : on ne change d'etage qu'apres l'avoir vaincu.
 func start_guardian_fight(going_down: bool) -> void:
