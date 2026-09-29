@@ -201,11 +201,12 @@ func _spawn_quest_item(pos: Vector2, npc: DreamNpc) -> void:
 func _spawn_pickup(entry: Dictionary) -> void:
 	var pickup := ItemPickup.new()
 	pickup.item_id = entry["id"]
+	pickup.charges = entry.get("charges", -1)
 	pickup.position = entry["pos"]
-	pickup.taken.connect(func(_p, taken_id, old_id): _on_ground_item_taken(entry, taken_id, old_id))
+	pickup.taken.connect(func(p, taken_id, old_id): _on_ground_item_taken(entry, taken_id, old_id, p.charges))
 	generated_root.add_child(pickup)
 
-func _on_ground_item_taken(entry: Dictionary, taken_id: String, old_id: String) -> void:
+func _on_ground_item_taken(entry: Dictionary, taken_id: String, old_id: String, old_charges: int) -> void:
 	Sound.play("pickup")
 	var item := Items.find(taken_id)
 	var text := "Tu prends %s (%s)" % [item["name"], item["desc"]]
@@ -213,6 +214,7 @@ func _on_ground_item_taken(entry: Dictionary, taken_id: String, old_id: String) 
 		GameState.current_floor()["ground_items"].erase(entry)
 	else:
 		entry["id"] = old_id
+		entry["charges"] = old_charges
 		text += " et laisses %s au sol" % Items.find(old_id)["name"]
 	_show_message(text + ".")
 
@@ -335,4 +337,4 @@ func _trigger_encounter() -> void:
 		tween.tween_interval(0.3)
 	await tween.finished
 	GameState.return_position = player.global_position
-	SceneTransition.change_scene("res://scenes/combat/CombatArena.tscn")
+	SceneTransition.change_scene("res://scenes/combat/CombatArena.tscn", SceneTransition.style_for_family(GameState.current_floor()["family"]))

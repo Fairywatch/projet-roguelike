@@ -29,4 +29,4 @@ func _on_body_entered(body: Node2D) -> void:
 	GameState.start_guardian_fight(force_descend or GameState.floor_index < 0)
 	# Fuite du combat (debug) : retour au debut de l'etage plutot que sur le portail.
 	GameState.return_position = Vector2.ZERO
-	SceneTransition.change_scene("res://scenes/combat/CombatArena.tscn")
+	SceneTransition.change_scene("res://scenes/combat/CombatArena.tscn", SceneTransition.style_for_family(GameState.current_floor()["family"]))

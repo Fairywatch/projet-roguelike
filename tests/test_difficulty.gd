@@ -172,6 +172,22 @@ func _initialize() -> void:
 	gs.complete_tower()
 	assert(is_equal_approx(gs.best_times[Towers.LIST[0]["id"]], 42.0) and gs.menu_message.contains("0:42"))
 
+	# Quitter le jeu en plein combat compte comme une mort au redemarrage.
+	gs.new_run(0)
+	gs.floor_index = 7
+	gs.take_item("plume_de_reve")
+	gs.start_combat()
+	gs.new_run(0)
+	gs.load_run()
+	assert(gs.floor_index == 2 and gs.passive_count() == 0 and not gs.in_combat)
+	assert(gs.menu_message.begins_with("Tu as fui un combat"))
+	# Un actif repose au sol garde ses charges : pas de recharge gratuite en le reprenant.
+	gs.take_item("oreiller_volant")
+	gs.active_charges = 1
+	assert(gs.take_item("mouchoir_usage", 2) == "oreiller_volant" and gs.active_charges == 2)
+	gs.take_item("oreiller_volant", 1)
+	assert(gs.active_charges == 1)
+
 	# Parametres : une option coupee le reste apres rechargement.
 	var saved: bool = Settings.enabled("screen_shake")
 	Settings.set_option("screen_shake", false)

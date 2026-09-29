@@ -27,7 +27,7 @@ const SAVE_VERSION := 1
 const SAVED_FIELDS := [
 	"floor_index", "floor_data_by_index", "negative_dive_available", "return_position",
 	"run_started", "passive_items", "active_item_id", "active_charges", "next_fight_bonus_hp",
-	"pending_ground_item", "tower_index", "speedrun", "time_left", "run_time",
+	"pending_ground_item", "tower_index", "speedrun", "time_left", "run_time", "in_combat",
 ]
 const META_FIELDS := ["coins", "unlocked_towers", "start_bag", "shop_offers", "best_times"]
 
@@ -39,6 +39,8 @@ var return_position: Vector2 = Vector2.ZERO
 
 var tower_index: int = 0
 var speedrun: bool = false
+# Vrai pendant un combat : si le jeu redemarre avec ce drapeau, on a fui le combat en quittant.
+var in_combat: bool = false
 var time_left: float = 0.0
 var run_time: float = 0.0
 var floor_index: int = 0
@@ -88,6 +90,27 @@ func save_meta() -> void:
 func load_run() -> void:
 	_load_fields(save_path, SAVED_FIELDS)
 	_recompute_mods()
+	if in_combat:
+		apply_combat_death()
+		menu_message = "Tu as fui un combat... le reve te rattrape. " + menu_message
+
+func start_combat() -> void:
+	if not run_started:  # scene d'arene lancee seule (F6 dans l'editeur) : rien a proteger
+		return
+	in_combat = true
+	save_run()
+
+func end_combat() -> void:
+	in_combat = false
+
+# Mort en combat : recul classique, ou perte du passage vers les profondeurs.
+func apply_combat_death() -> void:
+	in_combat = false
+	guardian_fight = false
+	if floor_index < 0:
+		apply_negative_death()
+	else:
+		apply_death_setback()
 
 func _save_fields(path: String, fields: Array) -> void:
 	var data := {"version": SAVE_VERSION}
@@ -310,13 +333,14 @@ func has_active_item() -> bool:
 
 # Prend un objet. Passif : s'ajoute aux autres. Actif : un seul a la fois, on renvoie
 # l'ancien actif ("" si aucun) pour le laisser au sol.
-func take_item(id: String) -> String:
+# charges : celles de l'actif ramasse (-1 = objet neuf, charges pleines).
+func take_item(id: String, charges: int = -1) -> String:
 	if not Items.is_active(id):
 		add_passive_item(id)
 		return ""
 	var old := active_item_id
 	active_item_id = id
-	active_charges = ACTIVE_MAX_CHARGES
+	active_charges = ACTIVE_MAX_CHARGES if charges < 0 else charges
 	return old
 
 # Chaque combat gagne rend une charge a l'objet actif (facon Isaac).

@@ -11,6 +11,7 @@ const ICON_ACTIVE := preload("res://assets/sprites/props/item_active.png")
 const RADIUS := 36.0
 
 var item_id := ""
+var charges := -1  # actif deja entame (repose au sol) ; -1 = neuf
 var player_near := false
 var icon := Sprite2D.new()
 var label := Label.new()
@@ -66,7 +67,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	get_viewport().set_input_as_handled()
 	var taken_id := item_id
-	var old := GameState.take_item(item_id)
+	var old_charges := GameState.active_charges
+	var old := GameState.take_item(item_id, charges)
+	charges = old_charges
 	Fx.puff(get_parent(), global_position, Color(0.8, 0.85, 1), 12)
 	taken.emit(self, taken_id, old)
 	if old == "":
