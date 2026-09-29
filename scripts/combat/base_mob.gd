@@ -106,6 +106,7 @@ func _wait(duration: float) -> bool:
 	return id == action_id and state != State.DEAD
 
 func _start_telegraph() -> void:
+	Sound.play("telegraph", -12.0, 0.1)
 	state = State.TELEGRAPH
 	sprite.modulate = Color(1, 0.85, 0.2, 1)
 	_on_telegraph_begin()
@@ -147,6 +148,7 @@ func take_hit(damage: int = 1) -> void:
 	Fx.flash(sprite)
 
 func _die() -> void:
+	Sound.play("mob_die", -3.0, 0.12)
 	if state == State.ATTACK:
 		_on_attack_end()
 	state = State.DEAD

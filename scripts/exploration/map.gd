@@ -153,6 +153,7 @@ func _spawn_pickup(entry: Dictionary) -> void:
 	generated_root.add_child(pickup)
 
 func _on_ground_item_taken(entry: Dictionary, taken_id: String, old_id: String) -> void:
+	Sound.play("pickup")
 	var item := Items.find(taken_id)
 	var text := "Tu prends %s (%s)" % [item["name"], item["desc"]]
 	if old_id == "":
@@ -190,6 +191,7 @@ func _spawn_decor(floor_data, floor_seed: int) -> void:
 		generated_root.add_child(decor)
 
 func _on_decor_touched(decor: DreamDecor) -> void:
+	Sound.play("decor", -6.0, 0.2)
 	match decor.decor_name:
 		"etoile":
 			GameState.next_fight_bonus_hp += 1
@@ -219,6 +221,7 @@ func _on_decor_touched(decor: DreamDecor) -> void:
 			_consume(decor, Color(0.75, 0.55, 1), text)
 
 func _consume(decor: DreamDecor, color: Color, text: String) -> void:
+	Sound.play("pop" if decor.decor_name == "bulle" else "sparkle", -3.0)
 	_mark_used(decor)
 	decor.vanish(color)
 	if text != "":
@@ -228,6 +231,7 @@ func _mark_used(decor: DreamDecor) -> void:
 	GameState.current_floor()["used_decor"].append(decor.decor_id)
 
 func _setup_ambience(floor_data) -> void:
+	Sound.music("reve" if floor_data.family == FloorGenerator.Family.PARADOXAL else "profond")
 	var ambient := CanvasModulate.new()
 	ambient.color = DreamTheme.ambient_color(floor_data.family, floor_data.intensity)
 	add_child(ambient)
@@ -268,6 +272,7 @@ func _on_encounter_timer_timeout() -> void:
 func _trigger_encounter() -> void:
 	if player.frozen:
 		return
+	Sound.play("encounter")
 	player.frozen = true
 	var tween := create_tween()
 	if Settings.enabled("flashes"):

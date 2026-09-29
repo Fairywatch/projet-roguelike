@@ -58,6 +58,9 @@ func _ready() -> void:
 
 	var scenes := _pick_mob_scenes()
 	is_boss_fight = GameState.guardian_fight or scenes == [NEGATIVE_FLOOR_MOB]
+	Sound.music("boss" if is_boss_fight else "combat")
+	if is_boss_fight:
+		Sound.play("boss")
 	for scene in scenes:
 		_spawn_mob(scene)
 
@@ -142,6 +145,7 @@ func _on_item_message(text: String, duration: float = 2.0) -> void:
 		item_message_label.visible = false
 
 func _on_victory() -> void:
+	Sound.play("victory")
 	combat_over = true
 	player.invincible = true
 	if not GameState.guardian_fight:
@@ -165,6 +169,7 @@ func _drop_item() -> void:
 	_on_item_message("E : prendre l'objet   |   Entree : continuer", 0.0)
 
 func _on_pickup_taken(_pickup: ItemPickup, taken_id: String, old_id: String) -> void:
+	Sound.play("pickup")
 	player.apply_items()
 	var text := "Tu prends %s" % Items.find(taken_id)["name"]
 	if old_id != "":

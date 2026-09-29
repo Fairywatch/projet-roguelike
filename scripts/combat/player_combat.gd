@@ -184,6 +184,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		_use_active_item()
 
 func _start_dash() -> void:
+	Sound.play("dash", -4.0)
 	dashing = true
 	invincible = true
 	dash_timer = dash_duration
@@ -200,6 +201,7 @@ func _try_attack() -> void:
 	if attack_cooldown_timer > 0.0:
 		return
 	attack_cooldown_timer = attack_cooldown_effective
+	Sound.play("slash", -6.0, 0.12)
 	slash_timer = ATTACK_DURATION
 	attack_hitbox.position = facing * reach
 	attack_shape.disabled = false
@@ -231,6 +233,7 @@ func _use_active_item() -> void:
 			speed_boost_timer = CAFE_DURATION
 			Fx.flash(sprite, Color(0.9, 0.7, 0.4), 0.3)
 	GameState.active_charges -= 1
+	Sound.play("active")
 	item_message.emit("%s ! (%d charge(s) restante(s))" % [item_name, GameState.active_charges])
 
 func _use_sept_ans_de_malheur() -> void:
@@ -268,6 +271,7 @@ func on_enemy_killed() -> void:
 		_heal(1)
 
 func _heal(amount: int) -> void:
+	Sound.play("heal")
 	hp = min(max_hp, hp + amount)
 	hp_changed.emit(hp)
 	Fx.flash(sprite, Color(0.5, 1.0, 0.6), 0.3)
@@ -276,6 +280,7 @@ func _on_attack_area_entered(area: Area2D) -> void:
 	if area.has_method("register_hit"):
 		var crit := randf() < crit_chance
 		area.register_hit(attack_damage * (2 if crit else 1))
+		Sound.play("crit" if crit else "hit", 0.0, 0.1)
 		shake = max(shake, 5.0 if crit else 2.5)
 		Fx.hitstop(get_tree(), 0.08 if crit else 0.04)
 		var target := area.get_parent()
@@ -290,16 +295,19 @@ func take_damage() -> void:
 	if invincible or dead:
 		return
 	if randf() < evasion:
+		Sound.play("dodge")
 		Fx.flash(sprite, Color(0.6, 0.9, 1), 0.2)
 		_start_hurt_invincibility()
 		return
 	if shield > 0:
+		Sound.play("shield")
 		shield -= 1
 		Fx.flash(sprite, Color(1, 0.9, 0.5), 0.3)
 		_start_hurt_invincibility()
 		item_message.emit("Doudou protecteur : coup bloque !")
 		return
 	shake = 7.0
+	Sound.play("hurt")
 	Fx.flash(sprite, Color(1, 0.3, 0.3), 0.2)
 	if thorns > 0:
 		for mob in _mobs_within(THORNS_RADIUS):
@@ -321,6 +329,7 @@ func _start_hurt_invincibility() -> void:
 	hurt_timer = hurt_invincibility
 
 func _die() -> void:
+	Sound.play("death")
 	dead = true
 	invincible = true
 	dashing = false

@@ -35,6 +35,7 @@ func _ready() -> void:
 	z_timer.timeout.connect(_spawn_z)
 	add_child(z_timer)
 
+	Sound.music("reve")
 	message_label.text = GameState.menu_message
 	GameState.menu_message = ""
 	GameState.save_run()
@@ -57,7 +58,8 @@ func _add_button(label: String, action: Callable) -> void:
 		style.set_border_width_all(1)
 		style.set_corner_radius_all(3)
 		button.add_theme_stylebox_override(state, style)
-	button.pressed.connect(action)
+	button.pressed.connect(func(): Sound.play("ui_select"); action.call())
+	button.focus_entered.connect(Sound.play.bind("ui_move", -6.0, 0.0))
 	buttons.add_child(button)
 
 func _spawn_z() -> void:

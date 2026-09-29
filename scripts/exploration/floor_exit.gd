@@ -25,6 +25,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group("player") or body.frozen:
 		return
 	body.frozen = true
+	Sound.play("portal")
 	GameState.start_guardian_fight(force_descend or GameState.floor_index < 0)
 	# Fuite du combat (debug) : retour au debut de l'etage plutot que sur le portail.
 	GameState.return_position = Vector2.ZERO

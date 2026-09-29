@@ -28,6 +28,10 @@ func _initialize() -> void:
 	var mobs := get_nodes_in_group("mobs")
 	assert(mobs.size() >= 2 and mobs.size() <= arena.MAX_MOBS)
 	assert(not arena.combat_over)
+	# La musique de combat tourne (lecteur ajoute a la racine, en boucle).
+	var music_players := root.get_children().filter(func(n): return n is AudioStreamPlayer and n.get_meta("track", "") == "combat")
+	assert(music_players.size() == 1 and music_players[0].playing)
+	assert(music_players[0].stream.loop_mode == AudioStreamWAV.LOOP_FORWARD)
 
 	# Mouchoir a PV pleins : pas de charge gaspillee. Blesse : soigne et consomme.
 	await _press(KEY_E)
