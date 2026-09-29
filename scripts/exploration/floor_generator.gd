@@ -11,6 +11,7 @@ const MIN_ROOMS := 6
 const CELL_SIZE := 100
 const MAX_ROOM_ATTEMPTS := 400
 const CHEST_COUNT := 2
+const NONE := Vector2i(-1, -1)
 
 class FloorData:
 	var size: Vector2i
@@ -21,6 +22,9 @@ class FloorData:
 	var exit_cell: Vector2i = Vector2i.ZERO
 	var secondary_cell: Vector2i = Vector2i.ZERO
 	var chest_cells: Array = []
+	# PNJ : une salle libre (NONE si l'etage n'en a plus) ; quest_cell = case la plus eloignee du PNJ.
+	var npc_cell: Vector2i = NONE
+	var quest_cell: Vector2i = NONE
 
 static func generate(family: int, intensity: int, rng: RandomNumberGenerator, size_ratio: float = 1.0) -> FloorData:
 	var data := FloorData.new()
@@ -97,8 +101,24 @@ static func generate(family: int, intensity: int, rng: RandomNumberGenerator, si
 				candidates.append(center)
 		while data.chest_cells.size() < CHEST_COUNT and not candidates.is_empty():
 			data.chest_cells.append(candidates.pop_at(rng.randi_range(0, candidates.size() - 1)))
+		if not candidates.is_empty():
+			data.npc_cell = candidates.pop_at(rng.randi_range(0, candidates.size() - 1))
+			data.quest_cell = _farthest_free_cell(data)
 
 	return data
+
+static func _farthest_free_cell(data: FloorData) -> Vector2i:
+	var reserved := [data.spawn_cell, data.exit_cell, data.secondary_cell, data.npc_cell] + data.chest_cells
+	var best := NONE
+	var best_dist := -1.0
+	var cells: Array = data.floor_cells.keys()
+	cells.sort()
+	for cell in cells:
+		var dist := Vector2(cell - data.npc_cell).length_squared()
+		if cell not in reserved and dist > best_dist:
+			best_dist = dist
+			best = cell
+	return best
 
 static func _overlaps_any(rect: Rect2i, rooms: Array, margin: int) -> bool:
 	var expanded := Rect2i(rect.position - Vector2i(margin, margin), rect.size + Vector2i(margin, margin) * 2)

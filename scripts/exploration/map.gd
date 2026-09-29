@@ -12,6 +12,9 @@ const CONSUMABLE_DECOR := ["etoile", "lune", "horloge", "bulle", "champignon", "
 const GUIDE_DURATION := 10.0
 const CLOCK_PAUSE := 15.0
 const CRYSTAL_ITEM_CHANCE := 0.3
+# Chance qu'un PNJ habite l'etage : le sommeil paradoxal est plus peuple (GDD).
+const NPC_CHANCE := {FloorGenerator.Family.PARADOXAL: 0.85, FloorGenerator.Family.PROFOND: 0.35}
+const QuestItemTexture := preload("res://assets/sprites/props/quest_item.png")
 const FloorExitScene := preload("res://scenes/exploration/FloorExit.tscn")
 const ChestScene := preload("res://scenes/exploration/Chest.tscn")
 
@@ -44,6 +47,7 @@ func _ready() -> void:
 	background.setup(floor_data.floor_cells, floor_data.size, floor_meta["family"], floor_meta["intensity"], floor_meta["seed"])
 	_spawn_floor_exit(floor_data)
 	_spawn_chests(floor_data)
+	_spawn_npc(floor_data, floor_meta)
 	_spawn_decor(floor_data, floor_meta["seed"])
 	_setup_ambience(floor_data)
 	floor_label.text = "Etage %d / %d  -  %s" % [GameState.floor_index, GameState.TOWER_FLOOR_COUNT - 1, FAMILY_NAMES[floor_meta["family"]]]
@@ -144,6 +148,54 @@ func _spawn_chests(floor_data) -> void:
 		chest.item_dropped.connect(_spawn_pickup)
 		generated_root.add_child(chest)
 
+func _spawn_npc(floor_data, floor_meta: Dictionary) -> void:
+	if floor_data.npc_cell == FloorGenerator.NONE:
+		return
+	if not floor_meta.has("quest"):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = floor_meta["seed"] + 2
+		floor_meta["quest"] = DreamNpc.make_quest(rng) if rng.randf() < NPC_CHANCE[floor_data.family] else {}
+	var quest: Dictionary = floor_meta["quest"]
+	if quest.is_empty():
+		return
+	var npc := DreamNpc.new()
+	npc.quest = quest
+	npc.position = _cell_to_world(floor_data.npc_cell)
+	npc.said.connect(_show_message)
+	npc.rewarded.connect(_spawn_pickup)
+	generated_root.add_child(npc)
+	if quest["kind"] == "objet_perdu" and not quest["carried"] and floor_data.quest_cell != FloorGenerator.NONE:
+		_spawn_quest_item(_cell_to_world(floor_data.quest_cell), npc)
+
+# Objet perdu d'une quete : ramassable seulement une fois la quete acceptee.
+func _spawn_quest_item(pos: Vector2, npc: DreamNpc) -> void:
+	var item := Area2D.new()
+	item.position = pos
+	var shape := CollisionShape2D.new()
+	shape.shape = CircleShape2D.new()
+	shape.shape.radius = 24.0
+	item.add_child(shape)
+	var sprite := Sprite2D.new()
+	sprite.texture = QuestItemTexture
+	sprite.scale = Vector2(2, 2)
+	item.add_child(sprite)
+	item.add_child(DreamTheme.make_light(Color(1, 0.85, 0.4), 70.0, 1.2))
+	var tween := sprite.create_tween().set_loops().set_trans(Tween.TRANS_SINE)
+	tween.tween_property(sprite, "position:y", -5.0, 0.9)
+	tween.tween_property(sprite, "position:y", 0.0, 0.9)
+	item.body_entered.connect(func(body):
+		if not body.is_in_group("player"):
+			return
+		if npc.quest["state"] != "active":
+			_show_message("Un objet brille ici... quelqu'un l'a peut-etre perdu.")
+			return
+		npc.quest["carried"] = true
+		npc.refresh()
+		Sound.play("pickup")
+		_show_message("Tu as trouve %s ! Rapporte-la a %s." % [npc.npc["object"], npc.npc["name"]])
+		item.queue_free())
+	generated_root.add_child(item)
+
 # entry vit dans current_floor()["ground_items"] : l'objet reste au sol entre deux combats.
 func _spawn_pickup(entry: Dictionary) -> void:
 	var pickup := ItemPickup.new()
@@ -167,7 +219,7 @@ func _on_ground_item_taken(entry: Dictionary, taken_id: String, old_id: String) 
 func _spawn_decor(floor_data, floor_seed: int) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = floor_seed + 1
-	var reserved: Array = [floor_data.spawn_cell, floor_data.exit_cell, floor_data.secondary_cell] + floor_data.chest_cells
+	var reserved: Array = [floor_data.spawn_cell, floor_data.exit_cell, floor_data.secondary_cell, floor_data.npc_cell, floor_data.quest_cell] + floor_data.chest_cells
 	var names: Array = DreamTheme.DECOR[floor_data.family]
 	var used: Array = GameState.current_floor()["used_decor"]
 	var cells: Array = floor_data.floor_cells.keys()
