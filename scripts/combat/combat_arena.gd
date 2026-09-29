@@ -57,6 +57,7 @@ func _ready() -> void:
 	add_child(ambient)
 	player.add_child(DreamTheme.make_ambient_particles(floor_meta["family"]))
 
+	GameState.start_combat()
 	var scenes := _pick_mob_scenes()
 	is_boss_fight = GameState.guardian_fight or scenes == [NEGATIVE_FLOOR_MOB]
 	Sound.music("boss" if is_boss_fight else "combat")
@@ -126,6 +127,7 @@ func _process(_delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
+		GameState.end_combat()
 		GameState.guardian_fight = false
 		SceneTransition.change_scene(GameState.return_map_path)
 
@@ -146,6 +148,7 @@ func _on_item_message(text: String, duration: float = 2.0) -> void:
 		item_message_label.visible = false
 
 func _on_victory() -> void:
+	GameState.end_combat()
 	Sound.play("victory")
 	combat_over = true
 	player.invincible = true
@@ -190,11 +193,7 @@ func _leave() -> void:
 
 func _on_player_died() -> void:
 	combat_over = true
-	GameState.guardian_fight = false
 	mob_label.text = "Vaincu..."
 	await get_tree().create_timer(1.0).timeout
-	if GameState.floor_index < 0:
-		GameState.apply_negative_death()
-	else:
-		GameState.apply_death_setback()
+	GameState.apply_combat_death()
 	SceneTransition.change_scene(GameState.MENU_PATH)
