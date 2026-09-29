@@ -54,6 +54,7 @@ func _ready() -> void:
 	encounter_chance = ENCOUNTER_CHANCE_PROFOND if floor_meta["family"] == FloorGenerator.Family.PROFOND else ENCOUNTER_CHANCE_PARADOXAL
 	encounter_chance *= maxf(0.2, 1.0 + GameState.mod("encounter_rate"))
 	$UI.add_child(InventoryPanel.new())
+	$UI.add_child(SpeedrunTimer.new())
 
 	if GameState.return_position != Vector2.ZERO:
 		player.global_position = GameState.return_position

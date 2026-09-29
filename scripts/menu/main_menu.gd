@@ -42,7 +42,8 @@ func _ready() -> void:
 	GameState.save_run()
 	coins_label.text = "Pieces : %d" % GameState.coins
 	if GameState.run_started:
-		_add_button("Continuer  (%s, etage %d)" % [GameState.tower()["name"], GameState.floor_index], _go)
+		var mode := "  -  %s" % GameState.format_time(GameState.time_left) if GameState.speedrun else ""
+		_add_button("Continuer  (%s, etage %d%s)" % [GameState.tower()["name"], GameState.floor_index, mode], _go)
 	_add_button("Nouvelle nuit", _open_panel.bind(TowerPanel))
 	_add_button("Boutique", _open_panel.bind(ShopPanel))
 	_add_button("Parametres", _open_panel.bind(SettingsPanel))
@@ -82,8 +83,8 @@ func _close_panel() -> void:
 	buttons.visible = true
 	buttons.get_child(0).grab_focus()
 
-func _start_tower(index: int) -> void:
-	GameState.new_run(index)
+func _start_tower(index: int, speedrun: bool) -> void:
+	GameState.new_run(index, speedrun)
 	_go()
 
 func _go() -> void:

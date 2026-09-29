@@ -156,6 +156,22 @@ func _initialize() -> void:
 	gs.coins = 0
 	assert(not gs.buy(1))
 
+	# Speedrun : le chrono ne tourne qu'en mode speedrun ; a zero, la nuit s'arrete sans recompense.
+	gs.new_run(0)
+	assert(not gs.tick_speedrun(9999.0) and gs.run_started)
+	gs.new_run(0, true)
+	assert(is_equal_approx(gs.time_left, gs.floor_count() * gs.SPEEDRUN_SECONDS_PER_FLOOR))
+	var coins_before: int = gs.coins
+	assert(not gs.tick_speedrun(10.0) and is_equal_approx(gs.run_time, 10.0))
+	assert(gs.tick_speedrun(gs.time_left + 1.0))
+	assert(not gs.run_started and gs.coins == coins_before and gs.menu_message.begins_with("Le reveil sonne"))
+	# Record enregistre en terminant une nuit en speedrun.
+	gs.best_times.clear()
+	gs.new_run(0, true)
+	gs.tick_speedrun(42.0)
+	gs.complete_tower()
+	assert(is_equal_approx(gs.best_times[Towers.LIST[0]["id"]], 42.0) and gs.menu_message.contains("0:42"))
+
 	# Parametres : une option coupee le reste apres rechargement.
 	var saved: bool = Settings.enabled("screen_shake")
 	Settings.set_option("screen_shake", false)

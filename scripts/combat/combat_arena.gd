@@ -46,6 +46,7 @@ func _ready() -> void:
 	player.died.connect(_on_player_died)
 	player.item_message.connect(_on_item_message)
 	$UI.add_child(InventoryPanel.new())
+	$UI.add_child(SpeedrunTimer.new())
 
 	var floor_meta := GameState.current_floor()
 	DreamTheme.set_family(floor_meta["family"])
