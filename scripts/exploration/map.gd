@@ -40,7 +40,7 @@ func _ready() -> void:
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = floor_meta["seed"]
-	var size_ratio := float(abs(GameState.floor_index)) / (GameState.TOWER_FLOOR_COUNT - 1)
+	var size_ratio := float(abs(GameState.floor_index)) / (GameState.floor_count() - 1)
 	var floor_data := FloorGenerator.generate(floor_meta["family"], floor_meta["intensity"], rng, size_ratio)
 
 	_build_walls(floor_data)
@@ -50,7 +50,7 @@ func _ready() -> void:
 	_spawn_npc(floor_data, floor_meta)
 	_spawn_decor(floor_data, floor_meta["seed"])
 	_setup_ambience(floor_data)
-	floor_label.text = "Etage %d / %d  -  %s" % [GameState.floor_index, GameState.TOWER_FLOOR_COUNT - 1, FAMILY_NAMES[floor_meta["family"]]]
+	floor_label.text = "%s  -  Etage %d / %d\n%s" % [GameState.tower()["name"], GameState.floor_index, GameState.floor_count() - 1, FAMILY_NAMES[floor_meta["family"]]]
 	encounter_chance = ENCOUNTER_CHANCE_PROFOND if floor_meta["family"] == FloorGenerator.Family.PROFOND else ENCOUNTER_CHANCE_PARADOXAL
 	encounter_chance *= maxf(0.2, 1.0 + GameState.mod("encounter_rate"))
 	$UI.add_child(InventoryPanel.new())
@@ -92,7 +92,7 @@ func _process(delta: float) -> void:
 	guide_arrow.rotation = (exit_position - player.global_position).angle()
 
 func _refresh_hud() -> void:
-	items_label.text = "%s\nPassifs : %d  (Tab)" % [GameState.active_summary(), GameState.passive_count()]
+	items_label.text = "%s\nPassifs : %d  (Tab)   Pieces : %d" % [GameState.active_summary(), GameState.passive_count(), GameState.coins]
 
 func _show_message(text: String) -> void:
 	message_serial += 1

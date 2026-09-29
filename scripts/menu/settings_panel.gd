@@ -1,28 +1,10 @@
 class_name SettingsPanel
-extends PanelContainer
+extends MenuPanel
 
 # Onglet Parametres du menu : une case a cocher par option de Settings.LABELS.
 
-signal closed
-
-func _ready() -> void:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.06, 0.04, 0.12, 0.95)
-	style.border_color = Color(0.6, 0.5, 0.9, 0.9)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(4)
-	style.set_content_margin_all(14)
-	add_theme_stylebox_override("panel", style)
-
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
-	add_child(box)
-	var title := Label.new()
-	title.text = "Parametres"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 16)
-	box.add_child(title)
-
+func build() -> void:
+	add_title("Parametres")
 	for option in Settings.LABELS:
 		var check := CheckButton.new()
 		check.text = Settings.LABELS[option]
@@ -33,25 +15,4 @@ func _ready() -> void:
 		# Lance depuis l'editeur, le jeu est integre a l'onglet "Jeu" : pas de plein ecran possible.
 		if option == "fullscreen" and Engine.is_embedded_in_editor():
 			check.disabled = true
-			var note := Label.new()
-			note.text = "Indisponible quand le jeu tourne dans l'onglet Jeu de l'editeur"
-			note.add_theme_font_size_override("font_size", 9)
-			note.modulate = Color(1, 1, 1, 0.6)
-			box.add_child(note)
-
-	var back := Button.new()
-	back.text = "Retour"
-	back.add_theme_font_size_override("font_size", 12)
-	back.pressed.connect(_close)
-	box.add_child(back)
-
-	box.get_child(1).grab_focus()
-
-func _unhandled_key_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
-		get_viewport().set_input_as_handled()
-		_close()
-
-func _close() -> void:
-	closed.emit()
-	queue_free()
+			add_note("Indisponible quand le jeu tourne dans l'onglet Jeu de l'editeur")

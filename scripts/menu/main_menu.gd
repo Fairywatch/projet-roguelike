@@ -2,13 +2,14 @@ extends Node2D
 
 # Menu principal : ecran de depart, et retour apres une mort ou la fin d'une nuit.
 
-const DREAMER_POS := Vector2(320, 160)
+const DREAMER_POS := Vector2(320, 156)
 const Z_INTERVAL := 1.1
 
 @onready var background: Node2D = $Background
 @onready var dreamer: AnimatedSprite2D = $Dreamer
 @onready var message_label: Label = $UI/Message
 @onready var buttons: VBoxContainer = $UI/Buttons
+@onready var coins_label: Label = $UI/Coins
 
 func _ready() -> void:
 	background.setup(FloorGenerator.Family.PARADOXAL, FloorGenerator.Intensity.REVE)
@@ -39,27 +40,21 @@ func _ready() -> void:
 	message_label.text = GameState.menu_message
 	GameState.menu_message = ""
 	GameState.save_run()
+	coins_label.text = "Pieces : %d" % GameState.coins
 	if GameState.run_started:
-		_add_button("Continuer  (etage %d)" % GameState.floor_index, _continue)
-	_add_button("Nouvelle nuit", _new_run)
-	_add_button("Parametres", _open_settings)
+		_add_button("Continuer  (%s, etage %d)" % [GameState.tower()["name"], GameState.floor_index], _go)
+	_add_button("Nouvelle nuit", _open_panel.bind(TowerPanel))
+	_add_button("Boutique", _open_panel.bind(ShopPanel))
+	_add_button("Parametres", _open_panel.bind(SettingsPanel))
 	_add_button("Quitter", get_tree().quit)
 	buttons.get_child(0).grab_focus()
 
 func _add_button(label: String, action: Callable) -> void:
 	var button := Button.new()
 	button.text = label
-	button.custom_minimum_size = Vector2(220, 26)
-	button.add_theme_font_size_override("font_size", 13)
-	for state in ["normal", "hover", "focus", "pressed"]:
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color(0.1, 0.07, 0.2, 0.85) if state == "normal" else Color(0.32, 0.22, 0.52, 0.95)
-		style.border_color = Color(0.6, 0.5, 0.9, 0.9)
-		style.set_border_width_all(1)
-		style.set_corner_radius_all(3)
-		button.add_theme_stylebox_override(state, style)
+	button.custom_minimum_size = Vector2(240, 24)
+	MenuPanel.style_button(button, 13)
 	button.pressed.connect(func(): Sound.play("ui_select"); action.call())
-	button.focus_entered.connect(Sound.play.bind("ui_move", -6.0, 0.0))
 	buttons.add_child(button)
 
 func _spawn_z() -> void:
@@ -67,30 +62,28 @@ func _spawn_z() -> void:
 	z.text = "z"
 	z.add_theme_font_size_override("font_size", randi_range(10, 16))
 	z.modulate = Color(0.9, 0.9, 1, 0.9)
-	z.position = DREAMER_POS + Vector2(22, -40)
+	z.position = DREAMER_POS + Vector2(14, -30)
 	add_child(z)
 	var tween := z.create_tween().set_parallel()
 	tween.tween_property(z, "position", z.position + Vector2(randf_range(10, 30), -60), 2.0)
 	tween.tween_property(z, "modulate:a", 0.0, 2.0)
 	tween.chain().tween_callback(z.queue_free)
 
-func _open_settings() -> void:
+func _open_panel(panel_script: GDScript) -> void:
 	buttons.visible = false
-	var panel := SettingsPanel.new()
-	panel.closed.connect(_close_settings)
+	var panel: MenuPanel = panel_script.new()
+	panel.closed.connect(_close_panel)
+	if panel is TowerPanel:
+		panel.tower_chosen.connect(_start_tower)
 	$UI.add_child(panel)
-	panel.reset_size()
-	panel.position = (get_viewport_rect().size - panel.size) / 2.0
 
-func _close_settings() -> void:
+func _close_panel() -> void:
+	coins_label.text = "Pieces : %d" % GameState.coins
 	buttons.visible = true
 	buttons.get_child(0).grab_focus()
 
-func _continue() -> void:
-	_go()
-
-func _new_run() -> void:
-	GameState.new_run()
+func _start_tower(index: int) -> void:
+	GameState.new_run(index)
 	_go()
 
 func _go() -> void:

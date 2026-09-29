@@ -150,6 +150,7 @@ func _on_victory() -> void:
 	player.invincible = true
 	if not GameState.guardian_fight:
 		GameState.current_floor()["wins"] += 1
+	GameState.coins += GameState.COINS_PER_GUARDIAN if GameState.guardian_fight else GameState.COINS_PER_WIN
 	GameState.recharge_active()
 	mob_label.text = "Gardien vaincu !" if GameState.guardian_fight else "Victoire !"
 	if is_boss_fight or randf() < DROP_CHANCE + GameState.mod("drop_chance"):
