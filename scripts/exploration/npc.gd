@@ -97,11 +97,12 @@ func talk() -> void:
 		"active":
 			if is_complete():
 				quest["state"] = "done"
+				GameState.coins += GameState.COINS_PER_QUEST
 				Sound.play("victory")
 				var entry := {"id": GameState.roll_item_id(GameState.QUEST_LOOT_BONUS), "pos": position + REWARD_OFFSET}
 				GameState.current_floor()["ground_items"].append(entry)
 				rewarded.emit(entry)
-				_say("Merci, voyageur ! Prends ceci : %s." % Items.find(entry["id"])["name"])
+				_say("Merci, voyageur ! Prends ceci : %s. (+%d pieces)" % [Items.find(entry["id"])["name"], GameState.COINS_PER_QUEST])
 			elif quest["kind"] == "chasse":
 				var left: int = quest["target"] - (GameState.current_floor()["wins"] - quest["start_wins"])
 				_say("Encore %d combat(s) a gagner." % left)

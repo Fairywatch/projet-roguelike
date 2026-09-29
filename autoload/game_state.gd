@@ -3,7 +3,6 @@ extends Node
 const DEATH_SETBACK_FLOORS := 5
 const MIN_FLOOR_INDEX := -10
 const ACTIVE_MAX_CHARGES := 3
-const TOWER_FLOOR_COUNT := 10
 const ACTIVE_DROP_WEIGHT := 0.25
 const DIFFICULTY_PER_FLOOR := 0.08
 const LOOT_WINS_CAP := 4
@@ -11,6 +10,13 @@ const BOSS_LOOT_BONUS := 0.3
 const SEALED_CHEST_LOOT_BONUS := 0.25
 const QUEST_LOOT_BONUS := 0.3
 const PROFOND_DIFFICULTY_BONUS := 0.15
+# Meta-progression (GDD section 7) : pieces gagnees pendant les nuits, gardees a la mort.
+const COINS_PER_WIN := 1
+const COINS_PER_GUARDIAN := 3
+const COINS_PER_QUEST := 2
+const SHOP_SIZE := 3
+const SHOP_PRICES := [15, 35, 80]  # commun, rare, legendaire
+const SHOP_QUALITY := 0.5
 
 const MENU_PATH := "res://scenes/menu/MainMenu.tscn"
 const SAVE_VERSION := 1
@@ -18,14 +24,17 @@ const SAVE_VERSION := 1
 const SAVED_FIELDS := [
 	"floor_index", "floor_data_by_index", "negative_dive_available", "return_position",
 	"run_started", "passive_items", "active_item_id", "active_charges", "next_fight_bonus_hp",
-	"pending_ground_item",
+	"pending_ground_item", "tower_index",
 ]
+const META_FIELDS := ["coins", "unlocked_towers", "start_bag", "shop_offers", "best_times"]
 
 var save_path := "user://run.save"
+var meta_path := "user://meta.save"
 
 var return_map_path := "res://scenes/exploration/Map.tscn"
 var return_position: Vector2 = Vector2.ZERO
 
+var tower_index: int = 0
 var floor_index: int = 0
 var floor_data_by_index: Dictionary = {}
 var guardian_fight: bool = false
@@ -44,9 +53,17 @@ var next_fight_bonus_hp: int = 0
 # Objet a deposer au sol a l'arrivee sur la carte (butin des profondeurs).
 var pending_ground_item: String = ""
 
+# Meta-progression, sauvegardee a part (meta_path) : elle survit a la mort et aux nouvelles nuits.
+var coins: int = 0
+var unlocked_towers: int = 1
+var start_bag: Array = []  # passifs achetes hors partie, donnes au debut de la prochaine nuit
+var shop_offers: Array = []  # ids proposes par la boutique ; "" = deja vendu
+var best_times: Dictionary = {}  # id de tour -> meilleur temps en mode speedrun (secondes)
+
 func _ready() -> void:
 	Settings.load_settings()
 	load_run()
+	_load_fields(meta_path, META_FIELDS)
 
 # Fermeture de la fenetre : on garde la partie (la carte met d'abord a jour la position du joueur).
 func _notification(what: int) -> void:
@@ -56,34 +73,44 @@ func _notification(what: int) -> void:
 # Sauvegarde a l'arrivee sur la carte ou au menu, et a la fermeture du jeu. Un combat en cours
 # n'est pas sauvegarde : on reprend juste avant la rencontre.
 func save_run() -> void:
+	_save_fields(save_path, SAVED_FIELDS)
+	save_meta()
+
+func save_meta() -> void:
+	_save_fields(meta_path, META_FIELDS)
+
+func load_run() -> void:
+	_load_fields(save_path, SAVED_FIELDS)
+	_recompute_mods()
+
+func _save_fields(path: String, fields: Array) -> void:
 	var data := {"version": SAVE_VERSION}
-	for field in SAVED_FIELDS:
+	for field in fields:
 		data[field] = get(field)
-	var file := FileAccess.open(save_path, FileAccess.WRITE)
+	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_warning("Sauvegarde impossible : %s" % error_string(FileAccess.get_open_error()))
 		return
 	file.store_var(data)
 
-func load_run() -> void:
-	if not FileAccess.file_exists(save_path):
+func _load_fields(path: String, fields: Array) -> void:
+	if not FileAccess.file_exists(path):
 		return
-	var file := FileAccess.open(save_path, FileAccess.READ)
+	var file := FileAccess.open(path, FileAccess.READ)
 	var data = file.get_var() if file else null
 	if not (data is Dictionary) or data.get("version") != SAVE_VERSION:
-		push_warning("Sauvegarde illisible ou d'une ancienne version, ignoree.")
+		push_warning("Sauvegarde illisible ou d'une ancienne version, ignoree : %s" % path)
 		return
-	for field in SAVED_FIELDS:
+	for field in fields:
 		if data.has(field):
 			set(field, data[field])
-	_recompute_mods()
 
 func get_or_create_floor_data(index: int) -> Dictionary:
 	if not floor_data_by_index.has(index):
 		floor_data_by_index[index] = {
 			"seed": randi(),
 			"family": randi() % 2,
-			"intensity": randi() % 2,
+			"intensity": FloorGenerator.Intensity.CAUCHEMAR if randf() < tower()["nightmare_chance"] else FloorGenerator.Intensity.REVE,
 			"wins": 0,
 			"opened_chests": [],
 			"ground_items": [],
@@ -98,12 +125,19 @@ func current_floor() -> Dictionary:
 func difficulty() -> float:
 	var family: int = current_floor()["family"]
 	var bonus := PROFOND_DIFFICULTY_BONUS if family == FloorGenerator.Family.PROFOND else 0.0
-	return 1.0 + abs(floor_index) * DIFFICULTY_PER_FLOOR + bonus
+	return 1.0 + abs(floor_index) * DIFFICULTY_PER_FLOOR + bonus + tower()["difficulty"]
+
+func tower() -> Dictionary:
+	return Towers.get_tower(tower_index)
+
+func floor_count() -> int:
+	return tower()["floors"]
 
 func is_last_floor() -> bool:
-	return floor_index == TOWER_FLOOR_COUNT - 1
+	return floor_index == floor_count() - 1
 
-func new_run() -> void:
+func new_run(index: int = tower_index) -> void:
+	tower_index = index
 	floor_data_by_index.clear()
 	floor_index = 0
 	negative_dive_available = true
@@ -112,6 +146,9 @@ func new_run() -> void:
 	pending_message = ""
 	pending_ground_item = ""
 	reset_run_items()
+	for id in start_bag:
+		add_passive_item(id)
+	start_bag.clear()
 	run_started = true
 
 # Ou aller apres un combat : la carte, ou le menu si la nuit est terminee.
@@ -125,7 +162,12 @@ func complete_tower() -> void:
 	return_position = Vector2.ZERO
 	reset_run_items()
 	run_started = false
-	menu_message = "Le reveur se reveille... Nuit terminee !"
+	coins += tower()["reward"]
+	menu_message = "Le reveur se reveille... %s terminee ! +%d pieces." % [tower()["name"], tower()["reward"]]
+	if tower_index + 1 < Towers.LIST.size() and unlocked_towers <= tower_index + 1:
+		unlocked_towers = tower_index + 2
+		menu_message += " Nouvelle nuit debloquee : %s !" % Towers.get_tower(tower_index + 1)["name"]
+	shop_offers.clear()
 
 # Chaque portail est garde par un boss : on ne change d'etage qu'apres l'avoir vaincu.
 func start_guardian_fight(going_down: bool) -> void:
@@ -161,6 +203,7 @@ func apply_death_setback() -> void:
 	return_position = Vector2.ZERO
 	reset_run_items()
 	menu_message = "Tu te reveilles en sursaut... Tu reprendras a l'etage %d, les mains vides." % floor_index
+	shop_offers.clear()
 
 func apply_negative_death() -> void:
 	for key in floor_data_by_index.keys():
@@ -185,7 +228,7 @@ func complete_negative_run() -> void:
 # Qualite du butin (GDD : double progression). Monte avec l'etage atteint dans la tour et avec
 # les combats gagnes sur l'etage ; bonus selon la source (boss, coffre scelle, quete).
 func loot_quality(bonus: float = 0.0) -> float:
-	var in_tower := clampf(abs(floor_index) / float(TOWER_FLOOR_COUNT - 1), 0.0, 1.0)
+	var in_tower := clampf(abs(floor_index) / float(floor_count() - 1), 0.0, 1.0)
 	var in_floor := minf(current_floor()["wins"], LOOT_WINS_CAP) / float(LOOT_WINS_CAP)
 	return in_tower * 0.6 + in_floor * 0.25 + bonus
 
@@ -270,3 +313,32 @@ func passives_detail() -> String:
 		lines.append("[%s] %s%s : %s" % [Items.RARITY_NAMES[item["rarity"]], item["name"], count, item["desc"]])
 	return "
 ".join(lines)
+
+# --- Boutique (meta-progression) ---------------------------------------------------
+
+func shop_price(id: String) -> int:
+	return SHOP_PRICES[Items.rarity(id)]
+
+# Offres renouvelees apres chaque mort ou fin de nuit.
+func get_shop_offers() -> Array:
+	if shop_offers.is_empty():
+		while shop_offers.size() < SHOP_SIZE:
+			var rarity := roll_rarity(SHOP_QUALITY)
+			var candidates := Items.PASSIVES.filter(func(item): return item["rarity"] == rarity and item["id"] not in shop_offers)
+			if not candidates.is_empty():
+				shop_offers.append(candidates.pick_random()["id"])
+	return shop_offers
+
+# Achat : le passif rejoint la nuit en cours, ou le sac de depart de la prochaine nuit.
+func buy(slot: int) -> bool:
+	var id: String = get_shop_offers()[slot]
+	if id == "" or coins < shop_price(id):
+		return false
+	coins -= shop_price(id)
+	shop_offers[slot] = ""
+	if run_started:
+		add_passive_item(id)
+	else:
+		start_bag.append(id)
+	save_run()
+	return true

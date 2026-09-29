@@ -6,6 +6,7 @@ func _initialize() -> void:
 	await process_frame  # laisse GameState._ready (chargement de la sauvegarde) passer avant la mise en place
 	# Fichier a part : les tests ne touchent pas a la vraie sauvegarde du joueur.
 	gs.save_path = "user://test_run.save"
+	gs.meta_path = "user://test_meta.save"
 	gs.new_run()
 
 	gs.floor_index = 0
@@ -29,7 +30,7 @@ func _initialize() -> void:
 	assert(mob.hp == 6)
 	assert(mob.telegraph_duration == telegraph)
 
-	gs.floor_index = gs.TOWER_FLOOR_COUNT - 1
+	gs.floor_index = gs.floor_count() - 1
 	assert(gs.is_last_floor())
 	gs.run_started = true
 	gs.take_item("plume_de_reve")
@@ -67,7 +68,7 @@ func _initialize() -> void:
 	assert(gs.floor_index == 3 and gs.guardian_fight)
 	gs.take_guardian_exit()
 	assert(gs.floor_index == 4 and not gs.guardian_fight)
-	gs.floor_index = gs.TOWER_FLOOR_COUNT - 1
+	gs.floor_index = gs.floor_count() - 1
 	gs.start_guardian_fight(false)
 	gs.take_guardian_exit()
 	assert(gs.floor_index == 0 and gs.menu_message.begins_with("Le reveur") and not gs.run_started)
@@ -100,7 +101,7 @@ func _initialize() -> void:
 	gs.new_run()
 	gs.floor_index = 0
 	var low: float = gs.loot_quality()
-	gs.floor_index = gs.TOWER_FLOOR_COUNT - 1
+	gs.floor_index = gs.floor_count() - 1
 	gs.current_floor()["wins"] = 3
 	assert(gs.loot_quality() > low and gs.loot_quality(gs.BOSS_LOOT_BONUS) > gs.loot_quality())
 
@@ -120,6 +121,40 @@ func _initialize() -> void:
 	assert(gs.passive_items == {"plume_de_reve": 2} and gs.mod("max_hp") == 2)
 	assert(gs.active_item_id == "oreiller_volant" and gs.active_charges == 1)
 	assert(gs.floor_data_by_index[4]["ground_items"][0]["pos"] == Vector2(120, 340))
+
+	# Nuits : chacune a ses etages, sa difficulte et sa part de cauchemars ; la suivante se debloque.
+	gs.coins = 0
+	gs.unlocked_towers = 1
+	gs.start_bag.clear()
+	gs.shop_offers.clear()
+	gs.new_run(0)
+	var calm_difficulty: float = gs.difficulty()
+	gs.new_run(2)
+	gs.floor_index = 0
+	gs.current_floor()["family"] = FloorGenerator.Family.PARADOXAL
+	assert(gs.floor_count() == Towers.LIST[2]["floors"] and gs.difficulty() > calm_difficulty)
+	var nightmares := 0
+	for i in 200:
+		gs.floor_data_by_index.erase(0)
+		nightmares += int(gs.current_floor()["intensity"] == FloorGenerator.Intensity.CAUCHEMAR)
+	assert(nightmares > 140)
+	gs.new_run(0)
+	gs.floor_index = gs.floor_count() - 1
+	gs.complete_tower()
+	assert(gs.unlocked_towers == 2 and gs.coins == Towers.LIST[0]["reward"])
+	assert(gs.menu_message.contains(Towers.LIST[1]["name"]))
+
+	# Boutique : 3 offres distinctes ; achat hors partie = sac de depart de la prochaine nuit.
+	gs.coins = 500
+	var offers: Array = gs.get_shop_offers()
+	assert(offers.size() == gs.SHOP_SIZE and offers.size() == Array(offers).reduce(func(acc, id): return acc + [id] if id not in acc else acc, []).size())
+	var bought: String = offers[0]
+	assert(gs.buy(0) and not gs.buy(0))
+	assert(gs.coins == 500 - gs.shop_price(bought) and gs.start_bag == [bought])
+	gs.new_run(0)
+	assert(gs.passive_items.has(bought) and gs.start_bag.is_empty())
+	gs.coins = 0
+	assert(not gs.buy(1))
 
 	# Parametres : une option coupee le reste apres rechargement.
 	var saved: bool = Settings.enabled("screen_shake")

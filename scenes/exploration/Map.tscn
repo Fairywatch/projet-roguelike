@@ -45,8 +45,8 @@ mouse_filter = 2
 offset_left = 10.0
 offset_top = 6.0
 offset_right = 330.0
-offset_bottom = 26.0
-theme_override_font_sizes/font_size = 14
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 12
 text = "Etage 0 / 9"
 
 [node name="ItemsLabel" type="Label" parent="UI"]
