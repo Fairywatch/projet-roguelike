@@ -71,6 +71,9 @@ func _initialize() -> void:
 		await process_frame
 	arena = current_scene
 	assert(arena.is_boss_fight and get_nodes_in_group("mobs").size() == 1)
+	# Combat de boss : sa propre musique, pas celle des combats normaux.
+	var boss_music := root.get_children().filter(func(n): return n is AudioStreamPlayer and n.get_meta("track", "") == "boss")
+	assert(boss_music.size() == 1 and boss_music[0].playing)
 	for m in get_nodes_in_group("mobs"):
 		m.take_hit(999)
 	for i in 3:
