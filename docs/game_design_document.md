@@ -1,4 +1,4 @@
-# Document de Game Design — [Titre provisoire]
+# Document de Game Design — Dream Dive
 *Un roguelite d'action en 2D pixel art, sur PC*
 
 ---
@@ -19,7 +19,8 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - Deux grandes familles d'étages, alternant de façon imprévisible au sein d'une tour :
   - **Sommeil paradoxal** : rythme rapide, ambiance vive et changeante, plus de PNJ et d'événements narratifs, rebondissements fréquents.
   - **Sommeil profond** : rythme plus lent, ambiance sombre/oppressante, moins de PNJ mais mobs plus dangereux.
-- **Les PNJ font partie intégrante du rêve lui-même** — ce sont des habitants propres à cet univers onirique, pas des représentations d'autres personnes.
+- Une seconde dimension, indépendante de la famille : l'**intensité** de l'étage, **rêve** ou **cauchemar** (palette claire ou sombre). La part de cauchemars dépend de la nuit.
+- **Les PNJ font partie intégrante du rêve lui-même** — ce sont des habitants propres à cet univers onirique, pas des représentations d'autres personnes (hibou insomniaque, lapin horloger, marchande de lune...).
 - **Tours difficiles = nuits plus tourmentées** : les nuits les plus dures correspondent à des périodes où le personnage porte des peurs plus profondes ou des problèmes de vie plus lourds — la difficulté est donc directement liée à l'état intérieur du personnage à ce moment-là, et justifiée narrativement.
 - **Fil rouge narratif** : les nuits suivent une forme de chronologie dans la vie du personnage. En débloquant et en traversant les tours dans l'ordre, le joueur découvre progressivement des fragments de ce qui lui est arrivé — un moteur narratif pour donner envie d'avancer, au-delà du simple défi de gameplay. Chaque nuit tourmentée peut ainsi correspondre à un événement ou une période précise de sa vie.
 
@@ -27,24 +28,28 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 
 ## 3. Boucle de gameplay
 
-1. Le joueur explore la carte d'un étage (déplacement libre).
-2. Une **rencontre aléatoire** se déclenche (façon herbes hautes de Pokémon).
-3. Transition stylisée (écran qui se déforme/ondule, façon bascule dans le rêve) → le joueur est **enfermé dans une arène de combat séparée**, pré-conçue selon le type de mob/biome de l'étage.
-4. Combat en **temps réel** (dash, esquive avec i-frames, attaques, patterns de mobs lisibles — inspiration Hadès).
-5. Victoire → retour sur la carte d'exploration, loot potentiel.
-6. Exploration de PNJ (quêtes) et coffres, en plus des combats, comme sources de loot.
-7. Progression à travers les étages jusqu'à la fin de la tour (le rêveur se réveille) ou jusqu'à la mort.
-8. Mort → reset du stuff de run, le joueur redescend de 5 étages, nouveau tirage aléatoire au-dessus (voir Structure & Difficulté).
+1. Depuis le **menu principal**, le joueur choisit une nuit (tour) et, s'il le souhaite, le mode speedrun.
+2. Il explore la carte d'un étage (déplacement libre, décors interactifs, coffres, PNJ).
+3. Une **rencontre aléatoire** se déclenche (façon herbes hautes de Pokémon).
+4. Transition stylisée selon le type d'étage → le joueur est **enfermé dans une arène de combat séparée**.
+5. Combat en **temps réel** contre 2 à 4 ennemis (dash, esquive avec i-frames, attaques, patterns lisibles — inspiration Hadès).
+6. Victoire → butin éventuel posé au sol (à prendre ou non), pièces, retour sur la carte.
+7. Pour changer d'étage, le joueur prend le **portail**, toujours **gardé par un boss** : l'étage ne change qu'après la victoire.
+8. Fin de la tour (le rêveur se réveille) ou mort → retour au menu.
+9. Mort → reset du stuff de run, le joueur redescend de 5 étages, nouveau tirage aléatoire au-dessus (voir Structure & Difficulté).
 
 ---
 
 ## 4. Combat
 
-- **Temps réel**, inspiration directe *Hadès* : dash avec i-frames, combos courts, moveset lisible.
-- Arène séparée de la map d'exploration (option la plus simple techniquement — pas de gestion de collision complexe avec le décor d'exploration).
-- 3-4 arènes pré-conçues par étage, réutilisées pour plusieurs rencontres, avec variations visuelles selon le type de mob.
-- Les mobs ont des patterns d'attaque télégraphiés clairement (lisibilité avant tout, pour une difficulté juste).
-- Piste à explorer : transition différente selon le type d'étage (douce/floue pour sommeil paradoxal, brutale/saccadée pour sommeil profond) — pas de coût technique supplémentaire, juste un habillage de la transition existante.
+- **Temps réel**, inspiration directe *Hadès* : dash avec i-frames, attaque en arc, objet actif (E).
+- Arène séparée de la map d'exploration, habillée avec les tuiles du type d'étage.
+- **Rencontres** : 2 à 4 ennemis (un de plus tous les 4 étages). Les **boss combattent seuls**.
+- Les mobs ont des patterns d'attaque **télégraphiés** clairement (lisibilité avant tout) : la difficulté augmente leurs PV, leur vitesse et leur cadence, **jamais la durée des télégraphes**.
+- Brève invincibilité après un coup encaissé (plusieurs ennemis peuvent frapper en même temps).
+- **Gardiens de portail** : un mob renforcé (aura violette) tiré au hasard ; le dernier portail de la nuit est gardé par la **Terreur nocturne**.
+- **Transition selon le type d'étage** : douce et ondulante (paradoxal), brutale et saccadée (profond ; fondu simple si les flashs sont désactivés).
+- Bestiaire actuel : Ombre rampante, Berceuse, Nounours égaré, Songe papillon, Voix murmurante, Éveilleur de peur, Terreur nocturne (boss).
 
 ---
 
@@ -52,77 +57,80 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 
 - Chaque tour est indépendante des autres (nuit différente = tour différente) et possède un **nombre limité d'étages** : narrativement, la tour se termine quand le personnage se réveille — pas de tour infinie.
 - **Ordre des étages aléatoire** à chaque run, alternant sommeil paradoxal / sommeil profond.
-- **Courbe de difficulté** : progression liée au *numéro d'étage atteint* (l'étage n°8 est toujours plus dur que le n°3, quel que soit son type), avec un **modificateur de type** en surcouche (un sommeil profond est toujours un peu plus oppressant/dangereux qu'un paradoxal du même palier).
-- **À la mort** : le joueur redescend de 5 étages en dessous de sa position actuelle, avec un **nouveau tirage aléatoire des étages au-dessus** de ce point. Une run n'est donc jamais totalement perdue, mais recule concrètement, et le chemin à refaire au-dessus est toujours différent.
+- **Taille des étages** : petits au début (16×10 cases), de plus en plus grands jusqu'au dernier étage (34×20).
+- **Courbe de difficulté** : +8 % par étage atteint, +15 % en sommeil profond (modificateur de type), plus le bonus propre à la nuit.
+- **À la mort** : le joueur redescend de 5 étages en dessous de sa position actuelle, avec un **nouveau tirage aléatoire des étages au-dessus** de ce point. Une run n'est donc jamais totalement perdue, mais recule concrètement.
+- **Quitter le jeu en plein combat compte comme une mort** (pas de fuite par la fermeture du jeu).
+- **Plongée négative** : à l'étage 0, un second portail (rouge) mène aux profondeurs (étages -1 à -10), plus dangereuses (la Terreur nocturne y rôde). Les remonter rapporte un butin ; y mourir referme le passage pour la partie.
 
 ---
 
 ## 6. Modes de jeu & sélection des tours
 
-- **Écran de sélection en début de partie** : le joueur choisit quelle tour (quelle nuit) explorer.
-- **Déblocage progressif** : les tours les plus difficiles se débloquent en terminant les tours plus simples.
-- **Nombre de tours** : non fixé pour l'instant, pensé pour pouvoir s'agrandir au fil du développement (contenu extensible plutôt que figé dès la V1).
-- **Deux modes de jeu** :
-  - **Mode Normal** : la boucle telle que décrite dans ce document (mort = recul de 5 étages, pas de contrainte de temps).
-  - **Mode Speedrun** : un timer représente le moment où le rêveur va se réveiller — le joueur doit progresser avant l'expiration du temps, ce qui ajoute une pression supplémentaire et un objectif de rejouabilité orienté performance/vitesse.
+- **Menu principal** : Continuer (partie sauvegardée), Nouvelle nuit (choix de la tour), Boutique, Paramètres.
+- **Déblocage progressif** : terminer une nuit débloque la suivante.
+- **Tours** : décrites comme des données (nombre d'étages, bonus de difficulté, part d'étages cauchemar, récompense en pièces), pour pouvoir s'agrandir au fil du développement. Trois nuits provisoires : *Nuit calme* (8 étages), *Nuit agitée* (10), *Nuit de terreur* (12) — **à remplacer par le vrai contenu**.
+- **Mode Normal** : la boucle telle que décrite dans ce document.
+- **Mode Speedrun** : un **chrono unique pour toute la nuit** (75 s par étage), qui ne tourne qu'en jeu. À zéro, **le réveil sonne** : la nuit s'arrête, sans récompense. La mort garde sa règle habituelle, et le chrono continue de tourner. Meilleur temps enregistré par nuit.
 
 ---
 
 ## 7. Méta-progression
 
-- Entre les runs, le joueur gagne des **pièces** (indépendantes du loot en run, qui reset toujours à la mort).
-- Ces pièces permettent d'**acheter des items** en dehors des runs, pour faciliter les tentatives suivantes.
-- Ce système garantit que même en cas de mort, le joueur repart avec un sentiment de progression tangible (contrairement au stuff en run, qui lui reset entièrement).
-- À définir plus tard : nature exacte de ces items (boosts temporaires, débloquage de capacités permanentes, cosmétiques, etc.) — voir Questions ouvertes.
+- Entre les runs, le joueur gagne des **pièces** (indépendantes du loot en run, qui reset toujours à la mort) : 1 par combat gagné, 3 par gardien, 2 par quête, et une récompense en fin de nuit.
+- La **boutique des songes** (menu) propose 3 objets passifs, renouvelés après chaque réveil (mort ou fin de nuit). Prix selon la rareté (15 / 35 / 80).
+- Un achat rejoint la nuit en cours, ou attend dans le **sac de départ** de la prochaine nuit.
+- Ce système garantit que même en cas de mort, le joueur repart avec un sentiment de progression tangible.
 
 ---
 
 ## 8. Système de loot
 
 - **Reset complet du stuff de run à chaque mort** (roguelite pur) — justifié narrativement par le réveil/redémarrage du rêve.
-- Trois sources de loot :
-  - Combats aléatoires (drop de mobs).
+- **Objets passifs** : cumulables sans limite (y compris plusieurs exemplaires du même). Chacun est décrit par des effets chiffrés (PV, dégâts, vitesse, critiques, esquive, vol de vie, bouclier, ennemis affaiblis...) : ajouter un passif ne demande pas de code.
+- **Objet actif** : un seul à la fois, utilisé avec E en combat, 3 charges. Un combat gagné rend une charge. Prendre un nouvel actif laisse l'ancien au sol, avec ses charges restantes.
+- Le butin tombe **au sol** : le joueur choisit de le prendre (E) ou non. Les objets au sol restent sur l'étage.
+- Sources de loot :
+  - Combats aléatoires (45 % de chance) et boss (garanti).
+  - Coffres : deux par étage, dont un **scellé** qui s'ouvre après 2 combats gagnés sur l'étage.
   - PNJ à quêtes (récompense de quête).
-  - Coffres liés à des quêtes/objectifs.
-- **Hiérarchie de rareté à deux axes** :
-  - Progression *dans l'étage* (plus on avance dans un étage, meilleur le loot potentiel).
-  - Progression *dans la tour* (les étages hauts ont un meilleur plafond de rareté).
-- Degré de randomness variable selon le palier atteint (pas juste "rare ou pas" — une vraie plage aléatoire par palier, à définir précisément).
+  - Cristaux du sommeil profond (30 % de chance de contenir un objet).
+- **Rareté** : commun, rare, légendaire. **Hiérarchie à deux axes** : la qualité du butin monte avec l'**étage atteint dans la tour** et avec les **combats gagnés sur l'étage**, plus un bonus selon la source (boss, coffre scellé, quête). Ce n'est jamais garanti : les poids passent d'environ 82/16/2 % à 42/42/16 %.
 
 ---
 
 ## 9. Exploration & rencontres
 
 - Déplacement libre sur la carte de chaque étage.
-- Rencontres **aléatoires**, non visibles à l'avance (façon herbes hautes).
-- Taux de rencontre à moduler selon le type d'étage (à définir — un sommeil profond pourrait avoir un taux plus élevé pour renforcer l'oppression, par exemple).
-- PNJ visibles et non hostiles, proposant des quêtes courtes (éliminer X mobs, récupérer un objet, etc.), habitants du rêve indépendants du rêveur.
-- Coffres présents sur la map, potentiellement liés à des petites énigmes ou quêtes.
+- Rencontres **aléatoires**, non visibles à l'avance (façon herbes hautes) : 4 % par demi-seconde de marche en sommeil paradoxal, 7 % en sommeil profond (oppression).
+- **PNJ** : présents sur 85 % des étages paradoxaux et 35 % des profonds. Ils proposent une quête courte : gagner N combats sur l'étage, ou rapporter un objet perdu à l'autre bout de l'étage.
+- **Décors interactifs** : étoiles (+1 PV au prochain combat), lunes (flèche vers le portail), horloges (pas de rencontre pendant 15 s), champignons (spores : embuscade), cristaux (peuvent contenir un objet), bougies (restent allumées), et d'autres qui réagissent simplement au passage.
 
 ---
 
-## 10. Direction artistique
+## 10. Direction artistique & son
 
-- **2D pixel art**, choisi pour rester simple et efficace à produire.
-- Chaque tour (nuit) a une identité visuelle propre liée à son degré de tourment (nuits calmes vs nuits de peurs profondes).
-- Chaque famille d'étage (paradoxal / profond) a un traitement visuel distinct (couleurs, densité de détails, luminosité).
-- Les arènes de combat peuvent avoir un style renforcé/déformé par rapport à la carte d'exploration, pour accentuer la sensation d'un basculement dans le rêve.
+- **2D pixel art** (1 pixel = 2 pixels écran), généré par `tools/gen_pixel_art.py` puis retouchable.
+- Chaque famille d'étage a un traitement visuel distinct : paradoxal lumineux et coloré, profond dans la pénombre avec une lumière autour du joueur.
+- Rêve / cauchemar : palettes claires ou sombres.
+- Retours de combat : flash à l'impact, arrêt sur image, secousses, particules (chaque effet désactivable dans les Paramètres).
+- **Son** : effets et musiques synthétisés par `tools/gen_audio.py` (style chiptune rêveur) ; une musique par famille d'étage, une de combat, une de boss.
 
 ---
 
 ## 11. Questions ouvertes à trancher
 
 - **Détail du fil rouge narratif** : comment les fragments de vie du personnage sont-ils révélés concrètement (cinématiques courtes, objets/journaux à trouver en jeu, dialogues de PNJ, texte entre les tours) ? Et l'ordre des tours débloquées suit-il forcément la chronologie de vie, ou peut-il y avoir des sauts temporels ?
-- **Nature des items de méta-progression** : boosts temporaires, capacités permanentes, cosmétiques ? À préciser.
-- **Nombre de tours / structure globale du jeu** : combien de tours au total, y a-t-il une fin au jeu global (toutes les tours terminées) ?
-- **Détail du système de déblocage** : critère précis pour débloquer une tour plus dure (juste "terminer" la précédente, ou un objectif plus spécifique) ?
-- **Détail du mode Speedrun** : le timer est-il global sur toute la tour, ou reset-il à chaque étage ? Un échec au timer équivaut-il à une mort classique ?
-- **Taux de rencontre exact** par type d'étage.
+- **Contenu propre à chaque nuit** : histoire, bestiaire, biomes et boss spécifiques (les trois nuits actuelles ne diffèrent que par leurs paramètres).
+- **Nombre de tours / fin du jeu global** : combien de nuits au total, que se passe-t-il quand toutes sont terminées ?
+- **Méta-progression au-delà des passifs** : capacités permanentes, cosmétiques ?
+
+*Tranché depuis la première version : mode Speedrun (chrono global, fin = réveil), déblocage (terminer la nuit précédente), taux de rencontre (4 % / 7 %), nature des achats (objets passifs).*
 
 ---
 
-## 12. Prochaines étapes suggérées
+## 12. Prochaines étapes
 
-- Trancher les questions ouvertes restantes, en particulier le détail du mode Speedrun et de la méta-progression.
-- Prototyper la boucle de base : déplacement + rencontre aléatoire + transition + combat simple.
-- Concevoir 2-3 exemples concrets d'étages (un paradoxal, un profond) avec mobs et loot associés, pour valider le concept d'écosystème par étage.
+- Concevoir les vraies nuits (tours) et leurs étages : contenu, ambiance, mobs et boss propres.
+- Trancher le fil rouge narratif et sa mise en scène.
+- Équilibrage en jeu (nombre d'ennemis, prix de la boutique, chrono du speedrun, taux de rencontre).
