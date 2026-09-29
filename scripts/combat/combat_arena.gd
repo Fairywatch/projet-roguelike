@@ -161,7 +161,7 @@ func _on_victory() -> void:
 # Le butin tombe au sol : on choisit de le prendre (E) ou de garder son objet (Entree).
 func _drop_item() -> void:
 	var pickup := ItemPickup.new()
-	pickup.item_id = GameState.roll_item_id()
+	pickup.item_id = GameState.roll_item_id(GameState.BOSS_LOOT_BONUS if is_boss_fight else 0.0)
 	pickup.position = player.position + Vector2(0, -80 if player.position.y > 150 else 80)
 	add_child(pickup)
 	pickup.taken.connect(_on_pickup_taken)

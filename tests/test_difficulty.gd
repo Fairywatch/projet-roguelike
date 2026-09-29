@@ -88,6 +88,22 @@ func _initialize() -> void:
 		assert(small.exit_cell != small.spawn_cell and small.secondary_cell not in [small.spawn_cell, small.exit_cell])
 		assert(not small.chest_cells.is_empty())
 
+	# Rarete : chaque objet en a une, et le butin s'ameliore avec l'etage atteint.
+	for item in Items.PASSIVES + Items.ACTIVES:
+		assert(item["rarity"] in [Items.COMMUN, Items.RARE, Items.LEGENDAIRE])
+	var legendary_rate := func(quality: float) -> float:
+		var count := 0
+		for i in 3000:
+			count += int(gs.roll_rarity(quality) == Items.LEGENDAIRE)
+		return count / 3000.0
+	assert(legendary_rate.call(0.0) < 0.05 and legendary_rate.call(1.0) > 0.1)
+	gs.new_run()
+	gs.floor_index = 0
+	var low: float = gs.loot_quality()
+	gs.floor_index = gs.TOWER_FLOOR_COUNT - 1
+	gs.current_floor()["wins"] = 3
+	assert(gs.loot_quality() > low and gs.loot_quality(gs.BOSS_LOOT_BONUS) > gs.loot_quality())
+
 	# Sauvegarde de partie : tout l'etat de la run survit a un redemarrage du jeu.
 	gs.new_run()
 	gs.floor_index = 4

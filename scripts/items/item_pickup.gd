@@ -14,6 +14,7 @@ var item_id := ""
 var player_near := false
 var icon := Sprite2D.new()
 var label := Label.new()
+var glow: PointLight2D
 
 func _ready() -> void:
 	var shape := CollisionShape2D.new()
@@ -22,7 +23,8 @@ func _ready() -> void:
 	add_child(shape)
 	icon.scale = Vector2(2, 2)
 	add_child(icon)
-	add_child(DreamTheme.make_light(Color(0.8, 0.85, 1), 60.0, 0.8))
+	glow = DreamTheme.make_light(Color.WHITE, 60.0, 0.9)
+	add_child(glow)
 	label.add_theme_font_size_override("font_size", 9)
 	label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.1))
 	label.add_theme_constant_override("outline_size", 4)
@@ -48,8 +50,12 @@ func _refresh() -> void:
 	icon.texture = ICON_ACTIVE if Items.is_active(item_id) else ICON_PASSIVE
 	# Chaque passif a sa teinte, pour les reconnaitre d'un coup d'oeil.
 	icon.modulate = Color.WHITE if Items.is_active(item_id) else Color.from_hsv(float(hash(item_id) % 360) / 360.0, 0.45, 1.0)
+	# Couleur du nom et de la lueur selon la rarete (commun, rare, legendaire).
+	label.add_theme_color_override("font_color", Items.rarity_color(item_id))
+	glow.color = Items.rarity_color(item_id)
+	var rarity_name: String = Items.RARITY_NAMES[item["rarity"]]
 	if player_near:
-		label.text = "E : prendre %s\n%s" % [item["name"], item["desc"]]
+		label.text = "E : prendre %s (%s)\n%s" % [item["name"], rarity_name, item["desc"]]
 	else:
 		label.text = item["name"]
 

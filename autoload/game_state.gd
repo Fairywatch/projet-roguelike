@@ -6,6 +6,9 @@ const ACTIVE_MAX_CHARGES := 3
 const TOWER_FLOOR_COUNT := 10
 const ACTIVE_DROP_WEIGHT := 0.25
 const DIFFICULTY_PER_FLOOR := 0.08
+const LOOT_WINS_CAP := 4
+const BOSS_LOOT_BONUS := 0.3
+const SEALED_CHEST_LOOT_BONUS := 0.25
 const PROFOND_DIFFICULTY_BONUS := 0.15
 
 const MENU_PATH := "res://scenes/menu/MainMenu.tscn"
@@ -178,10 +181,30 @@ func complete_negative_run() -> void:
 	var bonus_name: String = Items.find_passive(pending_ground_item)["name"]
 	pending_message = "Tu remontes des profondeurs avec un lourd butin : %s !" % bonus_name
 
-func roll_item_id() -> String:
+# Qualite du butin (GDD : double progression). Monte avec l'etage atteint dans la tour et avec
+# les combats gagnes sur l'etage ; bonus selon la source (boss, coffre scelle, quete).
+func loot_quality(bonus: float = 0.0) -> float:
+	var in_tower := clampf(abs(floor_index) / float(TOWER_FLOOR_COUNT - 1), 0.0, 1.0)
+	var in_floor := minf(current_floor()["wins"], LOOT_WINS_CAP) / float(LOOT_WINS_CAP)
+	return in_tower * 0.6 + in_floor * 0.25 + bonus
+
+# Poids commun / rare / legendaire : qualite 0 -> ~82/16/2 %, qualite 1 -> ~42/42/16 %.
+func roll_rarity(quality: float) -> int:
+	var weights: Array[float] = [1.0, 0.2 + quality * 0.8, 0.02 + quality * 0.35]
+	var pick: float = randf() * (weights[0] + weights[1] + weights[2])
+	for rarity in weights.size():
+		pick -= weights[rarity]
+		if pick < 0.0:
+			return rarity
+	return Items.COMMUN
+
+func roll_item_id(quality_bonus: float = 0.0) -> String:
+	var pool: Array = Items.PASSIVES
 	if randf() < ACTIVE_DROP_WEIGHT:
-		return Items.ACTIVES.filter(func(item): return item["id"] != active_item_id).pick_random()["id"]
-	return Items.PASSIVES.pick_random()["id"]
+		pool = Items.ACTIVES.filter(func(item): return item["id"] != active_item_id)
+	var rarity := roll_rarity(loot_quality(quality_bonus))
+	var candidates := pool.filter(func(item): return item["rarity"] == rarity)
+	return (candidates if not candidates.is_empty() else pool).pick_random()["id"]
 
 # Somme d'un effet ("speed", "crit"...) sur tous les passifs possedes (voir Items.PASSIVES).
 func mod(stat: String) -> float:
@@ -243,6 +266,6 @@ func passives_detail() -> String:
 	for id in passive_items:
 		var item := Items.find_passive(id)
 		var count: String = " x%d" % passive_items[id] if passive_items[id] > 1 else ""
-		lines.append("%s%s : %s" % [item["name"], count, item["desc"]])
+		lines.append("[%s] %s%s : %s" % [Items.RARITY_NAMES[item["rarity"]], item["name"], count, item["desc"]])
 	return "
 ".join(lines)

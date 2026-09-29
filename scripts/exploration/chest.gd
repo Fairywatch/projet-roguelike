@@ -43,7 +43,8 @@ func _on_body_entered(body: Node2D) -> void:
 		message.emit("Coffre scelle : gagne encore %d combat(s) sur cet etage." % missing)
 		return
 	Sound.play("chest")
-	var entry := {"id": GameState.roll_item_id(), "pos": position + DROP_OFFSET}
+	var bonus := GameState.SEALED_CHEST_LOOT_BONUS if sealed else 0.0
+	var entry := {"id": GameState.roll_item_id(bonus), "pos": position + DROP_OFFSET}
 	GameState.current_floor()["opened_chests"].append(chest_id)
 	GameState.current_floor()["ground_items"].append(entry)
 	_refresh_visual()
