@@ -22,6 +22,7 @@ const SPEEDRUN_SECONDS_PER_FLOOR := 75.0
 const GAMEPLAY_SCENES := ["Map", "CombatArena"]
 
 const MENU_PATH := "res://scenes/menu/MainMenu.tscn"
+const HUB_PATH := "res://scenes/hub/Hub.tscn"
 const SAVE_VERSION := 1
 # Etat de la partie sauvegarde entre deux sessions (voir save_run / load_run).
 const SAVED_FIELDS := [
@@ -29,7 +30,7 @@ const SAVED_FIELDS := [
 	"run_started", "passive_items", "active_item_id", "active_charges", "next_fight_bonus_hp",
 	"pending_ground_item", "tower_index", "speedrun", "time_left", "run_time", "in_combat",
 ]
-const META_FIELDS := ["coins", "unlocked_towers", "start_bag", "shop_offers", "best_times"]
+const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag", "shop_offers", "best_times"]
 
 var save_path := "user://run.save"
 var meta_path := "user://meta.save"
@@ -64,6 +65,7 @@ var pending_ground_item: String = ""
 # Meta-progression, sauvegardee a part (meta_path) : elle survit a la mort et aux nouvelles nuits.
 var coins: int = 0
 var unlocked_towers: int = 1
+var completed_towers: Array = []  # ids des nuits deja terminees au moins une fois
 var start_bag: Array = []  # passifs achetes hors partie, donnes au debut de la prochaine nuit
 var shop_offers: Array = []  # ids proposes par la boutique ; "" = deja vendu
 var best_times: Dictionary = {}  # id de tour -> meilleur temps en mode speedrun (secondes)
@@ -221,6 +223,8 @@ func _end_run() -> void:
 func complete_tower() -> void:
 	_end_run()
 	coins += tower()["reward"]
+	if tower()["id"] not in completed_towers:
+		completed_towers.append(tower()["id"])
 	menu_message = "Le reveur se reveille... %s terminee ! +%d pieces." % [tower()["name"], tower()["reward"]]
 	if speedrun:
 		var id: String = tower()["id"]

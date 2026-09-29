@@ -5,6 +5,7 @@ extends SceneTree
 
 const SCENES := [
 	"res://scenes/menu/MainMenu.tscn",
+	"res://scenes/hub/Hub.tscn",
 	"res://scenes/exploration/Map.tscn",
 	"res://scenes/combat/CombatArena.tscn",
 ]

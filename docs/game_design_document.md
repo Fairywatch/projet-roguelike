@@ -14,6 +14,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 ## 2. Univers & Narration
 
 - Le joueur explore **son propre sommeil**. Chaque **tour = une nuit différente** de sa vie de rêveur.
+- **Le jeu couvre une semaine : 7 nuits, du lundi au dimanche.** Chaque jour, la semaine du rêveur se dégrade un peu plus sur le plan des émotions (fatigue, stress, doute, frustration, épuisement, solitude, angoisse), donc chaque nuit est plus difficile que la précédente.
 - Chaque tour (nuit) a son ambiance propre : certaines nuits sont calmes, d'autres bien plus tourmentées — reflet de l'état d'esprit du personnage à ce moment de sa vie.
 - Les étages d'une même tour ne suivent **aucun ordre logique fixe** — l'ordre est aléatoire à chaque run, pour refléter la non-linéarité réelle du sommeil.
 - Deux grandes familles d'étages, alternant de façon imprévisible au sein d'une tour :
@@ -28,7 +29,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 
 ## 3. Boucle de gameplay
 
-1. Depuis le **menu principal**, le joueur choisit une nuit (tour) et, s'il le souhaite, le mode speedrun.
+1. Depuis le **menu principal**, le joueur rejoint le **hub de la semaine** et marche jusqu'à la tour de la nuit qu'il veut jouer (mode speedrun activable à l'horloge).
 2. Il explore la carte d'un étage (déplacement libre, décors interactifs, coffres, PNJ).
 3. Une **rencontre aléatoire** se déclenche (façon herbes hautes de Pokémon).
 4. Transition stylisée selon le type d'étage → le joueur est **enfermé dans une arène de combat séparée**.
@@ -67,9 +68,22 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 
 ## 6. Modes de jeu & sélection des tours
 
-- **Menu principal** : Continuer (partie sauvegardée), Nouvelle nuit (choix de la tour), Boutique, Paramètres.
-- **Déblocage progressif** : terminer une nuit débloque la suivante.
-- **Tours** : décrites comme des données (nombre d'étages, bonus de difficulté, part d'étages cauchemar, récompense en pièces), pour pouvoir s'agrandir au fil du développement. Trois nuits provisoires : *Nuit calme* (8 étages), *Nuit agitée* (10), *Nuit de terreur* (12) — **à remplacer par le vrai contenu**.
+- **Menu principal** : Continuer (partie sauvegardée), Choisir une nuit (hub), Paramètres.
+- **Hub de la semaine** : un lieu où l'on marche, comme un menu vivant. Les 7 tours y sont alignées du lundi au dimanche, de plus en plus sombres et tordues. On y trouve aussi la Marchande de lune (boutique) et l'horloge du réveil (mode speedrun). Entrer dans une autre nuit que celle en cours demande une confirmation (la partie en cours est abandonnée).
+- **Déblocage progressif** : on ne peut entrer dans une nuit qu'après avoir terminé celle de la veille. Les nuits terminées portent une étoile.
+- **Les 7 nuits** (données dans `scripts/towers.gd`) :
+
+| Nuit | Émotion | Étages | Difficulté | Cauchemars | Récompense |
+|---|---|---|---|---|---|
+| Lundi | Fatigue | 6 | +0 % | 10 % | 15 |
+| Mardi | Stress | 7 | +15 % | 20 % | 25 |
+| Mercredi | Doute | 8 | +30 % | 35 % | 35 |
+| Jeudi | Frustration | 9 | +45 % | 50 % | 50 |
+| Vendredi | Épuisement | 10 | +60 % | 65 % | 65 |
+| Samedi | Solitude | 11 | +75 % | 80 % | 80 |
+| Dimanche | Angoisse | 12 | +90 % | 95 % | 120 |
+
+- Pour l'instant, les nuits ne diffèrent que par ces paramètres et leur tour dans le hub : leur contenu propre reste à concevoir.
 - **Mode Normal** : la boucle telle que décrite dans ce document.
 - **Mode Speedrun** : un **chrono unique pour toute la nuit** (75 s par étage), qui ne tourne qu'en jeu. À zéro, **le réveil sonne** : la nuit s'arrête, sans récompense. La mort garde sa règle habituelle, et le chrono continue de tourner. Meilleur temps enregistré par nuit.
 
@@ -121,16 +135,16 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 ## 11. Questions ouvertes à trancher
 
 - **Détail du fil rouge narratif** : comment les fragments de vie du personnage sont-ils révélés concrètement (cinématiques courtes, objets/journaux à trouver en jeu, dialogues de PNJ, texte entre les tours) ? Et l'ordre des tours débloquées suit-il forcément la chronologie de vie, ou peut-il y avoir des sauts temporels ?
-- **Contenu propre à chaque nuit** : histoire, bestiaire, biomes et boss spécifiques (les trois nuits actuelles ne diffèrent que par leurs paramètres).
-- **Nombre de tours / fin du jeu global** : combien de nuits au total, que se passe-t-il quand toutes sont terminées ?
+- **Contenu propre à chaque nuit** : histoire, bestiaire, biomes et boss spécifiques (les 7 nuits ne diffèrent encore que par leurs paramètres).
+- **Fin du jeu global** : que se passe-t-il quand le dimanche est terminé (fin de la semaine, nouvelle semaine plus dure) ?
 - **Méta-progression au-delà des passifs** : capacités permanentes, cosmétiques ?
 
-*Tranché depuis la première version : mode Speedrun (chrono global, fin = réveil), déblocage (terminer la nuit précédente), taux de rencontre (4 % / 7 %), nature des achats (objets passifs).*
+*Tranché depuis la première version : 7 nuits (une semaine), hub marchable pour les choisir, mode Speedrun (chrono global, fin = réveil), déblocage (terminer la nuit de la veille), taux de rencontre (4 % / 7 %), nature des achats (objets passifs).*
 
 ---
 
 ## 12. Prochaines étapes
 
-- Concevoir les vraies nuits (tours) et leurs étages : contenu, ambiance, mobs et boss propres.
+- Donner à chaque nuit de la semaine son contenu : ambiance liée à son émotion, mobs et boss propres, particularité d'étage, fragment de récit.
 - Trancher le fil rouge narratif et sa mise en scène.
 - Équilibrage en jeu (nombre d'ennemis, prix de la boutique, chrono du speedrun, taux de rencontre).

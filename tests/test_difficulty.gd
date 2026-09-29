@@ -127,17 +127,23 @@ func _initialize() -> void:
 	gs.unlocked_towers = 1
 	gs.start_bag.clear()
 	gs.shop_offers.clear()
+	# 7 nuits, du lundi au dimanche : chaque jour est plus long, plus dur, plus cauchemardesque.
+	assert(Towers.LIST.size() == 7)
+	for day in range(1, Towers.LIST.size()):
+		for key in ["floors", "difficulty", "nightmare_chance", "reward"]:
+			assert(Towers.LIST[day][key] > Towers.LIST[day - 1][key])
 	gs.new_run(0)
-	var calm_difficulty: float = gs.difficulty()
-	gs.new_run(2)
+	var monday_difficulty: float = gs.difficulty()
+	var sunday := Towers.LIST.size() - 1
+	gs.new_run(sunday)
 	gs.floor_index = 0
 	gs.current_floor()["family"] = FloorGenerator.Family.PARADOXAL
-	assert(gs.floor_count() == Towers.LIST[2]["floors"] and gs.difficulty() > calm_difficulty)
+	assert(gs.floor_count() == Towers.LIST[sunday]["floors"] and gs.difficulty() > monday_difficulty)
 	var nightmares := 0
 	for i in 200:
 		gs.floor_data_by_index.erase(0)
 		nightmares += int(gs.current_floor()["intensity"] == FloorGenerator.Intensity.CAUCHEMAR)
-	assert(nightmares > 140)
+	assert(nightmares > 170)
 	gs.new_run(0)
 	gs.floor_index = gs.floor_count() - 1
 	gs.complete_tower()
