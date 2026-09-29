@@ -3,7 +3,7 @@
 Lancer depuis la racine du projet : python tools/gen_audio.py
 Ecrit des WAV 16 bits mono dans assets/audio/{sfx,music}/. Comme pour le pixel art, les
 fichiers peuvent ensuite etre remplaces par de vrais sons ; relancer le script les ecrase.
-Les musiques sont des boucles : leur import Godot est regle en boucle (voir LOOP_IMPORT).
+Les musiques sont des boucles : scripts/audio/sound.gd les fait boucler a la lecture.
 """
 import os
 import wave
@@ -65,6 +65,18 @@ def lowpass(x, cutoff):
     return y
 
 
+def supersaw(freq, duration, detune=0.012, voices=3):
+    """Plusieurs dents de scie legerement desaccordees : son ample (cuivres, orgue, choeur)."""
+    spread = np.linspace(-detune, detune, voices)
+    return sum(osc(freq * (1 + d), duration, "saw") for d in spread) / voices
+
+
+def boom(duration=0.9, f0=70, f1=32):
+    """Coup grave (timbale / impact) : sinus qui plonge + souffle."""
+    x = osc(glide(f0, f1, duration), duration, "sine")
+    return x * env(len(x), 0.002, curve=4) + lowpass(noise(duration), 500) * env(len(x), 0.002, curve=12) * 0.5
+
+
 def glide(f0, f1, duration):
     return np.geomspace(f0, f1, int(RATE * duration))
 
@@ -122,6 +134,20 @@ def save(x, *parts, peak=0.8):
 
 # --- Effets sonores -------------------------------------------------------------
 
+def stinger(chord, swell, tail, drop=False):
+    """Coup de theatre : souffle inverse qui monte, impact grave, accord de cuivres
+    tremolo qui s'eteint (et plonge d'un demi-ton si drop)."""
+    total = swell + tail
+    n = noise(swell)
+    rise = lowpass(n, 2500) * np.linspace(0, 1, len(n)) ** 3 * 0.8
+    brass_f = [midi(m) * (np.geomspace(1, 0.944, int(RATE * tail)) if drop else 1) for m in chord]
+    brass = sum(supersaw(f, tail) for f in brass_f) / len(chord)
+    brass = lowpass(brass, 1800) * env(int(RATE * tail), 0.01, curve=2.5)
+    brass *= 1 + 0.35 * np.sin(2 * np.pi * 11 * t_axis(tail))
+    hit = mix(boom(min(tail, 1.2)), brass * 0.9)
+    return echo(mix(at(rise, 0, total), at(hit, swell, total)), 0.22, 0.3, 2)
+
+
 def sfx():
     s = {}
     n = noise(0.12)
@@ -140,11 +166,10 @@ def sfx():
     s["pickup"] = echo(seq(*[note(midi(m), 0.07, "square", curve=3, vol=0.5) for m in (72, 76, 79, 84)]), 0.09, 0.3, 2)
     s["chest"] = echo(mix(note(midi(67), 0.4, "triangle", curve=3), at(note(midi(74), 0.5, "triangle", curve=3), 0.1, 0.6),
                           at(note(midi(79), 0.5, "sine", curve=3, vol=0.6), 0.2, 0.7)), 0.12, 0.3, 2)
-    x = osc(glide(55, 40, 1.2), 1.2, "saw")
-    s["boss"] = lowpass(x, 400) * env(len(x), 0.05, curve=2) + note(midi(49), 1.2, "square", 0.05, 2, 0.25) + note(midi(50), 1.2, "square", 0.05, 2, 0.25)
+    s["boss"] = mix(stinger(chord=(38, 41, 44, 50, 51), swell=0.7, tail=2.2, drop=True),
+                    at(echo(note(midi(62), 1.6, "sine", 0.002, 3, 0.35) + note(midi(69) * 1.003, 1.6, "sine", 0.002, 3, 0.2), 0.3, 0.4, 3), 0.7, 3.5))
     s["portal"] = echo(note(glide(200, 800, 0.5), 0.5, "sine", 0.05, 2), 0.1, 0.4, 3)
-    x = osc(glide(300, 900, 0.45), 0.45, "triangle")
-    s["encounter"] = x * env(len(x), 0.02, curve=2) * (1 + 0.5 * np.sin(2 * np.pi * 18 * t_axis(0.45)))
+    s["encounter"] = stinger(chord=(50, 53, 56, 62), swell=0.45, tail=1.3)
     s["ui_move"] = note(midi(84), 0.04, "square", curve=4, vol=0.3)
     s["ui_select"] = seq(note(midi(79), 0.05, "square", curve=3, vol=0.4), note(midi(86), 0.08, "square", curve=3, vol=0.4))
     s["active"] = echo(mix(note(midi(81), 0.6, "sine", curve=3), note(midi(88), 0.6, "sine", curve=3, vol=0.5)), 0.15, 0.35, 3)
@@ -198,32 +223,71 @@ def music_profond():
     return echo(out, 0.45, 0.35, 2)[: len(out)]
 
 
-def music_combat(bpm=132, root=57, minor=True, total_bars=8, heavy=False):
-    """Combat : basse pulsee, arpege rapide. heavy=True pour les boss."""
+def music_combat(bpm=132, root=57, total_bars=8):
+    """Combat : basse pulsee, arpege rapide."""
     beat = 60 / bpm
     bar = beat * 4
     total = bar * total_bars
     out = np.zeros(int(RATE * total))
-    third = 3 if minor else 4
-    progression = [0, 0, -4, -2, 0, 0, -5, -2] if not heavy else [0, 1, 0, -2, 0, 1, 3, -1]
+    third = 3
+    progression = [0, 0, -4, -2, 0, 0, -5, -2]
     for b in range(total_bars):
         r = root + progression[b % len(progression)]
         start = b * bar
         for k in range(8):
-            out += at(note(midi(r - 12), beat / 2 * 0.9, "square", curve=5, vol=0.35 if not heavy else 0.45), start + k * beat / 2, total)
+            out += at(note(midi(r - 12), beat / 2 * 0.9, "square", curve=5, vol=0.35), start + k * beat / 2, total)
         arp = [r, r + third, r + 7, r + 12]
         for k in range(16):
             out += at(note(midi(arp[k % 4] + 12), beat / 4 * 0.9, "triangle", curve=4, vol=0.18), start + k * beat / 4, total)
         for k in range(4):
             kick = osc(glide(120, 45, 0.12), 0.12, "sine") * env(int(RATE * 0.12), 0.001, curve=5) * 0.6
             out += at(kick, start + k * beat, total)
-            if heavy or k % 2 == 1:
+            if k % 2 == 1:
                 hat = lowpass(noise(0.05), 6000) * env(int(RATE * 0.05), curve=8) * 0.15
                 out += at(hat, start + k * beat + beat / 2, total)
     return out
 
 
-LOOP_IMPORT = ["reve", "profond", "combat", "boss"]
+def music_boss():
+    """Boss : piece a part, lente et solennelle. Ostinato grave chromatique, timbales,
+    choeur/orgue sur Rem - Sib - Solm - La (mineur harmonique), theme lent au-dessus."""
+    bpm = 96
+    beat = 60 / bpm
+    bar = beat * 4
+    chords = [(50, 53, 57), (46, 50, 53), (43, 46, 50), (45, 49, 52)]  # Rem, Sib, Solm, La
+    melody = [  # (demi-temps de depart, note midi, duree en temps), sur 2 mesures
+        (0, 74, 1.5), (3, 77, 0.5), (4, 76, 1), (6, 74, 1), (8, 73, 3), (14, 69, 1),
+    ]
+    bars = 8
+    total = bar * bars
+    out = np.zeros(int(RATE * total))
+    for b in range(bars):
+        root, third, fifth = chords[b % len(chords)]
+        start = b * bar
+        # Choeur / orgue : accord tenu, ample.
+        pad = sum(supersaw(midi(m), bar, 0.008) for m in (root, third, fifth, root + 12)) / 4
+        out += at(lowpass(pad, 1100) * env(int(RATE * bar), bar * 0.25, curve=0.8) * 0.45, start, total)
+        # Ostinato de basse chromatique en croches.
+        for k, step in enumerate((0, 0, 1, 0, -1, 0, 1, 0)):
+            out += at(lowpass(note(midi(root - 12 + step), beat / 2 * 0.95, "saw", curve=3, vol=0.5), 600), start + k * beat / 2, total)
+        # Timbales sur les temps 1 et 3, roulement en fin de phrase.
+        for k in (0, 2):
+            out += at(boom(0.5, 90, 45) * 0.7, start + k * beat, total)
+        if b % 4 == 3:
+            for k in range(8):
+                out += at(boom(0.15, 110, 70) * (0.25 + 0.05 * k), start + 2 * beat + k * beat / 4, total)
+        # Cloche en debut de mesure paire.
+        if b % 2 == 0:
+            out += at(note(midi(root + 24), 1.5, "sine", 0.002, 3, 0.18), start, total)
+    # Theme au-dessus (carre avec vibrato), une phrase sur deux mesures, jouee a partir de la mesure 3.
+    for phrase in (2, 6):
+        for half, m, dur in melody:
+            t0 = phrase * bar + half * beat / 2
+            d = dur * beat
+            vib = midi(m) * (1 + 0.006 * np.sin(2 * np.pi * 5.5 * t_axis(d)))
+            out += at(lowpass(note(vib, d, "square", 0.02, 1.5, 0.22), 2500), t0, total)
+    return echo(out, beat * 0.75, 0.25, 2)[: len(out)]
+
 
 
 def main():
@@ -231,7 +295,7 @@ def main():
     save(music_reve(), "music", "reve.wav", peak=0.6)
     save(music_profond(), "music", "profond.wav", peak=0.6)
     save(music_combat(), "music", "combat.wav", peak=0.6)
-    save(music_combat(bpm=146, root=52, heavy=True), "music", "boss.wav", peak=0.6)
+    save(music_boss(), "music", "boss.wav", peak=0.6)
 
 
 if __name__ == "__main__":
