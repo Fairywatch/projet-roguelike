@@ -27,7 +27,7 @@ static var values := {
 	"ambient_particles": true,
 	"fullscreen": false,
 	"music_volume": 0.7,
-	"sfx_volume": 0.6,
+	"sfx_volume": 0.5,
 }
 
 static func enabled(option: String) -> bool:

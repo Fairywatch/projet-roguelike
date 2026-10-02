@@ -148,59 +148,88 @@ def stinger(chord, swell, tail, drop=False):
     return echo(mix(at(rise, 0, total), at(hit, swell, total)), 0.22, 0.3, 2)
 
 
-# Niveau de crete de chaque effet : les sons entendus en permanence (coups, telegraphes,
-# dash, menu) restent tres discrets ; seuls les moments importants (boss, rencontre) ressortent.
+# Style des effets : organique et etouffe (facon The Binding of Isaac) plutot que des "bips"
+# synthetiques. Des "plop", "splat" et coups sourds, tres courts, filtres sous ~1500 Hz.
+# Les evenements tres frequents (telegraphes, survol des menus, decors) n'ont pas de son.
 SFX_PEAKS = {
-    "slash": 0.2, "hit": 0.3, "crit": 0.35, "hurt": 0.35, "dash": 0.15, "telegraph": 0.12,
-    "mob_die": 0.25, "shoot": 0.12, "pickup": 0.3, "chest": 0.35, "boss": 0.5, "portal": 0.3,
-    "encounter": 0.45, "ui_move": 0.12, "ui_select": 0.2, "active": 0.3, "heal": 0.28, "dodge": 0.18,
-    "shield": 0.25, "decor": 0.12, "sparkle": 0.2, "pop": 0.15, "victory": 0.35, "death": 0.35,
-    "quest": 0.28, "coin": 0.25,
+    "slash": 0.12, "hit": 0.22, "crit": 0.26, "hurt": 0.28, "dash": 0.08, "mob_die": 0.22,
+    "shoot": 0.1, "pickup": 0.22, "chest": 0.25, "boss": 0.38, "portal": 0.2, "encounter": 0.32,
+    "ui_select": 0.12, "active": 0.22, "heal": 0.2, "dodge": 0.1, "shield": 0.18, "sparkle": 0.15,
+    "pop": 0.14, "victory": 0.24, "death": 0.28, "quest": 0.2, "coin": 0.18,
 }
 
 
-def soft(x, cutoff=2500):
-    """Retire les aigus agressifs (les carres et le bruit blanc fatiguent l'oreille)."""
-    return lowpass(x, cutoff)
+def soft(x, cutoff=1500):
+    """Etouffe le son : c'est surtout l'aigu qui rend un effet agressif. Trois filtres en
+    cascade (pente raide) : un seul laisse passer trop d'aigu sur du bruit."""
+    return lowpass(lowpass(lowpass(x, cutoff), cutoff), cutoff)
+
+
+def thud(duration=0.08, f0=120, f1=55, body=0.6):
+    """Coup sourd : un sinus grave qui plonge, avec un peu de souffle etouffe."""
+    x = osc(glide(f0, f1, duration), duration, "sine") * env(int(RATE * duration), 0.002, curve=6)
+    return x + soft(noise(duration), 1400) * env(int(RATE * duration), 0.001, curve=14) * body
+
+
+def splat(duration=0.16, cutoff=900):
+    """Eclaboussure organique : bruit filtre dont le filtre se referme, sur un coup sourd."""
+    n = noise(duration)
+    closing = soft(n, cutoff) * env(len(n), 0.002, curve=7)
+    return mix(closing, thud(duration * 0.7, 100, 45) * 0.8)
+
+
+def plop(f0=420, f1=180, duration=0.06):
+    """Goutte / bulle : sinus qui descend vite (tir des larmes d'Isaac)."""
+    return osc(glide(f0, f1, duration), duration, "sine") * env(int(RATE * duration), 0.003, curve=5)
+
+
+def chime(midi_note, duration=0.35, vol=1.0):
+    """Clochette douce : fondamentale et une harmonique discrete, sans attaque seche."""
+    t = t_axis(duration)
+    f = midi(midi_note)
+    x = np.sin(2 * np.pi * f * t) + 0.25 * np.sin(2 * np.pi * 2.01 * f * t)
+    return x * env(len(t), 0.006, curve=5) * vol
 
 
 def sfx():
     s = {}
-    n = noise(0.1)
-    s["slash"] = soft(n, 1200) * np.sin(np.linspace(0, np.pi, len(n))) ** 2
-    x = osc(glide(140, 70, 0.1), 0.1, "sine")
-    s["hit"] = x * env(len(x), 0.002, curve=5) + soft(noise(0.1), 500) * env(len(x), curve=12) * 0.4
-    s["crit"] = mix(s["hit"], note(midi(84), 0.18, "sine", curve=5, vol=0.4))
-    x = osc(glide(380, 190, 0.2), 0.2, "triangle")
-    s["hurt"] = soft(x * env(len(x), curve=3) * (1 + 0.2 * np.sin(2 * np.pi * 20 * t_axis(0.2))), 1800)
-    n = noise(0.15)
-    s["dash"] = soft(n, 900) * np.sin(np.linspace(0, np.pi, len(n)))
-    s["telegraph"] = note(glide(660, 760, 0.07), 0.07, "sine", 0.005, 3)
-    x = osc(glide(480, 150, 0.2), 0.2, "triangle")
-    s["mob_die"] = soft(x * env(len(x), curve=4) + soft(noise(0.2), 600) * env(len(x), curve=8) * 0.4, 1600)
-    s["shoot"] = note(glide(700, 450, 0.06), 0.06, "sine", curve=3)
-    s["pickup"] = echo(seq(*[note(midi(m), 0.07, "triangle", curve=3, vol=0.5) for m in (72, 76, 79, 84)]), 0.09, 0.25, 2)
-    s["chest"] = echo(mix(note(midi(67), 0.4, "triangle", curve=3), at(note(midi(74), 0.45, "sine", curve=3), 0.1, 0.55),
-                          at(note(midi(79), 0.45, "sine", curve=3, vol=0.6), 0.2, 0.65)), 0.12, 0.25, 2)
+    n = noise(0.07)
+    s["slash"] = soft(n, 700) * np.sin(np.linspace(0, np.pi, len(n))) ** 2
+    s["hit"] = thud(0.09, 200, 90, 0.9)
+    s["crit"] = mix(thud(0.12, 150, 50, 0.9), chime(72, 0.15, 0.25))
+    x = osc(glide(210, 140, 0.16), 0.16, "saw")
+    s["hurt"] = soft(x * env(len(x), 0.004, curve=4) * (1 + 0.15 * np.sin(2 * np.pi * 9 * t_axis(0.16))), 650)
+    n = noise(0.12)
+    s["dash"] = soft(n, 500) * np.sin(np.linspace(0, np.pi, len(n)))
+    s["mob_die"] = splat(0.2, 1100)
+    s["shoot"] = plop(380, 170, 0.05)
+    s["pickup"] = mix(plop(300, 520, 0.05), at(chime(76, 0.3, 0.5), 0.04, 0.34))
+    s["chest"] = mix(thud(0.12, 90, 50, 1.0), at(chime(72, 0.4, 0.4), 0.08, 0.48), at(chime(79, 0.4, 0.3), 0.16, 0.56))
     s["boss"] = soft(mix(stinger(chord=(38, 41, 44, 50, 51), swell=0.7, tail=2.2, drop=True),
-                         at(echo(note(midi(62), 1.6, "sine", 0.002, 3, 0.35) + note(midi(69) * 1.003, 1.6, "sine", 0.002, 3, 0.2), 0.3, 0.4, 3), 0.7, 3.5)), 2200)
-    s["portal"] = echo(note(glide(220, 660, 0.45), 0.45, "sine", 0.05, 2.5), 0.1, 0.3, 2)
-    s["encounter"] = soft(stinger(chord=(50, 53, 56, 62), swell=0.45, tail=1.3), 2200)
-    s["ui_move"] = note(midi(79), 0.03, "sine", curve=5)
-    s["ui_select"] = seq(note(midi(76), 0.04, "sine", curve=3), note(midi(83), 0.07, "sine", curve=3))
-    s["active"] = echo(mix(note(midi(81), 0.45, "sine", curve=3), note(midi(88), 0.45, "sine", curve=3, vol=0.4)), 0.15, 0.25, 2)
-    s["heal"] = echo(seq(note(midi(76), 0.08, "sine", vol=0.6), note(midi(83), 0.16, "sine", vol=0.6)), 0.1, 0.25, 2)
-    s["dodge"] = note(glide(900, 1300, 0.07), 0.07, "sine", curve=3)
-    s["shield"] = echo(note(midi(86), 0.25, "triangle", curve=4), 0.07, 0.3, 2)
-    s["decor"] = note(midi(76) * (1 + 0.02 * np.sin(2 * np.pi * 8 * t_axis(0.12))), 0.12, "sine", curve=4)
-    s["sparkle"] = echo(seq(*[note(midi(m), 0.05, "sine", vol=0.4) for m in (79, 83, 86, 91)]), 0.06, 0.3, 2)
-    s["pop"] = note(glide(1000, 500, 0.05), 0.05, "sine", curve=5)
-    s["victory"] = echo(seq(*[note(midi(m), d, "triangle", curve=2.5, vol=0.5) for m, d in ((72, 0.1), (76, 0.1), (79, 0.1), (84, 0.35))]), 0.12, 0.2, 2)
-    s["death"] = echo(seq(*[note(midi(m), 0.25, "triangle", curve=2) for m in (67, 63, 60, 55)]), 0.2, 0.25, 2)
-    s["quest"] = echo(seq(note(midi(74), 0.12, "triangle"), note(midi(79), 0.2, "triangle")), 0.1, 0.25, 2)
-    s["coin"] = seq(note(midi(84), 0.05, "sine", vol=0.5), note(midi(91), 0.14, "sine", curve=4, vol=0.5))
+                         at(echo(chime(62, 1.6, 0.35) + chime(69, 1.6, 0.2), 0.3, 0.35, 2), 0.7, 3.5)), 1300)
+    n = noise(0.4)
+    s["portal"] = soft(n, 600) * np.sin(np.linspace(0, np.pi, len(n))) + plop(160, 320, 0.4) * 0.4
+    s["encounter"] = soft(stinger(chord=(50, 53, 56, 62), swell=0.45, tail=1.3), 1300)
+    s["ui_select"] = mix(thud(0.04, 260, 180, 0.3), chime(79, 0.08, 0.3))
+    s["active"] = mix(thud(0.1, 110, 60, 0.4), at(echo(chime(74, 0.4, 0.6), 0.12, 0.25, 2), 0.03, 0.8))
+    s["heal"] = echo(seq(chime(72, 0.12, 0.6), chime(76, 0.22, 0.6)), 0.1, 0.2, 2)
+    n = noise(0.08)
+    s["dodge"] = soft(n, 1200) * np.sin(np.linspace(0, np.pi, len(n)))
+    s["shield"] = mix(thud(0.08, 180, 120, 0.5), chime(84, 0.2, 0.35))
+    s["sparkle"] = echo(seq(*[chime(m, 0.08, 0.4) for m in (76, 79, 83)]), 0.07, 0.2, 2)
+    s["pop"] = plop(600, 250, 0.05)
+    s["victory"] = echo(seq(chime(67, 0.12, 0.6), chime(72, 0.12, 0.6), chime(76, 0.35, 0.6)), 0.12, 0.2, 2)
+    s["death"] = soft(echo(seq(*[note(midi(m), 0.3, "triangle", 0.01, 2) for m in (60, 56, 53, 48)]), 0.22, 0.25, 2), 900)
+    s["quest"] = echo(seq(chime(69, 0.12, 0.6), chime(74, 0.22, 0.6)), 0.1, 0.2, 2)
+    s["coin"] = seq(chime(79, 0.05, 0.5), chime(84, 0.15, 0.5))
     for name, x in s.items():
         save(x, "sfx", f"{name}.wav", peak=SFX_PEAKS[name])
+    # Sons retires (evenements trop frequents) : on supprime les anciens fichiers.
+    for name in ("telegraph", "ui_move", "decor"):
+        for ext in (".wav", ".wav.import"):
+            path = os.path.join(ROOT, "sfx", name + ext)
+            if os.path.exists(path):
+                os.remove(path)
 
 
 # --- Musiques (boucles) -------------------------------------------------------------

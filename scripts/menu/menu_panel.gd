@@ -24,7 +24,6 @@ static func style_button(button: Button, font_size: int = 12) -> void:
 		style.set_corner_radius_all(3)
 		style.set_content_margin_all(4)
 		button.add_theme_stylebox_override(state, style)
-	button.focus_entered.connect(Sound.play.bind("ui_move", -6.0, 0.0))
 
 func _ready() -> void:
 	var style := StyleBoxFlat.new()
