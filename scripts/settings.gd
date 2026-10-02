@@ -6,15 +6,18 @@ extends RefCounted
 
 const PATH := "user://settings.cfg"
 const SECTION := "options"
-# Nom de l'option -> libelle dans le menu.
+# Options on/off : nom -> libelle dans le menu.
 const LABELS := {
 	"screen_shake": "Secousses d'ecran",
 	"hitstop": "Arret sur image a l'impact",
 	"flashes": "Flashs lumineux",
 	"ambient_particles": "Particules d'ambiance",
 	"fullscreen": "Plein ecran",
-	"music": "Musique",
-	"sfx": "Effets sonores",
+}
+# Volumes de 0 (coupe) a 1 : nom -> libelle du curseur dans le menu.
+const SLIDERS := {
+	"music_volume": "Musique",
+	"sfx_volume": "Effets sonores",
 }
 
 static var values := {
@@ -23,15 +26,18 @@ static var values := {
 	"flashes": true,
 	"ambient_particles": true,
 	"fullscreen": false,
-	"music": true,
-	"sfx": true,
+	"music_volume": 0.7,
+	"sfx_volume": 0.6,
 }
 
 static func enabled(option: String) -> bool:
 	return values.get(option, true)
 
-static func set_option(option: String, on: bool) -> void:
-	values[option] = on
+static func volume(option: String) -> float:
+	return clampf(values.get(option, 1.0), 0.0, 1.0)
+
+static func set_option(option: String, value: Variant) -> void:
+	values[option] = value
 	apply()
 	var config := ConfigFile.new()
 	for key in values:
@@ -46,6 +52,7 @@ static func load_settings() -> void:
 	apply()
 
 static func apply() -> void:
+	Sound.apply_volumes()
 	Sound.refresh_music()
 	if DisplayServer.get_name() == "headless":
 		return

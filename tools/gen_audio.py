@@ -148,43 +148,59 @@ def stinger(chord, swell, tail, drop=False):
     return echo(mix(at(rise, 0, total), at(hit, swell, total)), 0.22, 0.3, 2)
 
 
+# Niveau de crete de chaque effet : les sons entendus en permanence (coups, telegraphes,
+# dash, menu) restent tres discrets ; seuls les moments importants (boss, rencontre) ressortent.
+SFX_PEAKS = {
+    "slash": 0.2, "hit": 0.3, "crit": 0.35, "hurt": 0.35, "dash": 0.15, "telegraph": 0.12,
+    "mob_die": 0.25, "shoot": 0.12, "pickup": 0.3, "chest": 0.35, "boss": 0.5, "portal": 0.3,
+    "encounter": 0.45, "ui_move": 0.12, "ui_select": 0.2, "active": 0.3, "heal": 0.28, "dodge": 0.18,
+    "shield": 0.25, "decor": 0.12, "sparkle": 0.2, "pop": 0.15, "victory": 0.35, "death": 0.35,
+    "quest": 0.28, "coin": 0.25,
+}
+
+
+def soft(x, cutoff=2500):
+    """Retire les aigus agressifs (les carres et le bruit blanc fatiguent l'oreille)."""
+    return lowpass(x, cutoff)
+
+
 def sfx():
     s = {}
-    n = noise(0.12)
-    s["slash"] = lowpass(n, 3500) * env(len(n), 0.003, curve=5) + osc(glide(900, 300, 0.12), 0.12, "sine") * env(len(n), curve=6) * 0.3
-    x = osc(glide(180, 55, 0.14), 0.14, "sine")
-    s["hit"] = x * env(len(x), 0.001, curve=4) + lowpass(noise(0.14), 1200) * env(len(x), curve=10) * 0.6
-    s["crit"] = mix(s["hit"], note(midi(88), 0.25, "square", curve=5, vol=0.35))
-    x = osc(glide(520, 140, 0.3), 0.3, "square")
-    s["hurt"] = x * env(len(x), curve=3) * (1 + 0.3 * np.sin(2 * np.pi * 30 * t_axis(0.3)))
-    n = noise(0.2)
-    s["dash"] = lowpass(n, 2000) * np.sin(np.linspace(0, np.pi, len(n))) * 0.7
-    s["telegraph"] = note(glide(600, 900, 0.1), 0.1, "square", curve=2, vol=0.5)
-    x = osc(glide(700, 90, 0.25), 0.25, "square")
-    s["mob_die"] = x * env(len(x), curve=4) * 0.6 + lowpass(noise(0.25), 800) * env(len(x), curve=8) * 0.5
-    s["shoot"] = note(glide(900, 400, 0.08), 0.08, "square", curve=3, vol=0.4)
-    s["pickup"] = echo(seq(*[note(midi(m), 0.07, "square", curve=3, vol=0.5) for m in (72, 76, 79, 84)]), 0.09, 0.3, 2)
-    s["chest"] = echo(mix(note(midi(67), 0.4, "triangle", curve=3), at(note(midi(74), 0.5, "triangle", curve=3), 0.1, 0.6),
-                          at(note(midi(79), 0.5, "sine", curve=3, vol=0.6), 0.2, 0.7)), 0.12, 0.3, 2)
-    s["boss"] = mix(stinger(chord=(38, 41, 44, 50, 51), swell=0.7, tail=2.2, drop=True),
-                    at(echo(note(midi(62), 1.6, "sine", 0.002, 3, 0.35) + note(midi(69) * 1.003, 1.6, "sine", 0.002, 3, 0.2), 0.3, 0.4, 3), 0.7, 3.5))
-    s["portal"] = echo(note(glide(200, 800, 0.5), 0.5, "sine", 0.05, 2), 0.1, 0.4, 3)
-    s["encounter"] = stinger(chord=(50, 53, 56, 62), swell=0.45, tail=1.3)
-    s["ui_move"] = note(midi(84), 0.04, "square", curve=4, vol=0.3)
-    s["ui_select"] = seq(note(midi(79), 0.05, "square", curve=3, vol=0.4), note(midi(86), 0.08, "square", curve=3, vol=0.4))
-    s["active"] = echo(mix(note(midi(81), 0.6, "sine", curve=3), note(midi(88), 0.6, "sine", curve=3, vol=0.5)), 0.15, 0.35, 3)
-    s["heal"] = echo(seq(note(midi(76), 0.1, "sine", vol=0.6), note(midi(83), 0.2, "sine", vol=0.6)), 0.1, 0.3, 2)
-    s["dodge"] = note(glide(1200, 2000, 0.08), 0.08, "sine", curve=3, vol=0.4)
-    s["shield"] = echo(note(midi(91), 0.3, "triangle", curve=4), 0.07, 0.4, 3)
-    s["decor"] = note(midi(79) * (1 + 0.02 * np.sin(2 * np.pi * 8 * t_axis(0.15))), 0.15, "sine", curve=4, vol=0.4)
-    s["sparkle"] = echo(seq(*[note(midi(m), 0.05, "sine", vol=0.4) for m in (84, 88, 91, 96)]), 0.06, 0.4, 3)
-    s["pop"] = note(glide(1400, 600, 0.05), 0.05, "sine", curve=5)
-    s["victory"] = echo(seq(*[note(midi(m), d, "square", curve=2.5, vol=0.5) for m, d in ((72, 0.1), (76, 0.1), (79, 0.1), (84, 0.35))]), 0.12, 0.25, 2)
-    s["death"] = echo(seq(*[note(midi(m), 0.25, "triangle", curve=2) for m in (67, 63, 60, 55)]), 0.2, 0.3, 2)
-    s["quest"] = echo(seq(note(midi(74), 0.12, "triangle"), note(midi(79), 0.2, "triangle")), 0.1, 0.3, 2)
-    s["coin"] = seq(note(midi(88), 0.05, "square", vol=0.4), note(midi(95), 0.15, "square", curve=4, vol=0.4))
+    n = noise(0.1)
+    s["slash"] = soft(n, 1200) * np.sin(np.linspace(0, np.pi, len(n))) ** 2
+    x = osc(glide(140, 70, 0.1), 0.1, "sine")
+    s["hit"] = x * env(len(x), 0.002, curve=5) + soft(noise(0.1), 500) * env(len(x), curve=12) * 0.4
+    s["crit"] = mix(s["hit"], note(midi(84), 0.18, "sine", curve=5, vol=0.4))
+    x = osc(glide(380, 190, 0.2), 0.2, "triangle")
+    s["hurt"] = soft(x * env(len(x), curve=3) * (1 + 0.2 * np.sin(2 * np.pi * 20 * t_axis(0.2))), 1800)
+    n = noise(0.15)
+    s["dash"] = soft(n, 900) * np.sin(np.linspace(0, np.pi, len(n)))
+    s["telegraph"] = note(glide(660, 760, 0.07), 0.07, "sine", 0.005, 3)
+    x = osc(glide(480, 150, 0.2), 0.2, "triangle")
+    s["mob_die"] = soft(x * env(len(x), curve=4) + soft(noise(0.2), 600) * env(len(x), curve=8) * 0.4, 1600)
+    s["shoot"] = note(glide(700, 450, 0.06), 0.06, "sine", curve=3)
+    s["pickup"] = echo(seq(*[note(midi(m), 0.07, "triangle", curve=3, vol=0.5) for m in (72, 76, 79, 84)]), 0.09, 0.25, 2)
+    s["chest"] = echo(mix(note(midi(67), 0.4, "triangle", curve=3), at(note(midi(74), 0.45, "sine", curve=3), 0.1, 0.55),
+                          at(note(midi(79), 0.45, "sine", curve=3, vol=0.6), 0.2, 0.65)), 0.12, 0.25, 2)
+    s["boss"] = soft(mix(stinger(chord=(38, 41, 44, 50, 51), swell=0.7, tail=2.2, drop=True),
+                         at(echo(note(midi(62), 1.6, "sine", 0.002, 3, 0.35) + note(midi(69) * 1.003, 1.6, "sine", 0.002, 3, 0.2), 0.3, 0.4, 3), 0.7, 3.5)), 2200)
+    s["portal"] = echo(note(glide(220, 660, 0.45), 0.45, "sine", 0.05, 2.5), 0.1, 0.3, 2)
+    s["encounter"] = soft(stinger(chord=(50, 53, 56, 62), swell=0.45, tail=1.3), 2200)
+    s["ui_move"] = note(midi(79), 0.03, "sine", curve=5)
+    s["ui_select"] = seq(note(midi(76), 0.04, "sine", curve=3), note(midi(83), 0.07, "sine", curve=3))
+    s["active"] = echo(mix(note(midi(81), 0.45, "sine", curve=3), note(midi(88), 0.45, "sine", curve=3, vol=0.4)), 0.15, 0.25, 2)
+    s["heal"] = echo(seq(note(midi(76), 0.08, "sine", vol=0.6), note(midi(83), 0.16, "sine", vol=0.6)), 0.1, 0.25, 2)
+    s["dodge"] = note(glide(900, 1300, 0.07), 0.07, "sine", curve=3)
+    s["shield"] = echo(note(midi(86), 0.25, "triangle", curve=4), 0.07, 0.3, 2)
+    s["decor"] = note(midi(76) * (1 + 0.02 * np.sin(2 * np.pi * 8 * t_axis(0.12))), 0.12, "sine", curve=4)
+    s["sparkle"] = echo(seq(*[note(midi(m), 0.05, "sine", vol=0.4) for m in (79, 83, 86, 91)]), 0.06, 0.3, 2)
+    s["pop"] = note(glide(1000, 500, 0.05), 0.05, "sine", curve=5)
+    s["victory"] = echo(seq(*[note(midi(m), d, "triangle", curve=2.5, vol=0.5) for m, d in ((72, 0.1), (76, 0.1), (79, 0.1), (84, 0.35))]), 0.12, 0.2, 2)
+    s["death"] = echo(seq(*[note(midi(m), 0.25, "triangle", curve=2) for m in (67, 63, 60, 55)]), 0.2, 0.25, 2)
+    s["quest"] = echo(seq(note(midi(74), 0.12, "triangle"), note(midi(79), 0.2, "triangle")), 0.1, 0.25, 2)
+    s["coin"] = seq(note(midi(84), 0.05, "sine", vol=0.5), note(midi(91), 0.14, "sine", curve=4, vol=0.5))
     for name, x in s.items():
-        save(x, "sfx", f"{name}.wav")
+        save(x, "sfx", f"{name}.wav", peak=SFX_PEAKS[name])
 
 
 # --- Musiques (boucles) -------------------------------------------------------------
