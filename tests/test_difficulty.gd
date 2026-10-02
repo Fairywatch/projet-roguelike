@@ -201,6 +201,17 @@ func _initialize() -> void:
 	Settings.load_settings()
 	assert(not Settings.enabled("screen_shake"))
 	Settings.set_option("screen_shake", saved)
+	# Volumes : un curseur regle son bus audio, et 0 le coupe.
+	var saved_sfx: float = Settings.volume("sfx_volume")
+	Settings.set_option("sfx_volume", 0.5)
+	var sfx_bus := AudioServer.get_bus_index("SFX")
+	assert(sfx_bus != -1 and is_equal_approx(AudioServer.get_bus_volume_db(sfx_bus), linear_to_db(0.5)))
+	Settings.set_option("sfx_volume", 0.0)
+	assert(AudioServer.is_bus_mute(sfx_bus))
+	Settings.values["sfx_volume"] = 1.0
+	Settings.load_settings()
+	assert(Settings.volume("sfx_volume") == 0.0)
+	Settings.set_option("sfx_volume", saved_sfx)
 
 	print("test_difficulty OK")
 	quit()
