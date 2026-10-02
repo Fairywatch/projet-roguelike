@@ -246,7 +246,6 @@ func _spawn_decor(floor_data, floor_seed: int) -> void:
 		generated_root.add_child(decor)
 
 func _on_decor_touched(decor: DreamDecor) -> void:
-	Sound.play("decor", -6.0, 0.2)
 	match decor.decor_name:
 		"etoile":
 			GameState.next_fight_bonus_hp += 1

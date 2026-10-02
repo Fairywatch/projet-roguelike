@@ -106,7 +106,6 @@ func _wait(duration: float) -> bool:
 	return id == action_id and state != State.DEAD
 
 func _start_telegraph() -> void:
-	Sound.play("telegraph", -12.0, 0.1)
 	state = State.TELEGRAPH
 	sprite.modulate = Color(1, 0.85, 0.2, 1)
 	_on_telegraph_begin()

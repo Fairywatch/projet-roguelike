@@ -184,7 +184,7 @@ func interact() -> void:
 
 func _enter_tower(i: int) -> void:
 	if tower_state(i) == "locked":
-		Sound.play("ui_move")
+		Sound.play("ui_select", -6.0)
 		return
 	if GameState.run_started and GameState.tower_index == i:
 		_go()
