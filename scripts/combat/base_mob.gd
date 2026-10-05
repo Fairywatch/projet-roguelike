@@ -147,7 +147,7 @@ func take_hit(damage: int = 1) -> void:
 	Fx.flash(sprite)
 
 func _die() -> void:
-	Sound.play("mob_die", -3.0, 0.12)
+	Sound.play("mob_die")
 	if state == State.ATTACK:
 		_on_attack_end()
 	state = State.DEAD

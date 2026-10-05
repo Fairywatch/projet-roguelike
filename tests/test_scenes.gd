@@ -15,6 +15,10 @@ func _initialize() -> void:
 	await process_frame
 	gs.save_path = "user://test_run.save"
 	gs.meta_path = "user://test_meta.save"
+	# Chaque effet du manifeste a bien tous ses fichiers de variantes.
+	for sfx_name in SfxManifest.SFX:
+		for i in SfxManifest.SFX[sfx_name]["variants"]:
+			assert(ResourceLoader.exists("%s%s_%d.ogg" % [Sound.SFX_DIR, sfx_name, i]))
 	for tower in Towers.LIST.size():
 		gs.new_run(tower)
 		for path in SCENES:
