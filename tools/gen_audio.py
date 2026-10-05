@@ -148,88 +148,132 @@ def stinger(chord, swell, tail, drop=False):
     return echo(mix(at(rise, 0, total), at(hit, swell, total)), 0.22, 0.3, 2)
 
 
-# Style des effets : organique et etouffe (facon The Binding of Isaac) plutot que des "bips"
-# synthetiques. Des "plop", "splat" et coups sourds, tres courts, filtres sous ~1500 Hz.
+# Style des effets : clair, aerien et cristallin, facon Celeste. Cloches FM sur une gamme
+# pentatonique (toujours consonantes entre elles), souffles de bruit dans un filtre qui balaie,
+# petites reverberations pour l'espace, et 44,1 kHz pour la nettete.
 # Les evenements tres frequents (telegraphes, survol des menus, decors) n'ont pas de son.
+SFX_RATE = 44100
+MUSIC_RATE = 22050
 SFX_PEAKS = {
-    "slash": 0.12, "hit": 0.22, "crit": 0.26, "hurt": 0.28, "dash": 0.08, "mob_die": 0.22,
-    "shoot": 0.1, "pickup": 0.22, "chest": 0.25, "boss": 0.38, "portal": 0.2, "encounter": 0.32,
-    "ui_select": 0.12, "active": 0.22, "heal": 0.2, "dodge": 0.1, "shield": 0.18, "sparkle": 0.15,
-    "pop": 0.14, "victory": 0.24, "death": 0.28, "quest": 0.2, "coin": 0.18,
+    "slash": 0.16, "hit": 0.24, "crit": 0.28, "hurt": 0.3, "dash": 0.16, "mob_die": 0.24,
+    "shoot": 0.12, "pickup": 0.26, "chest": 0.28, "boss": 0.4, "portal": 0.24, "encounter": 0.36,
+    "ui_select": 0.14, "active": 0.26, "heal": 0.24, "dodge": 0.14, "shield": 0.22, "sparkle": 0.2,
+    "pop": 0.16, "victory": 0.28, "death": 0.3, "quest": 0.24, "coin": 0.22,
 }
+# Pentatonique de Re majeur (D E F# A B), sur plusieurs octaves : notes "cristal".
+PENTA = [62, 64, 66, 69, 71, 74, 76, 78, 81, 83, 86, 88, 90, 93, 95]
 
 
-def soft(x, cutoff=1500):
-    """Etouffe le son : c'est surtout l'aigu qui rend un effet agressif. Trois filtres en
-    cascade (pente raide) : un seul laisse passer trop d'aigu sur du bruit."""
+def bell(midi_note, duration=0.5, vol=1.0, ratio=3.5, index=2.2):
+    """Cloche FM : l'index de modulation retombe vite, d'ou une attaque brillante puis un son
+    pur (verre, cristal). ratio non entier = timbre de cloche plutot que d'instrument a vent."""
+    t = t_axis(duration)
+    fc = midi(midi_note)
+    mod_env = np.exp(-t * 18)
+    x = np.sin(2 * np.pi * fc * t + index * mod_env * np.sin(2 * np.pi * fc * ratio * t))
+    return x * env(len(t), 0.002, curve=5) * vol
+
+
+def sweep_filter(x, f_start, f_end, q=2.0):
+    """Passe-bande (filtre a variable d'etat) dont la frequence balaie de f_start a f_end."""
+    n = len(x)
+    freqs = np.geomspace(f_start, f_end, n)
+    low = band = 0.0
+    damp = 1.0 / q
+    y = np.zeros(n)
+    for i in range(n):
+        f = 2 * np.sin(np.pi * min(freqs[i], RATE / 6) / RATE)
+        low += f * band
+        high = x[i] - low - damp * band
+        band += f * high
+        y[i] = band
+    return y
+
+
+def whoosh(duration, f_start, f_end, q=1.8):
+    """Souffle d'air : bruit dans un filtre qui balaie, enveloppe en cloche."""
+    n = noise(duration)
+    shape = np.sin(np.linspace(0, np.pi, len(n))) ** 1.5
+    return polish(sweep_filter(n, f_start, f_end, q), 3500) * shape
+
+
+def tick(freq=3000, duration=0.012, q=3.0):
+    """Petit clic net (contact, menu) : bruit tres court centre sur freq."""
+    n = noise(duration)
+    return sweep_filter(n, freq, freq, q) * env(len(n), 0.0005, curve=8)
+
+
+def reverb(x, wet=0.25, room=0.75, tail=0.6):
+    """Reverberation de Schroeder (4 filtres en peigne amortis + 2 passe-tout) : donne de l'air."""
+    dry = np.concatenate([x, np.zeros(int(RATE * tail))])
+    out = np.zeros_like(dry)
+    for delay_ms in (29.7, 37.1, 41.1, 43.7):
+        d = int(RATE * delay_ms / 1000)
+        y = np.zeros_like(dry)
+        lp = 0.0
+        for i in range(len(dry)):
+            back = y[i - d] if i >= d else 0.0
+            lp = 0.7 * back + 0.3 * lp  # amortit les aigus dans la queue
+            y[i] = dry[i] + room * lp
+        out += y
+    for delay_ms, g in ((5.0, 0.7), (1.7, 0.7)):
+        d = int(RATE * delay_ms / 1000)
+        y = np.zeros_like(out)
+        for i in range(len(out)):
+            xd = out[i - d] if i >= d else 0.0
+            yd = y[i - d] if i >= d else 0.0
+            y[i] = -g * out[i] + xd + g * yd
+        out = y
+    return dry * (1 - wet) + out / 4 * wet
+
+
+def polish(x, cutoff=5500):
+    """Arrondit le haut du spectre (trois filtres en cascade) : brillant sans sifflement."""
     return lowpass(lowpass(lowpass(x, cutoff), cutoff), cutoff)
 
 
-def thud(duration=0.08, f0=120, f1=55, body=0.6):
-    """Coup sourd : un sinus grave qui plonge, avec un peu de souffle etouffe."""
-    x = osc(glide(f0, f1, duration), duration, "sine") * env(int(RATE * duration), 0.002, curve=6)
-    return x + soft(noise(duration), 1400) * env(int(RATE * duration), 0.001, curve=14) * body
-
-
-def splat(duration=0.16, cutoff=900):
-    """Eclaboussure organique : bruit filtre dont le filtre se referme, sur un coup sourd."""
-    n = noise(duration)
-    closing = soft(n, cutoff) * env(len(n), 0.002, curve=7)
-    return mix(closing, thud(duration * 0.7, 100, 45) * 0.8)
-
-
-def plop(f0=420, f1=180, duration=0.06):
-    """Goutte / bulle : sinus qui descend vite (tir des larmes d'Isaac)."""
-    return osc(glide(f0, f1, duration), duration, "sine") * env(int(RATE * duration), 0.003, curve=5)
-
-
-def chime(midi_note, duration=0.35, vol=1.0):
-    """Clochette douce : fondamentale et une harmonique discrete, sans attaque seche."""
-    t = t_axis(duration)
-    f = midi(midi_note)
-    x = np.sin(2 * np.pi * f * t) + 0.25 * np.sin(2 * np.pi * 2.01 * f * t)
-    return x * env(len(t), 0.006, curve=5) * vol
+def arp(notes, step, duration, vol=0.6):
+    return mix(*[at(bell(m, duration, vol), k * step, step * len(notes) + duration) for k, m in enumerate(notes)])
 
 
 def sfx():
+    global RATE
+    RATE = SFX_RATE
     s = {}
-    n = noise(0.07)
-    s["slash"] = soft(n, 700) * np.sin(np.linspace(0, np.pi, len(n))) ** 2
-    s["hit"] = thud(0.09, 200, 90, 0.9)
-    s["crit"] = mix(thud(0.12, 150, 50, 0.9), chime(72, 0.15, 0.25))
-    x = osc(glide(210, 140, 0.16), 0.16, "saw")
-    s["hurt"] = soft(x * env(len(x), 0.004, curve=4) * (1 + 0.15 * np.sin(2 * np.pi * 9 * t_axis(0.16))), 650)
-    n = noise(0.12)
-    s["dash"] = soft(n, 500) * np.sin(np.linspace(0, np.pi, len(n)))
-    s["mob_die"] = splat(0.2, 1100)
-    s["shoot"] = plop(380, 170, 0.05)
-    s["pickup"] = mix(plop(300, 520, 0.05), at(chime(76, 0.3, 0.5), 0.04, 0.34))
-    s["chest"] = mix(thud(0.12, 90, 50, 1.0), at(chime(72, 0.4, 0.4), 0.08, 0.48), at(chime(79, 0.4, 0.3), 0.16, 0.56))
-    s["boss"] = soft(mix(stinger(chord=(38, 41, 44, 50, 51), swell=0.7, tail=2.2, drop=True),
-                         at(echo(chime(62, 1.6, 0.35) + chime(69, 1.6, 0.2), 0.3, 0.35, 2), 0.7, 3.5)), 1300)
-    n = noise(0.4)
-    s["portal"] = soft(n, 600) * np.sin(np.linspace(0, np.pi, len(n))) + plop(160, 320, 0.4) * 0.4
-    s["encounter"] = soft(stinger(chord=(50, 53, 56, 62), swell=0.45, tail=1.3), 1300)
-    s["ui_select"] = mix(thud(0.04, 260, 180, 0.3), chime(79, 0.08, 0.3))
-    s["active"] = mix(thud(0.1, 110, 60, 0.4), at(echo(chime(74, 0.4, 0.6), 0.12, 0.25, 2), 0.03, 0.8))
-    s["heal"] = echo(seq(chime(72, 0.12, 0.6), chime(76, 0.22, 0.6)), 0.1, 0.2, 2)
-    n = noise(0.08)
-    s["dodge"] = soft(n, 1200) * np.sin(np.linspace(0, np.pi, len(n)))
-    s["shield"] = mix(thud(0.08, 180, 120, 0.5), chime(84, 0.2, 0.35))
-    s["sparkle"] = echo(seq(*[chime(m, 0.08, 0.4) for m in (76, 79, 83)]), 0.07, 0.2, 2)
-    s["pop"] = plop(600, 250, 0.05)
-    s["victory"] = echo(seq(chime(67, 0.12, 0.6), chime(72, 0.12, 0.6), chime(76, 0.35, 0.6)), 0.12, 0.2, 2)
-    s["death"] = soft(echo(seq(*[note(midi(m), 0.3, "triangle", 0.01, 2) for m in (60, 56, 53, 48)]), 0.22, 0.25, 2), 900)
-    s["quest"] = echo(seq(chime(69, 0.12, 0.6), chime(74, 0.22, 0.6)), 0.1, 0.2, 2)
-    s["coin"] = seq(chime(79, 0.05, 0.5), chime(84, 0.15, 0.5))
+    s["slash"] = whoosh(0.1, 1800, 600, 1.5)
+    s["hit"] = mix(tick(2600, 0.014), osc(glide(240, 120, 0.05), 0.05, "sine") * env(int(RATE * 0.05), 0.001, curve=6) * 0.8)
+    s["crit"] = reverb(mix(s["hit"], at(bell(88, 0.25, 0.35), 0.005, 0.3)), 0.2, 0.6, 0.3)
+    s["hurt"] = reverb(mix(whoosh(0.12, 1800, 400, 1.2) * 0.8, osc(glide(520, 300, 0.22), 0.22, "triangle") * env(int(RATE * 0.22), 0.003, curve=4) * 0.6), 0.2, 0.6, 0.3)
+    s["dash"] = mix(whoosh(0.2, 450, 2200, 1.6), at(bell(PENTA[10], 0.2, 0.12), 0.04, 0.24))
+    s["mob_die"] = reverb(mix(whoosh(0.26, 1600, 280, 1.3), at(bell(PENTA[9], 0.25, 0.15), 0.03, 0.3)), 0.2, 0.6, 0.35)
+    s["shoot"] = whoosh(0.07, 800, 1900, 2.5)
+    s["pickup"] = reverb(arp([PENTA[5], PENTA[7], PENTA[9]], 0.06, 0.35, 0.6), 0.3, 0.75, 0.5)
+    knock = mix(tick(800, 0.025, 2.0), at(tick(700, 0.025, 2.0), 0.08, 0.11))
+    s["chest"] = reverb(mix(knock, at(arp([PENTA[3], PENTA[5], PENTA[7], PENTA[10]], 0.07, 0.5, 0.5), 0.15, 0.9)), 0.3, 0.75, 0.6)
+    s["boss"] = reverb(lowpass(mix(stinger(chord=(38, 41, 44, 50, 51), swell=0.7, tail=2.2, drop=True),
+                                   at(bell(62, 1.6, 0.4, ratio=1.4, index=3), 0.7, 3.5)), 3000), 0.3, 0.8, 1.0)
+    s["portal"] = reverb(mix(whoosh(0.5, 300, 2400, 1.4), at(arp([PENTA[2], PENTA[5], PENTA[8]], 0.08, 0.4, 0.35), 0.15, 0.9)), 0.35, 0.8, 0.7)
+    s["encounter"] = reverb(lowpass(stinger(chord=(50, 53, 56, 62), swell=0.45, tail=1.3), 3000), 0.3, 0.8, 0.8)
+    s["ui_select"] = mix(tick(3200, 0.01, 4.0), bell(PENTA[7], 0.08, 0.3))
+    s["active"] = reverb(mix(whoosh(0.18, 600, 2000), arp([PENTA[4], PENTA[6], PENTA[8], PENTA[11]], 0.04, 0.4, 0.5)), 0.3, 0.8, 0.6)
+    s["heal"] = reverb(arp([PENTA[3], PENTA[5], PENTA[8]], 0.08, 0.3, 0.5), 0.3, 0.75, 0.5)
+    s["dodge"] = whoosh(0.09, 1200, 2800, 2.0)
+    s["shield"] = reverb(mix(tick(1800, 0.015), bell(PENTA[11], 0.3, 0.5, ratio=2.76, index=2.5)), 0.3, 0.75, 0.5)
+    s["sparkle"] = reverb(arp([PENTA[12], PENTA[10], PENTA[13], PENTA[11]], 0.045, 0.25, 0.4), 0.35, 0.8, 0.6)
+    s["pop"] = mix(osc(glide(900, 1500, 0.03), 0.03, "sine") * env(int(RATE * 0.03), 0.001, curve=5), tick(2200, 0.01))
+    s["victory"] = reverb(arp([PENTA[5], PENTA[7], PENTA[8], PENTA[10]], 0.09, 0.6, 0.55), 0.3, 0.8, 0.8)
+    s["death"] = reverb(arp([PENTA[8], PENTA[6], PENTA[4], PENTA[1]], 0.18, 0.7, 0.55), 0.4, 0.85, 1.2)
+    s["quest"] = reverb(arp([PENTA[4], PENTA[7]], 0.1, 0.4, 0.55), 0.3, 0.75, 0.5)
+    s["coin"] = reverb(arp([PENTA[9], PENTA[12]], 0.05, 0.25, 0.5), 0.25, 0.7, 0.4)
     for name, x in s.items():
-        save(x, "sfx", f"{name}.wav", peak=SFX_PEAKS[name])
+        save(polish(x), "sfx", f"{name}.wav", peak=SFX_PEAKS[name])
     # Sons retires (evenements trop frequents) : on supprime les anciens fichiers.
     for name in ("telegraph", "ui_move", "decor"):
         for ext in (".wav", ".wav.import"):
             path = os.path.join(ROOT, "sfx", name + ext)
             if os.path.exists(path):
                 os.remove(path)
+    RATE = MUSIC_RATE
 
 
 # --- Musiques (boucles) -------------------------------------------------------------
@@ -336,7 +380,10 @@ def music_boss():
 
 
 def main():
+    global rng
     sfx()
+    # Graine propre aux musiques : retoucher les effets ne doit plus modifier leurs fichiers.
+    rng = np.random.default_rng(11)
     save(music_reve(), "music", "reve.wav", peak=0.6)
     save(music_profond(), "music", "profond.wav", peak=0.6)
     save(music_combat(), "music", "combat.wav", peak=0.6)
