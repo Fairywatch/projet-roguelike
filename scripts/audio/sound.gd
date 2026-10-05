@@ -2,7 +2,7 @@ class_name Sound
 extends RefCounted
 
 # Effets sonores (enregistrements CC0 importes par tools/import_sfx.py, voir SfxManifest) et
-# musique (tools/gen_audio.py). Classe statique : les lecteurs sont ajoutes a la racine de
+# musiques (morceaux CC0 telecharges par tools/import_music.py). Classe statique : les lecteurs sont ajoutes a la racine de
 # l'arbre, donc la musique survit aux changements de scene.
 
 const SFX_DIR := "res://assets/audio/sfx/"
@@ -57,10 +57,10 @@ static func music(music_name: String) -> void:
 	if _music_player and is_instance_valid(_music_player) and _music_player.get_meta("track", "") == music_name:
 		return
 	stop_music()
-	var stream: AudioStreamWAV = load(MUSIC_DIR + music_name + ".wav")
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	stream.loop_begin = 0
-	stream.loop_end = int(stream.get_length() * stream.mix_rate)
+	var stream := _music_stream(music_name)
+	if stream == null:
+		push_warning("Musique introuvable : %s" % music_name)
+		return
 	_music_player = AudioStreamPlayer.new()
 	_music_player.bus = "Music"
 	_music_player.stream = stream
@@ -70,6 +70,22 @@ static func music(music_name: String) -> void:
 	_music_player.autoplay = true
 	tree.root.add_child.call_deferred(_music_player)
 	tree.create_tween().tween_property(_music_player, "volume_db", MUSIC_DB, FADE)
+
+# Charge assets/audio/music/<nom>.ogg|.mp3|.wav et le met en boucle.
+static func _music_stream(music_name: String) -> AudioStream:
+	for ext in [".ogg", ".mp3", ".wav"]:
+		var path: String = MUSIC_DIR + music_name + ext
+		if not ResourceLoader.exists(path):
+			continue
+		var stream: AudioStream = load(path)
+		if stream is AudioStreamWAV:
+			stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			stream.loop_begin = 0
+			stream.loop_end = int(stream.get_length() * stream.mix_rate)
+		else:
+			stream.loop = true  # AudioStreamOggVorbis, AudioStreamMP3
+		return stream
+	return null
 
 static func stop_music() -> void:
 	if _music_player and is_instance_valid(_music_player):
