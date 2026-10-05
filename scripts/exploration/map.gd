@@ -275,7 +275,7 @@ func _on_decor_touched(decor: DreamDecor) -> void:
 			_consume(decor, Color(0.75, 0.55, 1), text)
 
 func _consume(decor: DreamDecor, color: Color, text: String) -> void:
-	Sound.play("pop" if decor.decor_name == "bulle" else "sparkle", -3.0)
+	Sound.play("pop" if decor.decor_name == "bulle" else "sparkle")
 	_mark_used(decor)
 	decor.vanish(color)
 	if text != "":

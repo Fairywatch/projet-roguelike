@@ -184,7 +184,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		_use_active_item()
 
 func _start_dash() -> void:
-	Sound.play("dash", -4.0)
+	Sound.play("dash")
 	dashing = true
 	invincible = true
 	dash_timer = dash_duration
@@ -201,7 +201,7 @@ func _try_attack() -> void:
 	if attack_cooldown_timer > 0.0:
 		return
 	attack_cooldown_timer = attack_cooldown_effective
-	Sound.play("slash", -6.0, 0.12)
+	Sound.play("slash")
 	slash_timer = ATTACK_DURATION
 	attack_hitbox.position = facing * reach
 	attack_shape.disabled = false
@@ -280,7 +280,7 @@ func _on_attack_area_entered(area: Area2D) -> void:
 	if area.has_method("register_hit"):
 		var crit := randf() < crit_chance
 		area.register_hit(attack_damage * (2 if crit else 1))
-		Sound.play("crit" if crit else "hit", 0.0, 0.1)
+		Sound.play("crit" if crit else "hit")
 		shake = max(shake, 5.0 if crit else 2.5)
 		Fx.hitstop(get_tree(), 0.08 if crit else 0.04)
 		var target := area.get_parent()

@@ -1,8 +1,9 @@
 class_name Sound
 extends RefCounted
 
-# Effets sonores et musique (fichiers de tools/gen_audio.py). Classe statique : les lecteurs
-# sont ajoutes a la racine de l'arbre, donc la musique survit aux changements de scene.
+# Effets sonores (enregistrements CC0 importes par tools/import_sfx.py, voir SfxManifest) et
+# musique (tools/gen_audio.py). Classe statique : les lecteurs sont ajoutes a la racine de
+# l'arbre, donc la musique survit aux changements de scene.
 
 const SFX_DIR := "res://assets/audio/sfx/"
 const MUSIC_DIR := "res://assets/audio/music/"
@@ -20,9 +21,14 @@ static var _last_played := {}
 static func _tree() -> SceneTree:
 	return Engine.get_main_loop() as SceneTree
 
+# Joue une variante au hasard de l'effet (hauteur et volume de base dans SfxManifest).
 static func play(sfx_name: String, volume_db: float = 0.0, pitch_jitter: float = 0.06) -> void:
 	var tree := _tree()
 	if tree == null or Settings.volume("sfx_volume") <= 0.0:
+		return
+	var entry: Dictionary = SfxManifest.SFX.get(sfx_name, {})
+	if entry.is_empty():
+		push_warning("Effet sonore inconnu : %s" % sfx_name)
 		return
 	var now := Time.get_ticks_msec() / 1000.0
 	if now - _last_played.get(sfx_name, -1.0) < MIN_INTERVAL:
@@ -30,9 +36,9 @@ static func play(sfx_name: String, volume_db: float = 0.0, pitch_jitter: float =
 	_last_played[sfx_name] = now
 	var player := AudioStreamPlayer.new()
 	player.bus = "SFX"
-	player.stream = load(SFX_DIR + sfx_name + ".wav")
-	player.volume_db = volume_db
-	player.pitch_scale = 1.0 + randf_range(-pitch_jitter, pitch_jitter)
+	player.stream = load("%s%s_%d.ogg" % [SFX_DIR, sfx_name, randi() % entry["variants"]])
+	player.volume_db = entry["db"] + volume_db
+	player.pitch_scale = entry["pitch"] * (1.0 + randf_range(-pitch_jitter, pitch_jitter))
 	player.process_mode = Node.PROCESS_MODE_ALWAYS
 	player.autoplay = true
 	player.finished.connect(player.queue_free)

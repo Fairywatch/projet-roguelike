@@ -1,8 +1,8 @@
-"""Synthetise les effets sonores et les musiques du jeu (style chiptune reveur).
+"""Synthetise les musiques du jeu (boucles, style chiptune reveur).
 
 Lancer depuis la racine du projet : python tools/gen_audio.py
-Ecrit des WAV 16 bits mono dans assets/audio/{sfx,music}/. Comme pour le pixel art, les
-fichiers peuvent ensuite etre remplaces par de vrais sons ; relancer le script les ecrase.
+Ecrit des WAV 16 bits mono dans assets/audio/music/ ; relancer le script les ecrase.
+Les effets sonores sont des enregistrements CC0 importes par tools/import_sfx.py.
 Les musiques sont des boucles : scripts/audio/sound.gd les fait boucler a la lecture.
 """
 import os
@@ -132,150 +132,6 @@ def save(x, *parts, peak=0.8):
         w.writeframes(data.tobytes())
 
 
-# --- Effets sonores -------------------------------------------------------------
-
-def stinger(chord, swell, tail, drop=False):
-    """Coup de theatre : souffle inverse qui monte, impact grave, accord de cuivres
-    tremolo qui s'eteint (et plonge d'un demi-ton si drop)."""
-    total = swell + tail
-    n = noise(swell)
-    rise = lowpass(n, 2500) * np.linspace(0, 1, len(n)) ** 3 * 0.8
-    brass_f = [midi(m) * (np.geomspace(1, 0.944, int(RATE * tail)) if drop else 1) for m in chord]
-    brass = sum(supersaw(f, tail) for f in brass_f) / len(chord)
-    brass = lowpass(brass, 1800) * env(int(RATE * tail), 0.01, curve=2.5)
-    brass *= 1 + 0.35 * np.sin(2 * np.pi * 11 * t_axis(tail))
-    hit = mix(boom(min(tail, 1.2)), brass * 0.9)
-    return echo(mix(at(rise, 0, total), at(hit, swell, total)), 0.22, 0.3, 2)
-
-
-# Style des effets : clair, aerien et cristallin, facon Celeste. Cloches FM sur une gamme
-# pentatonique (toujours consonantes entre elles), souffles de bruit dans un filtre qui balaie,
-# petites reverberations pour l'espace, et 44,1 kHz pour la nettete.
-# Les evenements tres frequents (telegraphes, survol des menus, decors) n'ont pas de son.
-SFX_RATE = 44100
-MUSIC_RATE = 22050
-SFX_PEAKS = {
-    "slash": 0.16, "hit": 0.24, "crit": 0.28, "hurt": 0.3, "dash": 0.16, "mob_die": 0.24,
-    "shoot": 0.12, "pickup": 0.26, "chest": 0.28, "boss": 0.4, "portal": 0.24, "encounter": 0.36,
-    "ui_select": 0.14, "active": 0.26, "heal": 0.24, "dodge": 0.14, "shield": 0.22, "sparkle": 0.2,
-    "pop": 0.16, "victory": 0.28, "death": 0.3, "quest": 0.24, "coin": 0.22,
-}
-# Pentatonique de Re majeur (D E F# A B), sur plusieurs octaves : notes "cristal".
-PENTA = [62, 64, 66, 69, 71, 74, 76, 78, 81, 83, 86, 88, 90, 93, 95]
-
-
-def bell(midi_note, duration=0.5, vol=1.0, ratio=3.5, index=2.2):
-    """Cloche FM : l'index de modulation retombe vite, d'ou une attaque brillante puis un son
-    pur (verre, cristal). ratio non entier = timbre de cloche plutot que d'instrument a vent."""
-    t = t_axis(duration)
-    fc = midi(midi_note)
-    mod_env = np.exp(-t * 18)
-    x = np.sin(2 * np.pi * fc * t + index * mod_env * np.sin(2 * np.pi * fc * ratio * t))
-    return x * env(len(t), 0.002, curve=5) * vol
-
-
-def sweep_filter(x, f_start, f_end, q=2.0):
-    """Passe-bande (filtre a variable d'etat) dont la frequence balaie de f_start a f_end."""
-    n = len(x)
-    freqs = np.geomspace(f_start, f_end, n)
-    low = band = 0.0
-    damp = 1.0 / q
-    y = np.zeros(n)
-    for i in range(n):
-        f = 2 * np.sin(np.pi * min(freqs[i], RATE / 6) / RATE)
-        low += f * band
-        high = x[i] - low - damp * band
-        band += f * high
-        y[i] = band
-    return y
-
-
-def whoosh(duration, f_start, f_end, q=1.8):
-    """Souffle d'air : bruit dans un filtre qui balaie, enveloppe en cloche."""
-    n = noise(duration)
-    shape = np.sin(np.linspace(0, np.pi, len(n))) ** 1.5
-    return polish(sweep_filter(n, f_start, f_end, q), 3500) * shape
-
-
-def tick(freq=3000, duration=0.012, q=3.0):
-    """Petit clic net (contact, menu) : bruit tres court centre sur freq."""
-    n = noise(duration)
-    return sweep_filter(n, freq, freq, q) * env(len(n), 0.0005, curve=8)
-
-
-def reverb(x, wet=0.25, room=0.75, tail=0.6):
-    """Reverberation de Schroeder (4 filtres en peigne amortis + 2 passe-tout) : donne de l'air."""
-    dry = np.concatenate([x, np.zeros(int(RATE * tail))])
-    out = np.zeros_like(dry)
-    for delay_ms in (29.7, 37.1, 41.1, 43.7):
-        d = int(RATE * delay_ms / 1000)
-        y = np.zeros_like(dry)
-        lp = 0.0
-        for i in range(len(dry)):
-            back = y[i - d] if i >= d else 0.0
-            lp = 0.7 * back + 0.3 * lp  # amortit les aigus dans la queue
-            y[i] = dry[i] + room * lp
-        out += y
-    for delay_ms, g in ((5.0, 0.7), (1.7, 0.7)):
-        d = int(RATE * delay_ms / 1000)
-        y = np.zeros_like(out)
-        for i in range(len(out)):
-            xd = out[i - d] if i >= d else 0.0
-            yd = y[i - d] if i >= d else 0.0
-            y[i] = -g * out[i] + xd + g * yd
-        out = y
-    return dry * (1 - wet) + out / 4 * wet
-
-
-def polish(x, cutoff=5500):
-    """Arrondit le haut du spectre (trois filtres en cascade) : brillant sans sifflement."""
-    return lowpass(lowpass(lowpass(x, cutoff), cutoff), cutoff)
-
-
-def arp(notes, step, duration, vol=0.6):
-    return mix(*[at(bell(m, duration, vol), k * step, step * len(notes) + duration) for k, m in enumerate(notes)])
-
-
-def sfx():
-    global RATE
-    RATE = SFX_RATE
-    s = {}
-    s["slash"] = whoosh(0.1, 1800, 600, 1.5)
-    s["hit"] = mix(tick(2600, 0.014), osc(glide(240, 120, 0.05), 0.05, "sine") * env(int(RATE * 0.05), 0.001, curve=6) * 0.8)
-    s["crit"] = reverb(mix(s["hit"], at(bell(88, 0.25, 0.35), 0.005, 0.3)), 0.2, 0.6, 0.3)
-    s["hurt"] = reverb(mix(whoosh(0.12, 1800, 400, 1.2) * 0.8, osc(glide(520, 300, 0.22), 0.22, "triangle") * env(int(RATE * 0.22), 0.003, curve=4) * 0.6), 0.2, 0.6, 0.3)
-    s["dash"] = mix(whoosh(0.2, 450, 2200, 1.6), at(bell(PENTA[10], 0.2, 0.12), 0.04, 0.24))
-    s["mob_die"] = reverb(mix(whoosh(0.26, 1600, 280, 1.3), at(bell(PENTA[9], 0.25, 0.15), 0.03, 0.3)), 0.2, 0.6, 0.35)
-    s["shoot"] = whoosh(0.07, 800, 1900, 2.5)
-    s["pickup"] = reverb(arp([PENTA[5], PENTA[7], PENTA[9]], 0.06, 0.35, 0.6), 0.3, 0.75, 0.5)
-    knock = mix(tick(800, 0.025, 2.0), at(tick(700, 0.025, 2.0), 0.08, 0.11))
-    s["chest"] = reverb(mix(knock, at(arp([PENTA[3], PENTA[5], PENTA[7], PENTA[10]], 0.07, 0.5, 0.5), 0.15, 0.9)), 0.3, 0.75, 0.6)
-    s["boss"] = reverb(lowpass(mix(stinger(chord=(38, 41, 44, 50, 51), swell=0.7, tail=2.2, drop=True),
-                                   at(bell(62, 1.6, 0.4, ratio=1.4, index=3), 0.7, 3.5)), 3000), 0.3, 0.8, 1.0)
-    s["portal"] = reverb(mix(whoosh(0.5, 300, 2400, 1.4), at(arp([PENTA[2], PENTA[5], PENTA[8]], 0.08, 0.4, 0.35), 0.15, 0.9)), 0.35, 0.8, 0.7)
-    s["encounter"] = reverb(lowpass(stinger(chord=(50, 53, 56, 62), swell=0.45, tail=1.3), 3000), 0.3, 0.8, 0.8)
-    s["ui_select"] = mix(tick(3200, 0.01, 4.0), bell(PENTA[7], 0.08, 0.3))
-    s["active"] = reverb(mix(whoosh(0.18, 600, 2000), arp([PENTA[4], PENTA[6], PENTA[8], PENTA[11]], 0.04, 0.4, 0.5)), 0.3, 0.8, 0.6)
-    s["heal"] = reverb(arp([PENTA[3], PENTA[5], PENTA[8]], 0.08, 0.3, 0.5), 0.3, 0.75, 0.5)
-    s["dodge"] = whoosh(0.09, 1200, 2800, 2.0)
-    s["shield"] = reverb(mix(tick(1800, 0.015), bell(PENTA[11], 0.3, 0.5, ratio=2.76, index=2.5)), 0.3, 0.75, 0.5)
-    s["sparkle"] = reverb(arp([PENTA[12], PENTA[10], PENTA[13], PENTA[11]], 0.045, 0.25, 0.4), 0.35, 0.8, 0.6)
-    s["pop"] = mix(osc(glide(900, 1500, 0.03), 0.03, "sine") * env(int(RATE * 0.03), 0.001, curve=5), tick(2200, 0.01))
-    s["victory"] = reverb(arp([PENTA[5], PENTA[7], PENTA[8], PENTA[10]], 0.09, 0.6, 0.55), 0.3, 0.8, 0.8)
-    s["death"] = reverb(arp([PENTA[8], PENTA[6], PENTA[4], PENTA[1]], 0.18, 0.7, 0.55), 0.4, 0.85, 1.2)
-    s["quest"] = reverb(arp([PENTA[4], PENTA[7]], 0.1, 0.4, 0.55), 0.3, 0.75, 0.5)
-    s["coin"] = reverb(arp([PENTA[9], PENTA[12]], 0.05, 0.25, 0.5), 0.25, 0.7, 0.4)
-    for name, x in s.items():
-        save(polish(x), "sfx", f"{name}.wav", peak=SFX_PEAKS[name])
-    # Sons retires (evenements trop frequents) : on supprime les anciens fichiers.
-    for name in ("telegraph", "ui_move", "decor"):
-        for ext in (".wav", ".wav.import"):
-            path = os.path.join(ROOT, "sfx", name + ext)
-            if os.path.exists(path):
-                os.remove(path)
-    RATE = MUSIC_RATE
-
-
 # --- Musiques (boucles) -------------------------------------------------------------
 
 def pad(chord, duration, shape="sine", vol=0.25):
@@ -381,9 +237,7 @@ def music_boss():
 
 def main():
     global rng
-    sfx()
-    # Graine propre aux musiques : retoucher les effets ne doit plus modifier leurs fichiers.
-    rng = np.random.default_rng(11)
+    rng = np.random.default_rng(11)  # meme graine que les fichiers deja generes
     save(music_reve(), "music", "reve.wav", peak=0.6)
     save(music_profond(), "music", "profond.wav", peak=0.6)
     save(music_combat(), "music", "combat.wav", peak=0.6)
