@@ -168,29 +168,85 @@ def music_profond():
     return echo(out, 0.45, 0.35, 2)[: len(out)]
 
 
-def music_combat(bpm=132, root=57, total_bars=8):
-    """Combat : basse pulsee, arpege rapide."""
+def pluck(freq, duration, brightness=3000, decay=0.996):
+    """Corde pincee (Karplus-Strong) : une salve de bruit qui circule dans une boucle de la
+    longueur de la periode et s'amortit, comme une vraie corde. Son naturel de harpe."""
+    n = int(RATE * duration)
+    period = max(2, int(RATE / freq))
+    buf = list(lowpass(rng.uniform(-1, 1, period), brightness))
+    out = np.zeros(n)
+    for i in range(n):
+        j = i % period
+        out[i] = buf[j]
+        buf[j] = decay * 0.5 * (buf[j] + buf[(j + 1) % period])
+    return out * env(n, 0.002, curve=1.5)
+
+
+def cello(freq, duration, vol=0.5):
+    """Basse facon violoncelle : dents de scie adoucies, attaque lente, vibrato qui arrive."""
+    t = t_axis(duration)
+    vibrato = 1 + 0.004 * np.sin(2 * np.pi * 5 * t) * np.clip(t / 0.4, 0, 1)
+    x = lowpass(lowpass(osc(freq * vibrato, duration, "saw"), 700), 700)
+    shape = np.clip(t / 0.18, 0, 1) * np.clip((duration - t) / 0.25, 0, 1)
+    return x * shape * vol
+
+
+def flute(freq, duration, vol=0.4):
+    """Flute : sinus et une harmonique douce, souffle filtre, vibrato retarde."""
+    t = t_axis(duration)
+    vibrato = 1 + 0.006 * np.sin(2 * np.pi * 5.5 * t) * np.clip((t - 0.15) / 0.3, 0, 1)
+    x = osc(freq * vibrato, duration, "sine") + 0.15 * osc(2 * freq * vibrato, duration, "sine")
+    breath = lowpass(lowpass(noise(duration), 2500), 2500) * 0.08
+    shape = np.clip(t / 0.08, 0, 1) * np.clip((duration - t) / 0.15, 0, 1)
+    return (x + breath) * shape * vol
+
+
+def frame_drum(duration=0.4):
+    x = osc(glide(110, 62, duration), duration, "sine") * env(int(RATE * duration), 0.002, curve=6)
+    return x + lowpass(noise(duration), 900) * env(int(RATE * duration), 0.001, curve=14) * 0.3
+
+
+def brush(duration=0.09):
+    return lowpass(lowpass(noise(duration), 4000), 4000) * np.sin(np.linspace(0, np.pi, int(RATE * duration))) * 0.18
+
+
+def music_combat():
+    """Combat : tendu mais pas frenetique (104 BPM). Harpe pincee en croches, violoncelle,
+    tambour sur cadre et balais ; une melodie de flute sur la deuxieme moitie. La mineur."""
+    bpm = 104
     beat = 60 / bpm
     bar = beat * 4
-    total = bar * total_bars
+    # La m | Fa | Do | Sol | La m | Fa | Re m | Mi  (Mi majeur : tension avant le retour)
+    chords = [(57, 60, 64), (53, 57, 60), (48, 52, 55), (55, 59, 62),
+              (57, 60, 64), (53, 57, 60), (50, 53, 57), (52, 56, 59)]
+    melody = [  # (mesure, temps de depart, note, duree en temps) sur les mesures 8 a 15
+        (8, 0, 76, 2), (8, 2, 74, 1), (8, 3, 72, 1), (9, 0, 72, 3), (9, 3, 69, 1),
+        (10, 0, 71, 2), (10, 2, 72, 2), (11, 0, 74, 4),
+        (12, 0, 76, 2), (12, 2, 77, 2), (13, 0, 76, 1.5), (13, 1.5, 74, 0.5), (13, 2, 72, 2),
+        (14, 0, 74, 2), (14, 2, 71, 2), (15, 0, 68, 3), (15, 3, 71, 1),
+    ]
+    bars = 16
+    total = bar * bars
     out = np.zeros(int(RATE * total))
-    third = 3
-    progression = [0, 0, -4, -2, 0, 0, -5, -2]
-    for b in range(total_bars):
-        r = root + progression[b % len(progression)]
+    plucks = {}
+    for b in range(bars):
+        root, third, fifth = chords[b % len(chords)]
         start = b * bar
-        for k in range(8):
-            out += at(note(midi(r - 12), beat / 2 * 0.9, "square", curve=5, vol=0.35), start + k * beat / 2, total)
-        arp = [r, r + third, r + 7, r + 12]
-        for k in range(16):
-            out += at(note(midi(arp[k % 4] + 12), beat / 4 * 0.9, "triangle", curve=4, vol=0.18), start + k * beat / 4, total)
+        out += at(cello(midi(root - 12), bar, 0.45), start, total)
+        pattern = [root, third, fifth, root + 12, fifth + 12, root + 12, fifth, third]
+        for k, m in enumerate(pattern):
+            if m not in plucks:
+                plucks[m] = pluck(midi(m), beat * 1.5)
+            out += at(plucks[m] * 0.35, start + k * beat / 2, total)
+        out += at(frame_drum() * 0.55, start, total)
+        out += at(frame_drum() * 0.4, start + 2 * beat, total)
+        if b % 2 == 1:  # petite relance du tambour une mesure sur deux
+            out += at(frame_drum(0.25) * 0.25, start + 3.5 * beat, total)
         for k in range(4):
-            kick = osc(glide(120, 45, 0.12), 0.12, "sine") * env(int(RATE * 0.12), 0.001, curve=5) * 0.6
-            out += at(kick, start + k * beat, total)
-            if k % 2 == 1:
-                hat = lowpass(noise(0.05), 6000) * env(int(RATE * 0.05), curve=8) * 0.15
-                out += at(hat, start + k * beat + beat / 2, total)
-    return out
+            out += at(brush(), start + k * beat + beat / 2, total)
+    for b, t0, m, d in melody:
+        out += at(flute(midi(m), d * beat * 0.95, 0.32), b * bar + t0 * beat, total)
+    return echo(out, beat * 0.75, 0.2, 2)[: len(out)]
 
 
 def music_boss():
@@ -235,13 +291,15 @@ def music_boss():
 
 
 
+# Une graine par morceau : retoucher un morceau ne change pas le bruit des autres.
+TRACKS = [("reve", music_reve, 11), ("profond", music_profond, 12), ("combat", music_combat, 13), ("boss", music_boss, 14)]
+
+
 def main():
     global rng
-    rng = np.random.default_rng(11)  # meme graine que les fichiers deja generes
-    save(music_reve(), "music", "reve.wav", peak=0.6)
-    save(music_profond(), "music", "profond.wav", peak=0.6)
-    save(music_combat(), "music", "combat.wav", peak=0.6)
-    save(music_boss(), "music", "boss.wav", peak=0.6)
+    for name, make, seed in TRACKS:
+        rng = np.random.default_rng(seed)
+        save(make(), "music", f"{name}.wav", peak=0.6)
 
 
 if __name__ == "__main__":
