@@ -9,24 +9,6 @@ const ARENA_SIZE := Vector2(900, 540)
 const SPAWN_MARGIN := 60.0
 const MIN_SPAWN_DISTANCE := 220.0
 
-# Gardiens de portail : pas le Songe papillon, trop rapide une fois renforce.
-const GUARDIAN_POOL := [
-	preload("res://scenes/combat/OmbreRampante.tscn"),
-	preload("res://scenes/combat/Berceuse.tscn"),
-	preload("res://scenes/combat/NounoursEgare.tscn"),
-	preload("res://scenes/combat/VoixMurmurante.tscn"),
-	preload("res://scenes/combat/EveilleurDePeur.tscn"),
-]
-const MOB_POOL := [
-	preload("res://scenes/combat/OmbreRampante.tscn"),
-	preload("res://scenes/combat/Berceuse.tscn"),
-	preload("res://scenes/combat/NounoursEgare.tscn"),
-	preload("res://scenes/combat/SongePapillon.tscn"),
-	preload("res://scenes/combat/VoixMurmurante.tscn"),
-	preload("res://scenes/combat/EveilleurDePeur.tscn"),
-]
-const NEGATIVE_FLOOR_MOB := preload("res://scenes/combat/TerreurNocturne.tscn")
-
 @onready var player: CharacterBody2D = $PlayerCombat
 @onready var background: Node2D = $Background
 @onready var hp_bar_fill: ColorRect = $UI/HPBarBack/HPBarFill
@@ -68,15 +50,9 @@ func _ready() -> void:
 	for mob in mobs:
 		_spawn_mob(mob)
 
-# Ennemis du combat (pas encore dans l'arbre). Nuits produites : bestiaire de la nuit
-# (scripts/combat/bestiary.gd) ; les autres utilisent encore les anciens monstres.
+# Ennemis du combat (pas encore dans l'arbre), tires du bestiaire de la nuit (scripts/combat/bestiary.gd).
 func _pick_mobs() -> Array:
 	var night: String = GameState.tower()["id"]
-	if not Bestiary.has_night(night):
-		var old: Array = _pick_mob_scenes().map(func(scene): return scene.instantiate())
-		if old[0].scene_file_path == NEGATIVE_FLOOR_MOB.resource_path and not GameState.guardian_fight:
-			old[0].is_boss = true
-		return old
 	var nightmare_floor: bool = GameState.current_floor()["intensity"] == FloorGenerator.Intensity.CAUCHEMAR
 	if GameState.guardian_fight:
 		if GameState.is_last_floor() and not GameState.guardian_exit_down:
@@ -92,25 +68,10 @@ func _pick_mobs() -> Array:
 func _encounter_size() -> int:
 	return mini(MAX_MOBS, 2 + abs(GameState.floor_index) / FLOORS_PER_EXTRA_MOB + randi() % 2)
 
-func _pick_mob_scenes() -> Array:
-	if GameState.guardian_fight:
-		# Le dernier portail de la nuit est garde par la Terreur nocturne.
-		if GameState.is_last_floor() and not GameState.guardian_exit_down:
-			return [NEGATIVE_FLOOR_MOB]
-		return [GUARDIAN_POOL.pick_random()]
-	if GameState.floor_index < 0 and randf() < NEGATIVE_BOSS_CHANCE:
-		return [NEGATIVE_FLOOR_MOB]
-	var scenes := []
-	for i in _encounter_size():
-		scenes.append(MOB_POOL.pick_random())
-	return scenes
-
 func _spawn_mob(mob: BaseMob) -> void:
 	mob.position = Vector2(450, 140) if mob.is_boss else _random_spawn_position()
 	add_child(mob)
 	mob.telegraph_duration *= 1.0 + GameState.mod("telegraph")
-	if GameState.guardian_fight and not mob.is_boss:  # anciens monstres promus gardiens
-		mob.empower_as_guardian()
 	mob.apply_difficulty(GameState.difficulty())
 	mob.apply_variant()
 	had_elite = had_elite or mob.elite
@@ -148,7 +109,7 @@ func _process(_delta: float) -> void:
 		_on_victory()
 	elif is_boss_fight:
 		var boss: BaseMob = alive.filter(func(m): return m.is_boss).front() if alive.any(func(m): return m.is_boss) else alive[0]
-		var boss_name: String = boss.display_name if boss.display_name != "" else ("Gardien du portail" if GameState.guardian_fight else "Terreur nocturne")
+		var boss_name: String = boss.display_name if boss.display_name != "" else "Gardien du portail"
 		mob_label.text = "%s  PV %d" % [boss_name, boss.hp]
 	else:
 		mob_label.text = "Ennemis : %d" % alive.size()

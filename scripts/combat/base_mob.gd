@@ -105,22 +105,6 @@ func _ready() -> void:
 func _on_ready() -> void:
 	pass
 
-func empower_as_guardian() -> void:
-	hp = 9
-	max_hp = hp
-	chase_speed *= 1.6
-	attack_range *= 1.25
-	telegraph_duration *= 0.7
-	attack_duration *= 1.2
-	cooldown_duration *= 0.65
-	# Aura violette plutot qu'une teinte : le sprite reste lisible.
-	add_child(DreamTheme.make_light(Color(0.75, 0.35, 1), 90.0, 1.5))
-	sprite.scale = sprite.scale * 1.5
-	var bigger_shape := RectangleShape2D.new()
-	bigger_shape.size = Vector2(56, 56)
-	$CollisionShape2D.shape = bigger_shape
-	$Hurtbox/CollisionShape2D.shape = bigger_shape
-
 # A appeler une fois dans l'arene, apres apply_difficulty.
 func apply_variant() -> void:
 	if nightmare:

@@ -1,6 +1,16 @@
 # Lancer : godot --headless --path . --script res://tests/test_arena.gd
 extends SceneTree
 
+# _die() plutot que take_hit : certains ennemis sont invulnerables par moments, d'autres en
+# laissent de nouveaux en mourant.
+func _kill_all() -> void:
+	for round in 5:
+		for m in get_nodes_in_group("mobs"):
+			if m.state != BaseMob.State.DEAD:
+				m._die()
+		for i in 3:
+			await process_frame
+
 func _press(keycode: Key) -> void:
 	var ev := InputEventKey.new()
 	ev.physical_keycode = keycode
@@ -27,7 +37,7 @@ func _initialize() -> void:
 		await process_frame
 	var arena = current_scene
 	var mobs := get_nodes_in_group("mobs")
-	assert(mobs.size() >= 2 and mobs.size() <= arena.MAX_MOBS)
+	assert(mobs.size() >= 2)  # plus que MAX_MOBS possible : certains invoquent des allies
 	assert(not arena.combat_over)
 	# La musique de combat tourne (lecteur ajoute a la racine, en boucle).
 	var music_players := root.get_children().filter(func(n): return n is AudioStreamPlayer and n.get_meta("track", "") == "combat")
@@ -53,10 +63,7 @@ func _initialize() -> void:
 	assert(mob.state == BaseMob.State.COOLDOWN)
 
 	# Victoire quand tous les ennemis sont morts, et l'objet actif se recharge.
-	for m in get_nodes_in_group("mobs"):
-		m.take_hit(999)
-	for i in 3:
-		await process_frame
+	await _kill_all()
 	assert(arena.combat_over)
 	assert(gs.current_floor()["wins"] == 1)
 	assert(gs.active_charges == gs.ACTIVE_MAX_CHARGES)
@@ -74,10 +81,7 @@ func _initialize() -> void:
 	# Combat de boss : sa propre musique, pas celle des combats normaux.
 	var boss_music := root.get_children().filter(func(n): return n is AudioStreamPlayer and n.get_meta("track", "") == "boss")
 	assert(boss_music.size() == 1 and boss_music[0].playing)
-	for m in get_nodes_in_group("mobs"):
-		m.take_hit(999)
-	for i in 3:
-		await process_frame
+	await _kill_all()
 	assert(arena.waiting_to_leave and gs.floor_index == 2)
 	var pickup = arena.get_children().filter(func(n): return "item_id" in n)[0]
 	# Un actif au sol s'echange avec l'actif tenu, qui reste au sol.
