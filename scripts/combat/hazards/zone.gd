@@ -3,7 +3,8 @@ extends Node2D
 # Zone au sol. Pale pendant arm_delay (telegraphe), puis active pendant active_time :
 #   "damage" : blesse le joueur qui s'y trouve (son invincibilite apres un coup evite l'acharnement) ;
 #   "slow"   : ralentit le joueur tant qu'il est dedans ;
-#   "push"   : pousse le joueur dans la direction push (tapis roulant...).
+#   "push"   : pousse le joueur dans la direction push (tapis roulant...) ;
+#   "mark"   : simple trace visuelle, sans effet (traces de pas...).
 # Voir Hazards.zone().
 
 var radius := 60.0

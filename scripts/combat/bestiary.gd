@@ -32,6 +32,11 @@ const NIGHTS := {
 		"bosses": ["vendredi/atlas", "vendredi/nid", "vendredi/balancier"],
 		"final": "vendredi/poids_du_monde",
 	},
+	"samedi": {
+		"creatures": ["samedi/silhouette", "samedi/echo", "samedi/chaise", "samedi/lettre"],
+		"bosses": ["samedi/maison_vide", "samedi/telephone", "samedi/foule_lointaine"],
+		"final": "samedi/absence",
+	},
 }
 const ELITE_CHANCE := 0.1
 const ALT_CHANCE := 0.5
