@@ -1001,6 +1001,170 @@ def mardi_sprites():
     }
 
 
+# --- Bestiaire du mercredi (Doute) ------------------------------------------------------
+
+def recolor(src, dark, light, alpha=255):
+    """Repeint un sprite en degrade de deux couleurs selon sa luminosite (copie de verre,
+    double sombre...). Les contours restent les plus sombres."""
+    img = src.copy()
+    px = img.load()
+    for y in range(img.height):
+        for x in range(img.width):
+            c = px[x, y]
+            if c[3]:
+                lum = (0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]) / 255
+                px[x, y] = mix(dark, light, lum) + (alpha,)
+    return img
+
+
+MERCREDI_PIECE_PILE = ([
+    "....DDDDDD....",
+    "..DDDDDDDDDD..",
+    ".DDDdDDDDDDDD.",
+    ".DDdDDDDDDDDD.",
+    "DDDdDDDDDDDDDD",
+    "DDDdDDDDDDDDDD",
+    "DDDdDDDDDDDDDD",
+    ".DDDdDDDDDDDD.",
+    ".DDDDddDDDDDD.",
+    "..DDDDDDDDDD..",
+    "....DDDDDD....",
+], {"D": rgba(150, 120, 60), "d": rgba(230, 210, 140)})
+MERCREDI_PIECE_FACE = ([
+    "....GGGGGG....",
+    "..GGGGGGGGGG..",
+    ".GGGGGGGGGGGG.",
+    ".GGGkGGGGkGGG.",
+    "GGGGkGGGGkGGGG",
+    "GGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGG",
+    ".GGGkGGGGkGGG.",
+    ".GGGGkkkkGGGG.",
+    "..GGGGGGGGGG..",
+    "....GGGGGG....",
+], {"G": rgba(240, 200, 80), "k": rgba(110, 70, 20)})
+
+MERCREDI_CARREFOUR = ([
+    "......WW..........",
+    "AAAAAAWWAAAAAAA...",
+    "AAAAAAWWAAAAAAAA..",
+    "AAAAAAWWAAAAAAA...",
+    "......WW..........",
+    "..BBBBWWBBBBBB....",
+    ".BBBBBWWBBBBBBB...",
+    "..BBBBWWBBBBBB....",
+    "......WW..........",
+    ".....eWWe.........",
+    "......WW..........",
+    "......WW..........",
+    ".....WWWW.........",
+    "....WWWWWW........",
+], {"W": rgba(120, 84, 56), "A": rgba(200, 170, 120), "B": rgba(170, 140, 96), "e": rgba(30, 20, 20)})
+
+MASQUE_PALETTE = {"M": rgba(240, 236, 228), "m": rgba(190, 184, 176), "k": rgba(30, 24, 36), "t": rgba(120, 170, 230)}
+MERCREDI_MASQUE_JOIE = [
+    "..MMMMMMMMMM..",
+    ".MMMMMMMMMMMM.",
+    "MMMkkMMMMkkMMM",
+    "MMkMMkMMkMMkMM",
+    "MMMMMMMMMMMMMM",
+    "MMMMMMMMMMMMMM",
+    "MMkMMMMMMMMkMM",
+    "MMMkkkkkkkkMMM",
+    ".MMMMMMMMMMMM.",
+    "..mmmmmmmmmm..",
+]
+MERCREDI_MASQUE_TRISTE = [
+    "..MMMMMMMMMM..",
+    ".MMMMMMMMMMMM.",
+    "MMMMkkMMkkMMMM",
+    "MMMkMMMMMMkMMM",
+    "MMMMtMMMMtMMMM",
+    "MMMMtMMMMtMMMM",
+    "MMMMMkkkkMMMMM",
+    "MMMMkMMMMkMMMM",
+    ".MMMMMMMMMMMM.",
+    "..mmmmmmmmmm..",
+]
+
+
+def broken_mirror(cracked):
+    """Le Miroir Brise : grand miroir ovale dans un cadre dore, fissure en etoile."""
+    w, h = 22, 30
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    cx, cy = (w - 1) / 2, (h - 1) / 2
+    for y in range(h):
+        for x in range(w):
+            e = ((x - cx) / (w / 2)) ** 2 + ((y - cy) / (h / 2)) ** 2
+            if e <= 1:
+                glass = mix((150, 180, 220), (220, 236, 250), (y / h))
+                px[x, y] = ((210, 170, 80) if e > 0.72 else glass) + (255,)
+    if cracked:
+        for a in range(6):
+            ang = a * math.pi / 3 + 0.3
+            for k in range(2, 9):
+                x, y = int(round(cx + math.cos(ang) * k)), int(round(cy + math.sin(ang) * k * 1.3))
+                px[x, y] = (60, 70, 100, 255)
+    return outline(img, (40, 30, 30))
+
+
+MERCREDI_LABYRINTHE = ([
+    "SSSSSSSSSSSSSSSSSSSS",
+    "SllllllSlllllllllllS",
+    "SlSSSSlSlSSSSSSSSSlS",
+    "SlSlllllllllllllSlSS",
+    "SlSlSSSSSSSSSSSSlSlS",
+    "SlllSssssssssssSlllS",
+    "SSSlSsGGGssGGGsSlSSS",
+    "SlllSsGkGssGkGsSlllS",
+    "SlSlSssssssssssSlSlS",
+    "SlSlSSSSSSSSSSSSlSlS",
+    "SlSllllllllllllllSlS",
+    "SlSSSSSSSSSSSSSSSSlS",
+    "SllllllllSllllllllll",
+    "SSSSSSSSSSSSSSSSSSSS",
+], {"S": rgba(120, 128, 120), "l": rgba(70, 80, 72), "s": rgba(90, 96, 90), "G": rgba(150, 255, 170),
+    "k": rgba(20, 60, 30)})
+
+MERCREDI_VOIE = ([
+    "....HHHHHH....",
+    "...HHHHHHHH...",
+    "..HHHLLDDDHH..",
+    "..HHLLLDDDDH..",
+    "..HHLeLDDrDH..",
+    "..HHLLLDDDDH..",
+    "...HHLLDDDH...",
+    "..HHHHHHHHHH..",
+    ".HHHHHHHHHHHH.",
+    ".HHHHHHHHHHHH.",
+    "HHHHHHHHHHHHHH",
+    "HHHHHHHHHHHHHH",
+    "HHHHHHHHHHHHHH",
+    ".hhhhhhhhhhhh.",
+], {"H": rgba(80, 70, 110), "h": rgba(50, 42, 72), "L": rgba(240, 230, 210), "D": rgba(40, 30, 50),
+    "e": rgba(60, 50, 80), "r": rgba(230, 60, 60)})
+
+
+def mercredi_sprites():
+    frames = player_frames()
+    glass = [recolor(f, (70, 110, 170), (200, 230, 255), 210) for f in (frames[0], frames[3])]
+    other = [recolor(f, (20, 10, 30), (130, 80, 160)) for f in (frames[0], frames[1])]
+    carrefour = rim_light(from_ascii(*MERCREDI_CARREFOUR))
+    labyrinthe = rim_light(from_ascii(*MERCREDI_LABYRINTHE))
+    voie = rim_light(from_ascii(*MERCREDI_VOIE))
+    return {
+        "reflet": glass,
+        "pile_ou_face": [from_ascii(*MERCREDI_PIECE_PILE), from_ascii(*MERCREDI_PIECE_FACE)],
+        "carrefour": [carrefour, shift_rows(carrefour, 0, 9, 1)],
+        "masque": [from_ascii(MERCREDI_MASQUE_JOIE, MASQUE_PALETTE), from_ascii(MERCREDI_MASQUE_TRISTE, MASQUE_PALETTE)],
+        "miroir_brise": [broken_mirror(False), broken_mirror(True)],
+        "labyrinthe": [labyrinthe, dim(labyrinthe, 0.85)],
+        "deux_voies": [voie, squash(voie, 7)],
+        "autre_soi": other,
+    }
+
+
 def save(img, *parts):
     path = os.path.join(ROOT, *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1037,6 +1201,8 @@ def main():
         save(sheet(frames), "mobs", "lundi", f"{name}.png")
     for name, frames in mardi_sprites().items():
         save(sheet(frames), "mobs", "mardi", f"{name}.png")
+    for name, frames in mercredi_sprites().items():
+        save(sheet(frames), "mobs", "mercredi", f"{name}.png")
 
     frames = player_frames()
     save(frames[0], "player", "idle.png")

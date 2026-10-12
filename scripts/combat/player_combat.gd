@@ -3,6 +3,8 @@ extends CharacterBody2D
 signal hp_changed(hp: int)
 signal died
 signal item_message(text: String)
+# Chaque attaque du joueur, avec la position de son coup (l'Echo la repete, l'Autre Soi l'observe).
+signal attacked(at: Vector2)
 
 const SPEED := 200.0
 const DASH_SPEED := 600.0
@@ -51,6 +53,7 @@ var speed_boost_timer := 0.0
 var external_velocity := Vector2.ZERO
 var slow_timer := 0.0
 var slow_factor := 1.0
+var last_attack_time := -100.0  # secondes (Time), pour les ennemis qui reagissent a nos attaques
 
 # Statistiques calculees a partir des passifs (apply_items).
 var max_hp := BASE_MAX_HP
@@ -221,6 +224,8 @@ func _try_attack() -> void:
 	Sound.play("slash")
 	slash_timer = ATTACK_DURATION
 	attack_hitbox.position = facing * reach
+	last_attack_time = Time.get_ticks_msec() / 1000.0
+	attacked.emit(attack_hitbox.global_position)
 	attack_shape.disabled = false
 	await get_tree().create_timer(ATTACK_DURATION).timeout
 	attack_shape.disabled = true

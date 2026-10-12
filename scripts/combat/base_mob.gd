@@ -81,6 +81,14 @@ func spawn_ally(path: String, pos: Vector2, props: Dictionary = {}) -> BaseMob:
 	get_parent().add_child.call_deferred(ally)
 	return ally
 
+# Affiche le sprite a une autre echelle (gros boss) en gardant les collisions a la bonne taille.
+func set_display_scale(factor: float) -> void:
+	sprite.scale = Vector2.ONE * factor
+	var shape := RectangleShape2D.new()
+	shape.size = Vector2(sprite.texture.get_width() / ANIM_FRAMES, sprite.texture.get_height()) * factor * 0.8
+	$CollisionShape2D.shape = shape
+	$Hurtbox/CollisionShape2D.shape = shape
+
 # Nombre d'ennemis vivants portant ce nom (pour limiter les invocations).
 func alive_count(mob_name: String) -> int:
 	return get_tree().get_nodes_in_group("mobs").filter(func(m): return m.display_name == mob_name and m.state != State.DEAD).size()
