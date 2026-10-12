@@ -25,12 +25,13 @@ static func player() -> Node2D:
 static func clamp_to_arena(pos: Vector2) -> Vector2:
 	return pos.clamp(ARENA.position, ARENA.end)
 
-static func shoot(source: Node2D, direction: Vector2, speed: float = 170.0, color: Color = Color(0.75, 0.8, 1, 0.9), text: String = "") -> Area2D:
+# lifetime : duree de vie en secondes (a fixer ici : le minuteur part des l'apparition).
+static func shoot(source: Node2D, direction: Vector2, speed: float = 170.0, color: Color = Color(0.75, 0.8, 1, 0.9), text: String = "", lifetime: float = 3.5) -> Area2D:
 	var projectile: Area2D = ProjectileScene.instantiate()
 	projectile.direction = direction.normalized()
 	projectile.speed = speed
 	projectile.source = source
-	projectile.lifetime = 3.5
+	projectile.lifetime = lifetime
 	_scene().add_child(projectile)
 	projectile.global_position = source.global_position + projectile.direction * 22.0
 	var visual: Polygon2D = projectile.get_node("Visual")

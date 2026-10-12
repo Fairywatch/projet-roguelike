@@ -26,9 +26,8 @@ func _chase_velocity(to_player: Vector2) -> Vector2:
 	return (to_player.normalized() + Vector2.from_angle(drift) * 0.9).normalized() * chase_speed
 
 func _plane(direction: Vector2) -> void:
-	var plane := Hazards.shoot(self, direction, PLANE_SPEED, PLANE)
+	var plane := Hazards.shoot(self, direction, PLANE_SPEED, PLANE, "", 4.5)
 	plane.homing = 1.8 if nightmare else 1.2
-	plane.lifetime = 4.5
 
 func _on_attack_begin() -> void:
 	var aim := player.global_position - global_position

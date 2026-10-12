@@ -1653,6 +1653,147 @@ def samedi_sprites():
     }
 
 
+# --- Bestiaire du dimanche (Angoisse) ----------------------------------------------------
+
+DIMANCHE_COMPTE = ([
+    "......ff......",
+    ".....f..f.....",
+    "....BBBBBB....",
+    "..BBBBBBBBBB..",
+    ".BBBBBBBBBBBB.",
+    "BBBWWWWWWWWBBB",
+    "BBWWWWWWWWWWBB",
+    "BBWWWWWWWWWWBB",
+    "BBWWWWWWWWWWBB",
+    "BBBWWWWWWWWBBB",
+    ".BBBBBBBBBBBB.",
+    "..BBBBBBBBBB..",
+    "...bbbbbbbb...",
+], {"f": rgba(255, 160, 60), "B": rgba(60, 56, 70), "b": rgba(36, 34, 44), "W": rgba(220, 210, 200)})
+DIMANCHE_MAIN = ([
+    "..F.F.F.F...",
+    "..F.F.F.F...",
+    "..F.F.F.F.F.",
+    "..FFFFFFF.F.",
+    "..FFFFFFFFF.",
+    "..FFFFFFFF..",
+    "...FFFFFF...",
+    "...FFFFFF...",
+    "...ffffff...",
+    "..dddddddd..",
+    ".dddddddddd.",
+], {"F": rgba(200, 196, 210), "f": rgba(150, 146, 166), "d": rgba(40, 32, 44)})
+DIMANCHE_LISTE = ([
+    ".RRRRRRRRRRRRRRRR.",
+    "RRrrrrrrrrrrrrrrRR",
+    ".PPPPPPPPPPPPPPPP.",
+    ".PPeePPPPPPPPeePP.",
+    ".PPPPPPPPPPPPPPPP.",
+    ".PlllllllllllllPP.",
+    ".PPPPPPPPPPPPPPPP.",
+    ".PlllllllllllPPPP.",
+    ".PPPPPPPPPPPPPPPP.",
+    ".PlllllllllllllPP.",
+    ".PPPPPPPPPPPPPPPP.",
+    ".PllllllllPPPPPPP.",
+    ".PPPPPPPPPPPPPPPP.",
+    ".PlllllllllllllPP.",
+    ".PPPPPPPPPPPPPPPP.",
+    "RRrrrrrrrrrrrrrrRR",
+    ".RRRRRRRRRRRRRRRR.",
+], {"R": rgba(160, 110, 70), "r": rgba(120, 80, 50), "P": rgba(236, 226, 196), "l": rgba(80, 70, 70),
+    "e": rgba(40, 20, 30)})
+
+
+def vortex(phase):
+    """Spirale : un tourbillon sombre aux bras qui s'enroulent."""
+    size = 22
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    px = img.load()
+    c = (size - 1) / 2
+    for y in range(size):
+        for x in range(size):
+            d = math.hypot(x - c, y - c)
+            if d > c:
+                continue
+            a = math.atan2(y - c, x - c)
+            arm = math.sin(a * 2 + d * 0.7 + phase) > 0.2
+            k = 1.0 - d / c
+            px[x, y] = (mix((40, 20, 60), (170, 120, 220), k) if arm else (25, 14, 40)) + (230,)
+    return img
+
+
+def sunset_beast(glow):
+    """Le Dimanche Soir : une bete crepusculaire, un soleil couchant sur le dos."""
+    w, h = 32, 22
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    for y in range(h):
+        for x in range(w):
+            if ((x - 16) / 15) ** 2 + ((y - 15) / 7) ** 2 <= 1:
+                px[x, y] = mix((70, 40, 90), (230, 120, 80), (h - y) / h * (1.2 if glow else 0.9)) + (255,)
+            if (x - 16) ** 2 + (y - 8) ** 2 <= 30 and y < 11:
+                px[x, y] = (255, 200, 110, 255) if glow else (220, 150, 90, 255)
+    for ex in (10, 21):
+        px[ex, 15] = px[ex + 1, 15] = (255, 230, 150, 255)
+    return outline(img, (30, 18, 36))
+
+
+def big_heart(beat):
+    """Le Coeur qui Bat : un coeur geant aux veines sombres."""
+    w, h = 30, 30
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    s = 1.0 + (0.08 if beat else 0.0)
+    for y in range(h):
+        for x in range(w):
+            nx, ny = (x - 15) / (11 * s), (16 - y) / (11 * s)  # y vers le haut : pointe en bas
+            if (nx * nx + ny * ny - 1) ** 3 - nx * nx * ny ** 3 * 1.4 <= 0:
+                vein = (x * 3 + y * 5) % 13 == 0
+                px[x, y] = ((110, 20, 40) if vein else (190, 40, 64)) + (255,)
+    for ex in (10, 19):
+        px[ex, 13] = px[ex, 14] = (30, 6, 12, 255)
+    return outline(img, (40, 8, 18))
+
+
+def last_night(eyes_open):
+    """La Derniere Nuit : un croissant noir immense, constelle d'yeux."""
+    w, h = 36, 40
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    for y in range(h):
+        for x in range(w):
+            outer = (x - 18) ** 2 + (y - 20) ** 2 <= 18 ** 2
+            inner = (x - 25) ** 2 + (y - 16) ** 2 <= 14 ** 2
+            if outer and not inner:
+                px[x, y] = mix((10, 8, 20), (50, 34, 80), y / h) + (255,)
+    rng = random.Random(9)
+    for i in range(9):
+        ex, ey = rng.randrange(4, 18), rng.randrange(8, 34)
+        if px[ex, ey][3] and px[ex + 1, ey][3]:
+            color = (255, 230, 160) if eyes_open else (120, 100, 150)
+            px[ex, ey] = px[ex + 1, ey] = color + (255,)
+    return outline(img, (60, 40, 90))
+
+
+def dimanche_sprites():
+    compte = rim_light(from_ascii(*DIMANCHE_COMPTE))
+    main = rim_light(from_ascii(*DIMANCHE_MAIN))
+    liste = rim_light(from_ascii(*DIMANCHE_LISTE))
+    frames = player_frames()
+    shadow = [recolor(f, (6, 4, 12), (40, 30, 60), 190) for f in (frames[2], frames[4])]
+    return {
+        "compte_a_rebours": [compte, shift_rows(compte, 0, 2, 1)],
+        "mains": [main, shift_rows(main, 0, 4, 1)],
+        "spirale": [vortex(0.0), vortex(1.5)],
+        "ombre_portee": shadow,
+        "dimanche_soir": [sunset_beast(False), sunset_beast(True)],
+        "liste_lendemain": [liste, shift_rows(liste, 2, 15, 1)],
+        "coeur_qui_bat": [big_heart(False), big_heart(True)],
+        "derniere_nuit": [last_night(False), last_night(True)],
+    }
+
+
 def save(img, *parts):
     path = os.path.join(ROOT, *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1697,6 +1838,8 @@ def main():
         save(sheet(frames), "mobs", "vendredi", f"{name}.png")
     for name, frames in samedi_sprites().items():
         save(sheet(frames), "mobs", "samedi", f"{name}.png")
+    for name, frames in dimanche_sprites().items():
+        save(sheet(frames), "mobs", "dimanche", f"{name}.png")
 
     frames = player_frames()
     save(frames[0], "player", "idle.png")

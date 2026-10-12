@@ -10,7 +10,7 @@
 | Jeudi | **Produit** (`scripts/combat/mobs/jeudi/`, testé par `tests/test_jeudi.gd`) |
 | Vendredi | **Produit** (`scripts/combat/mobs/vendredi/`, testé par `tests/test_vendredi.gd`) |
 | Samedi | **Produit** (`scripts/combat/mobs/samedi/`, testé par `tests/test_samedi.gd`) |
-| Dimanche | À produire (cette nuit utilise encore les anciens monstres en attendant) |
+| Dimanche | **Produit** (`scripts/combat/mobs/dimanche/`, testé par `tests/test_dimanche.gd`) |
 
 ## Règles retenues
 
