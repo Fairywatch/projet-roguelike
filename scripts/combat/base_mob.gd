@@ -8,6 +8,12 @@ const HP_BAR_WIDTH := 30.0
 const STUN_COLOR := Color(0.55, 0.6, 1.0, 1)
 const ANIM_FRAMES := 2
 const ANIM_FPS := 3.0
+const HurtboxScript := preload("res://scripts/combat/hurtbox.gd")
+# Variantes (docs/bestiaire.md) : cauchemar sur les etages cauchemar, elite rare.
+const NIGHTMARE_HP := 1.3
+const NIGHTMARE_TINT := Color(0.62, 0.5, 0.74)
+const ELITE_HP := 1.6
+const ELITE_SCALE := 1.35
 
 var chase_speed := 70.0
 var attack_range := 55.0
@@ -26,6 +32,44 @@ var base_color: Color
 var player: Node2D
 var action_id := 0
 var bob_time := randf() * TAU
+
+# Bestiaire par nuit (scripts/combat/mobs/<nuit>/) : nom affiche, boss, variantes.
+var display_name := ""
+var is_boss := false
+var nightmare := false  # variante cauchemar : plus de PV, un coup de plus dans son pattern
+var elite := false      # variante elite : plus grosse, aura, plus de PV, meilleur butin
+var alt := false        # variante de comportement : autre attaque (voir chaque creature)
+var invulnerable := false
+var auto_frames := true  # false : le script choisit lui-meme l'image (ex. paupiere ouverte/fermee)
+
+# Les creatures du bestiaire n'ont pas de scene : on construit sprite, collision et hurtbox ici.
+func _enter_tree() -> void:
+	if has_node("Sprite"):
+		return
+	var texture: Texture2D = load(_texture_path())
+	var sprite_node := Sprite2D.new()
+	sprite_node.name = "Sprite"
+	sprite_node.texture = texture
+	sprite_node.scale = Vector2(2, 2)
+	add_child(sprite_node)
+	var shape := RectangleShape2D.new()
+	shape.size = Vector2(texture.get_width() / ANIM_FRAMES, texture.get_height()) * 2.0 * 0.8
+	var body := CollisionShape2D.new()
+	body.name = "CollisionShape2D"
+	body.shape = shape
+	add_child(body)
+	var hurtbox := Area2D.new()
+	hurtbox.name = "Hurtbox"
+	hurtbox.monitoring = false
+	hurtbox.set_script(HurtboxScript)
+	var hurt_shape := CollisionShape2D.new()
+	hurt_shape.name = "CollisionShape2D"
+	hurt_shape.shape = shape
+	hurtbox.add_child(hurt_shape)
+	add_child(hurtbox)
+
+func _texture_path() -> String:
+	return ""
 
 func _ready() -> void:
 	add_to_group("mobs")
@@ -55,6 +99,18 @@ func empower_as_guardian() -> void:
 	$CollisionShape2D.shape = bigger_shape
 	$Hurtbox/CollisionShape2D.shape = bigger_shape
 
+# A appeler une fois dans l'arene, apres apply_difficulty.
+func apply_variant() -> void:
+	if nightmare:
+		hp = ceili(hp * NIGHTMARE_HP)
+		base_color = NIGHTMARE_TINT
+		sprite.modulate = base_color
+	if elite:
+		hp = ceili(hp * ELITE_HP)
+		sprite.scale *= ELITE_SCALE
+		add_child(DreamTheme.make_light(Color(1, 0.85, 0.4), 70.0, 1.2))
+	max_hp = hp
+
 # Les telegraphes ne sont pas touches : la lisibilite reste la meme a tous les paliers.
 func apply_difficulty(mult: float) -> void:
 	hp = ceili(hp * mult)
@@ -69,7 +125,8 @@ func _sprite_half_height() -> float:
 func _process(delta: float) -> void:
 	bob_time += delta
 	sprite.position.y = round(sin(bob_time * 5.0) * 1.5)
-	sprite.frame = int(bob_time * ANIM_FPS) % ANIM_FRAMES
+	if auto_frames:
+		sprite.frame = int(bob_time * ANIM_FPS) % ANIM_FRAMES
 	queue_redraw()
 
 func _draw() -> void:
@@ -138,6 +195,9 @@ func _start_cooldown() -> void:
 
 func take_hit(damage: int = 1) -> void:
 	if state == State.DEAD:
+		return
+	if invulnerable:
+		Fx.flash(sprite, Color(0.6, 0.7, 1.0), 0.08)
 		return
 	hp -= damage
 	hp_changed.emit(hp)

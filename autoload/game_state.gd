@@ -30,6 +30,7 @@ const SAVED_FIELDS := [
 	"floor_index", "floor_data_by_index", "negative_dive_available", "return_position",
 	"run_started", "passive_items", "active_item_id", "active_charges", "next_fight_bonus_hp",
 	"pending_ground_item", "tower_index", "speedrun", "time_left", "run_time", "in_combat",
+	"boss_history",
 ]
 const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag", "shop_offers", "best_times", "intro_seen"]
 
@@ -43,6 +44,8 @@ var tower_index: int = 0
 var speedrun: bool = false
 # Vrai pendant un combat : si le jeu redemarre avec ce drapeau, on a fui le combat en quittant.
 var in_combat: bool = false
+# Boss de portail deja tires dans la nuit en cours ("chemin|version", voir Bestiary.boss).
+var boss_history: Array = []
 var time_left: float = 0.0
 var run_time: float = 0.0
 var floor_index: int = 0
@@ -204,6 +207,7 @@ func new_run(index: int = tower_index, speedrun_mode: bool = false) -> void:
 	pending_message = ""
 	pending_ground_item = ""
 	reset_run_items()
+	boss_history.clear()
 	for id in start_bag:
 		add_passive_item(id)
 	start_bag.clear()

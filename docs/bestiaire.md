@@ -1,6 +1,11 @@
 # Bestiaire de Dream Dive — fiches à valider
 
-*Premier jet. Rien n'est encore produit : ces fiches servent à valider les idées avant de dessiner et coder les créatures.*
+*Fiches validées. Avancement de la production :*
+
+| Nuit | État |
+|---|---|
+| Lundi | **Produit** (`scripts/combat/mobs/lundi/`, testé par `tests/test_monday.gd`) |
+| Mardi à dimanche | À produire (ces nuits utilisent encore les anciens monstres en attendant) |
 
 ## Règles retenues
 
