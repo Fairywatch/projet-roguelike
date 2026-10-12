@@ -27,6 +27,11 @@ const NIGHTS := {
 		"bosses": ["jeudi/patron", "jeudi/tapis_roulant", "jeudi/mur"],
 		"final": "jeudi/colere",
 	},
+	"vendredi": {
+		"creatures": ["vendredi/fardeau", "vendredi/sangsue", "vendredi/soignant", "vendredi/bougie_fondue"],
+		"bosses": ["vendredi/atlas", "vendredi/nid", "vendredi/balancier"],
+		"final": "vendredi/poids_du_monde",
+	},
 }
 const ELITE_CHANCE := 0.1
 const ALT_CHANCE := 0.5
