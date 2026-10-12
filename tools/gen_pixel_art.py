@@ -627,6 +627,200 @@ BOOK = ([
     "g": rgba(40, 28, 60)})
 
 
+# --- Bestiaire du lundi (Fatigue) : voir docs/bestiaire.md ----------------------------
+# Chaque sprite est une planche de 2 images (repos / anime), comme les autres monstres.
+
+LUNDI_BAILLEUR = ([
+    "....WWWWWWWWWW....",
+    "..WWWWWWWWWWWWWW..",
+    ".WWWWWWWWWWWWWWWW.",
+    "WWWWWWWWWWWWWWWWWW",
+    "WWWkkkWWWWWWkkkWWW",
+    "WWWWWWWWWWWWWWWWWW",
+    "WWWWWWmmmmmmWWWWWW",
+    "WWWWWmrrrrrrmWWWWW",
+    "WWWWWmrrrrrrmWWWWW",
+    "WWWWWWmmmmmmWWWWWW",
+    ".WWWWWWWWWWWWWWWW.",
+    "..wwwwwwwwwwwwww..",
+], {"W": rgba(226, 220, 242), "w": rgba(172, 166, 204), "k": rgba(92, 80, 124), "m": rgba(64, 32, 64),
+    "r": rgba(184, 82, 112)})
+
+LUNDI_MOUTON = ([
+    "...WWWW..WWWW.....",
+    "..WWWWWWWWWWWW....",
+    ".WWWWWWWWWWWWWW...",
+    "WWWWWWWWWWWWWWWFF.",
+    "WWWWWWWWWWWWWWFeFF",
+    "WWWWWWWWWWWWWWFbFF",
+    ".WWWWWWWWWWWWWFFFF",
+    "..WWWWWWWWWWWWFF..",
+    "...ll..ll..ll.ll..",
+    "...ll..ll..ll.ll..",
+], {"W": rgba(236, 232, 226), "F": rgba(112, 100, 112), "e": rgba(244, 206, 206), "b": rgba(72, 40, 72),
+    "l": rgba(62, 52, 62)})
+
+LUNDI_VEILLEUSE = ([
+    "...YYYYYY...",
+    "..YyYYYYyY..",
+    "..YYYYYYYY..",
+    "..YkYYYYkY..",
+    "..YYYmmYYY..",
+    "...YYYYYY...",
+    "....GGGG....",
+    "...GGGGGG...",
+    "..GGGGGGGG..",
+    "..gggggggg..",
+], {"Y": rgba(255, 228, 150), "y": rgba(255, 250, 224), "k": rgba(120, 90, 60), "m": rgba(160, 110, 70),
+    "G": rgba(120, 110, 160), "g": rgba(76, 68, 110)})
+
+PAUPIERE_PALETTE = {"L": rgba(214, 170, 160), "l": rgba(150, 104, 100), "c": rgba(50, 36, 44),
+                    "W": rgba(240, 236, 236), "P": rgba(110, 150, 200), "k": rgba(20, 16, 30)}
+LUNDI_PAUPIERE_CLOSED = [
+    "..................",
+    "..LLLLLLLLLLLLLL..",
+    ".LLLLLLLLLLLLLLLL.",
+    "LLLLLLLLLLLLLLLLLL",
+    "LLLLLLLLLLLLLLLLLL",
+    ".llllllllllllllll.",
+    ".c.c.c.c.c.c.c.c..",
+    ".c.c.c.c.c.c.c.c..",
+]
+LUNDI_PAUPIERE_OPEN = [
+    "..LLLLLLLLLLLLLL..",
+    ".LLWWWWWWWWWWWWLL.",
+    "LLWWWWWPPPPWWWWWLL",
+    "LLWWWWPPkkPPWWWWLL",
+    ".LWWWWWPPPPWWWWWL.",
+    "..llllllllllllll..",
+    ".c.c.c.c.c.c.c.c..",
+    ".c.c.c.c.c.c.c.c..",
+]
+
+LUNDI_REVEIL = ([
+    ".BB..............BB.",
+    "BBBB............BBBB",
+    ".BBRRRRRRRRRRRRRRBB.",
+    "..RRWWWWWWWWWWWWRR..",
+    ".RRWWkkWWWWWWkkWWRR.",
+    ".RWWWWkkWWWWkkWWWWR.",
+    "RRWWWWWWWWWWWWWWWWRR",
+    "RWWWWWWWWkWWWWWWWWWR",
+    "RWWWWWWWWkWWWWWWWWWR",
+    "RWWWWWWWWkkkkWWWWWWR",
+    "RWWWWWWWWWWWWWWWWWWR",
+    "RRWWWWWmmmmmmWWWWWRR",
+    ".RWWWWmWWWWWWmWWWWR.",
+    ".RRWWWWWWWWWWWWWWRR.",
+    "..RRRRRRRRRRRRRRRR..",
+    "...ll..........ll...",
+    "..lll..........lll..",
+], {"B": rgba(236, 196, 90), "R": rgba(196, 64, 72), "W": rgba(246, 240, 228), "k": rgba(40, 30, 40),
+    "m": rgba(90, 40, 50), "l": rgba(70, 50, 60)})
+
+LUNDI_TETE = ([
+    "....HHHHHHHH....",
+    "..HHHHHHHHHHHH..",
+    ".HHHHHHHHHHHHHH.",
+    "HHHkkHHHHHHkkHHH",
+    "HHHHHHHHHHHHHHHH",
+    "HHHHHmmmmmmHHHHH",
+    "HHHHmrrrrrrmHHHH",
+    "HHHHmrrrrrrmHHHH",
+    "HHHHmrrrrrrmHHHH",
+    ".HHHHmmmmmmHHHH.",
+    "..HHHHHHHHHHHH..",
+    "....hhhhhhhh....",
+], {"H": rgba(206, 196, 222), "h": rgba(150, 140, 176), "k": rgba(70, 60, 96), "m": rgba(56, 28, 56),
+    "r": rgba(160, 64, 96)})
+
+
+def choir(head):
+    """Le Choeur des Baillements : trois tetes cote a cote, celle du milieu un peu plus haute."""
+    w, h = head.size
+    img = Image.new("RGBA", (w * 3 - 4, h + 6), (0, 0, 0, 0))
+    for i, dy in enumerate((6, 0, 6)):
+        img.paste(head, (i * (w - 2), dy), head)
+    return img
+
+
+def quilt(rng):
+    """La Grande Couette : patchwork qui ondule, deux yeux ensommeilles."""
+    w, h = 40, 22
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    patches = [(150, 120, 200), (196, 160, 214), (120, 150, 206), (220, 190, 220), (170, 140, 190)]
+    for x in range(w):
+        bottom = h - 3 + int(round(math.sin(x / 3.0) * 2))  # bord du bas qui pend
+        for y in range(2, bottom):
+            c = patches[(x // 8 + y // 7 * 2) % len(patches)]
+            if x % 8 == 0 or y % 7 == 0:
+                c = shade(c, 0.75)  # coutures
+            px[x, y] = c + (255,)
+    for ex in (12, 27):  # yeux mi-clos
+        for dx in range(5):
+            px[ex + dx, 9] = (60, 40, 80, 255)
+        px[ex, 8] = px[ex + 4, 8] = (60, 40, 80, 255)
+    return outline(img, (30, 20, 44))
+
+
+def door(light):
+    """La Porte des Voix : porte de bois, lumiere qui filtre par les fentes et la serrure."""
+    w, h = 28, 46
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    glow = (255, 214, 130) if light else (190, 140, 80)
+    for y in range(h):
+        for x in range(w):
+            frame = x < 2 or x >= w - 2 or y < 2
+            plank = (x - 2) % 6 == 0
+            c = (74, 46, 34) if frame else ((110, 70, 48) if not plank else (88, 56, 40))
+            if not frame and (y in (14, 15) or y in (32, 33)):
+                c = (88, 56, 40)  # traverses
+            px[x, y] = c + (255,)
+    for y in range(4, h - 2):  # fentes entre les planches
+        if y % 5 != 0:
+            px[8, y] = px[20, y] = glow + (255,)
+    for x in range(2, w - 2):  # jour sous la porte
+        px[x, h - 1] = glow + (255,)
+    px[21, 24] = px[21, 25] = (240, 200, 90, 255)  # poignee
+    for dy in range(3):
+        px[21, 28 + dy] = glow + (255,)  # serrure
+    return outline(img, (24, 14, 18))
+
+
+def dim(src, k=0.7):
+    """Assombrit le sprite (veilleuse qui vacille)."""
+    img = src.copy()
+    px = img.load()
+    for y in range(img.height):
+        for x in range(img.width):
+            c = px[x, y]
+            if c[3]:
+                px[x, y] = shade(c[:3], k) + (c[3],)
+    return img
+
+
+def lundi_sprites(rng):
+    bailleur = rim_light(from_ascii(*LUNDI_BAILLEUR))
+    mouton = rim_light(from_ascii(*LUNDI_MOUTON))
+    veilleuse = rim_light(from_ascii(*LUNDI_VEILLEUSE))
+    reveil = rim_light(from_ascii(*LUNDI_REVEIL))
+    tete = from_ascii(*LUNDI_TETE)
+    couette = quilt(rng)
+    return {
+        "bailleur": [bailleur, squash(bailleur, 6)],
+        "mouton": [mouton, shift_rows(mouton, 9, 12, 1)],
+        "veilleuse": [veilleuse, dim(veilleuse)],
+        # Paupiere : image 0 fermee (invulnerable), image 1 ouverte (choisie par le script).
+        "paupiere": [from_ascii(LUNDI_PAUPIERE_CLOSED, PAUPIERE_PALETTE), from_ascii(LUNDI_PAUPIERE_OPEN, PAUPIERE_PALETTE)],
+        "grande_couette": [couette, shift_rows(couette, 12, 30, 1)],
+        "reveil_grincheux": [reveil, shift_rows(reveil, 0, 40, 1)],
+        "choeur_baillements": [rim_light(choir(tete)), rim_light(choir(squash(tete, 6)))],
+        "porte_des_voix": [door(False), door(True)],
+    }
+
+
 def save(img, *parts):
     path = os.path.join(ROOT, *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -658,6 +852,9 @@ def main():
         save(tower_sprite(day), "hub", f"tower_{name}.png")
     save(from_ascii(*PADLOCK), "hub", "padlock.png")
     save(from_ascii(*BOOK), "hub", "book.png")
+
+    for name, frames in lundi_sprites(random.Random(7)).items():
+        save(sheet(frames), "mobs", "lundi", f"{name}.png")
 
     frames = player_frames()
     save(frames[0], "player", "idle.png")

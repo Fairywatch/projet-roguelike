@@ -47,6 +47,10 @@ var ring_timer := 0.0
 var ring_color := Color(1, 0.95, 0.5)
 var ring_radius := REVEIL_RADIUS
 var speed_boost_timer := 0.0
+# Effets des ennemis : attraction (baillements...) remise a zero chaque frame, et ralentissement.
+var external_velocity := Vector2.ZERO
+var slow_timer := 0.0
+var slow_factor := 1.0
 
 # Statistiques calculees a partir des passifs (apply_items).
 var max_hp := BASE_MAX_HP
@@ -170,8 +174,21 @@ func _physics_process(delta: float) -> void:
 		if Input.is_physical_key_pressed(KEY_SHIFT) and dash_cooldown_timer <= 0.0:
 			_start_dash()
 		velocity = input_vector * move_speed * (CAFE_SPEED_MULT if speed_boost_timer > 0.0 else 1.0)
+		if slow_timer > 0.0:
+			velocity *= slow_factor
+		velocity += external_velocity  # le dash permet d'echapper a une attraction
+	external_velocity = Vector2.ZERO
+	slow_timer = maxf(0.0, slow_timer - delta)
+	sprite.self_modulate = Color(0.7, 0.75, 1.0) if slow_timer > 0.0 else Color.WHITE
 
 	move_and_slide()
+
+func add_external_velocity(v: Vector2) -> void:
+	external_velocity += v
+
+func apply_slow(duration: float, factor: float) -> void:
+	slow_timer = maxf(slow_timer, duration)
+	slow_factor = factor
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if dead:

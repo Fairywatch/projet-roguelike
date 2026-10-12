@@ -37,6 +37,8 @@ const NEGATIVE_FLOOR_MOB := preload("res://scenes/combat/TerreurNocturne.tscn")
 @onready var item_message_label: Label = $UI/ItemMessageLabel
 
 var is_boss_fight := false
+var had_elite := false
+const ELITE_LOOT_BONUS := 0.2
 var combat_over := false
 var message_serial := 0
 var waiting_to_leave := false
@@ -58,13 +60,37 @@ func _ready() -> void:
 	player.add_child(DreamTheme.make_ambient_particles(floor_meta["family"]))
 
 	GameState.start_combat()
-	var scenes := _pick_mob_scenes()
-	is_boss_fight = GameState.guardian_fight or scenes == [NEGATIVE_FLOOR_MOB]
+	var mobs := _pick_mobs()
+	is_boss_fight = GameState.guardian_fight or mobs.any(func(m): return m.is_boss)
 	Sound.music("boss" if is_boss_fight else "combat")
 	if is_boss_fight:
 		Sound.play("boss")
-	for scene in scenes:
-		_spawn_mob(scene)
+	for mob in mobs:
+		_spawn_mob(mob)
+
+# Ennemis du combat (pas encore dans l'arbre). Nuits produites : bestiaire de la nuit
+# (scripts/combat/bestiary.gd) ; les autres utilisent encore les anciens monstres.
+func _pick_mobs() -> Array:
+	var night: String = GameState.tower()["id"]
+	if not Bestiary.has_night(night):
+		var old: Array = _pick_mob_scenes().map(func(scene): return scene.instantiate())
+		if old[0].scene_file_path == NEGATIVE_FLOOR_MOB.resource_path and not GameState.guardian_fight:
+			old[0].is_boss = true
+		return old
+	var nightmare_floor: bool = GameState.current_floor()["intensity"] == FloorGenerator.Intensity.CAUCHEMAR
+	if GameState.guardian_fight:
+		if GameState.is_last_floor() and not GameState.guardian_exit_down:
+			return [Bestiary.final_boss(night)]
+		return [Bestiary.boss(night, nightmare_floor, GameState.boss_history)]
+	if GameState.floor_index < 0 and randf() < NEGATIVE_BOSS_CHANCE:
+		return [Bestiary.boss(night, nightmare_floor, GameState.boss_history)]
+	var mobs := []
+	for i in _encounter_size():
+		mobs.append(Bestiary.creature(night, nightmare_floor))
+	return mobs
+
+func _encounter_size() -> int:
+	return mini(MAX_MOBS, 2 + abs(GameState.floor_index) / FLOORS_PER_EXTRA_MOB + randi() % 2)
 
 func _pick_mob_scenes() -> Array:
 	if GameState.guardian_fight:
@@ -74,20 +100,20 @@ func _pick_mob_scenes() -> Array:
 		return [GUARDIAN_POOL.pick_random()]
 	if GameState.floor_index < 0 and randf() < NEGATIVE_BOSS_CHANCE:
 		return [NEGATIVE_FLOOR_MOB]
-	var count := mini(MAX_MOBS, 2 + abs(GameState.floor_index) / FLOORS_PER_EXTRA_MOB + randi() % 2)
 	var scenes := []
-	for i in count:
+	for i in _encounter_size():
 		scenes.append(MOB_POOL.pick_random())
 	return scenes
 
-func _spawn_mob(scene: PackedScene) -> void:
-	var mob: CharacterBody2D = scene.instantiate()
-	mob.position = _random_spawn_position()
+func _spawn_mob(mob: BaseMob) -> void:
+	mob.position = Vector2(450, 140) if mob.is_boss else _random_spawn_position()
 	add_child(mob)
 	mob.telegraph_duration *= 1.0 + GameState.mod("telegraph")
-	if GameState.guardian_fight:
+	if GameState.guardian_fight and not mob.is_boss:  # anciens monstres promus gardiens
 		mob.empower_as_guardian()
 	mob.apply_difficulty(GameState.difficulty())
+	mob.apply_variant()
+	had_elite = had_elite or mob.elite
 	# Passifs qui affaiblissent les ennemis (Marchand de sable, Montre a gousset...).
 	mob.hp = maxi(1, ceili(mob.hp * (1.0 + GameState.mod("enemy_hp"))))
 	mob.max_hp = mob.hp
@@ -121,7 +147,9 @@ func _process(_delta: float) -> void:
 	if alive.is_empty():
 		_on_victory()
 	elif is_boss_fight:
-		mob_label.text = "%s  PV %d" % ["Gardien du portail" if GameState.guardian_fight else "Terreur nocturne", alive[0].hp]
+		var boss: BaseMob = alive.filter(func(m): return m.is_boss).front() if alive.any(func(m): return m.is_boss) else alive[0]
+		var boss_name: String = boss.display_name if boss.display_name != "" else ("Gardien du portail" if GameState.guardian_fight else "Terreur nocturne")
+		mob_label.text = "%s  PV %d" % [boss_name, boss.hp]
 	else:
 		mob_label.text = "Ennemis : %d" % alive.size()
 
@@ -157,7 +185,7 @@ func _on_victory() -> void:
 	GameState.coins += GameState.COINS_PER_GUARDIAN if GameState.guardian_fight else GameState.COINS_PER_WIN
 	GameState.recharge_active()
 	mob_label.text = "Gardien vaincu !" if GameState.guardian_fight else "Victoire !"
-	if is_boss_fight or randf() < DROP_CHANCE + GameState.mod("drop_chance"):
+	if is_boss_fight or had_elite or randf() < DROP_CHANCE + GameState.mod("drop_chance"):
 		_drop_item()
 		return
 	await get_tree().create_timer(1.4).timeout
@@ -166,7 +194,8 @@ func _on_victory() -> void:
 # Le butin tombe au sol : on choisit de le prendre (E) ou de garder son objet (Entree).
 func _drop_item() -> void:
 	var pickup := ItemPickup.new()
-	pickup.item_id = GameState.roll_item_id(GameState.BOSS_LOOT_BONUS if is_boss_fight else 0.0)
+	var bonus := GameState.BOSS_LOOT_BONUS if is_boss_fight else (ELITE_LOOT_BONUS if had_elite else 0.0)
+	pickup.item_id = GameState.roll_item_id(bonus)
 	pickup.position = player.position + Vector2(0, -80 if player.position.y > 150 else 80)
 	add_child(pickup)
 	pickup.taken.connect(_on_pickup_taken)
