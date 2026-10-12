@@ -11,6 +11,7 @@ const Beam := preload("res://scripts/combat/hazards/beam.gd")
 const Zone := preload("res://scripts/combat/hazards/zone.gd")
 const Sweep := preload("res://scripts/combat/hazards/sweep.gd")
 const Shrink := preload("res://scripts/combat/hazards/shrink.gd")
+const Boulder := preload("res://scripts/combat/hazards/boulder.gd")
 # Surface jouable de l'arene (900 x 540 moins une marge).
 const ARENA := Rect2(50, 50, 800, 440)
 
@@ -138,3 +139,15 @@ static func wall(rect: Rect2, duration: float, color: Color = Color(0.4, 0.45, 0
 	tween.tween_property(body, "modulate:a", 0.0, 0.3)
 	tween.tween_callback(body.queue_free)
 	return body
+
+# Rocher qui roule et rebondit sur les bords de l'arene (voir hazards/boulder.gd).
+static func boulder(center: Vector2, direction: Vector2, speed: float, radius: float, lifetime: float, color: Color) -> Node2D:
+	var b: Node2D = Boulder.new()
+	b.direction = direction.normalized()
+	b.speed = speed
+	b.radius = radius
+	b.lifetime = lifetime
+	b.color = color
+	_scene().add_child(b)
+	b.global_position = center
+	return b

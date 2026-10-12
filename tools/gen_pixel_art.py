@@ -1335,6 +1335,186 @@ def jeudi_sprites():
     }
 
 
+# --- Bestiaire du vendredi (Epuisement) --------------------------------------------------
+
+VENDREDI_FARDEAU = ([
+    "...pp...pp...pp.....",
+    "..pkpp.pkpp.pkpp....",
+    "..pppp.pppp.pppp....",
+    ".GGGGGGGGGGGGGGGG...",
+    "GGGGGGGGGGGGGGGGGG..",
+    "GGGkkGGGGGGGkkGGGG..",
+    "GGGGGGGGGGGGGGGGGGG.",
+    "GGGGGGGmmmmGGGGGGGG.",
+    "GGGGGGGGGGGGGGGGGGG.",
+    ".GGGGGGGGGGGGGGGGG..",
+    "..gggggggggggggggg..",
+    "...ll..........ll...",
+], {"p": rgba(200, 170, 140), "k": rgba(40, 30, 30), "G": rgba(130, 120, 110), "g": rgba(90, 82, 76),
+    "m": rgba(50, 40, 40), "l": rgba(60, 54, 50)})
+VENDREDI_PASSAGER = ([
+    "..pppp..",
+    ".pppppp.",
+    "ppkppkpp",
+    "pppppppp",
+    ".pmmmmp.",
+    "..l..l..",
+], {"p": rgba(200, 170, 140), "k": rgba(40, 30, 30), "m": rgba(120, 70, 60), "l": rgba(90, 70, 60)})
+VENDREDI_SANGSUE = ([
+    "...SSSSSS...",
+    ".SSSSSSSSSS.",
+    "SSSeSSSSeSSS",
+    "SSSSSSSSSSSS",
+    "SSSSmmmmSSSS",
+    ".ssssssssss.",
+], {"S": rgba(150, 90, 170), "s": rgba(100, 56, 120), "e": rgba(250, 240, 160), "m": rgba(60, 20, 60)})
+VENDREDI_SOIGNANT = ([
+    "...HHHH...",
+    "..HHHHHH..",
+    "..HeHHeH..",
+    "..HHHHHH..",
+    "...HHHH...",
+    ".WWWWWWWW.",
+    "WWWWRRWWWW",
+    "WWWRRRRWWW",
+    "WWWWRRWWWW",
+    "WWWWWWWWWW",
+    "WWWWWWWWWW",
+    ".WWWWWWWW.",
+    ".ww....ww.",
+], {"H": rgba(110, 100, 130), "e": rgba(230, 230, 255), "W": rgba(236, 238, 244), "w": rgba(170, 172, 186),
+    "R": rgba(220, 60, 70)})
+VENDREDI_BOUGIE = ([
+    "...F....",
+    "..FYF...",
+    "..FYF...",
+    "...k....",
+    ".CCCCC..",
+    ".CeCeC..",
+    ".CCCCC..",
+    "CCCCCCd.",
+    ".CCCCCd.",
+    ".CCdCC..",
+    ".CCdCCd.",
+    "CCCCCCCd",
+    "cccccccc",
+], {"F": rgba(255, 150, 60), "Y": rgba(255, 240, 170), "k": rgba(40, 30, 30), "C": rgba(236, 226, 206),
+    "e": rgba(60, 40, 40), "d": rgba(250, 244, 230), "c": rgba(180, 168, 150)})
+VENDREDI_OEUF = ([
+    "..EEEE..",
+    ".EEEEEE.",
+    "EEEsEEEE",
+    "EEEEEsEE",
+    "EEsEEEEE",
+    "EEEEEEEE",
+    ".EEEEEE.",
+    "..eeee..",
+], {"E": rgba(240, 232, 214), "s": rgba(170, 150, 120), "e": rgba(190, 180, 160)})
+VENDREDI_HORLOGE = ([
+    "..WWWWWWWWWWWWWW..",
+    ".WWwwwwwwwwwwwwWW.",
+    "WWwFFFFFFFFFFFFwWW",
+    "WWwFFkFFFFFFkFFwWW",
+    "WWwFFFFFFFFFFFFwWW",
+    "WWwFFFFFFFFFFFFwWW",
+    "WWwFFFFFmmFFFFFwWW",
+    "WWwFFFFFFFFFFFFwWW",
+    "WWwwwwwwwwwwwwwwWW",
+    ".WWWWWWWWWWWWWWWW.",
+    "..WWWW......WWWW..",
+], {"W": rgba(110, 70, 44), "w": rgba(80, 50, 32), "F": rgba(236, 226, 200), "k": rgba(30, 20, 20),
+    "m": rgba(80, 40, 30)})
+
+
+def atlas_sprite(lift):
+    """Atlas : un geant courbe qui porte un monde au-dessus de sa tete."""
+    w, h = 30, 40
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    cy = 9 - lift
+    for y in range(h):
+        for x in range(w):
+            if (x - 15) ** 2 + (y - cy) ** 2 <= 64:  # le monde
+                px[x, y] = ((80, 140, 200) if (x * 3 + y * 5) % 7 > 2 else (90, 170, 110)) + (255,)
+    for y in range(18, 38):  # le corps
+        half = 6 + (y - 18) // 4
+        for x in range(15 - half, 15 + half):
+            px[x, y] = (150, 120, 96, 255)
+    for x, y in ((9, 17 - lift), (21, 17 - lift), (10, 18), (20, 18)):  # bras leves
+        for k in range(3):
+            px[x, y + k] = (150, 120, 96, 255)
+    px[13, 23] = px[17, 23] = (40, 30, 30, 255)
+    for x in range(12, 19):
+        px[x, 27] = (90, 60, 50, 255)  # bouche crispee
+    return outline(img, (30, 22, 20))
+
+
+def nest_sprite(beak_open):
+    """Le Nid : une mere-oiseau aux plumes ebouriffees dans son nid de branches."""
+    w, h = 30, 22
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    for y in range(h):
+        for x in range(w):
+            if ((x - 15) / 9) ** 2 + ((y - 8) / 7) ** 2 <= 1:  # l'oiseau
+                px[x, y] = (120, 96, 150, 255)
+    for y in range(12, h):  # le nid
+        for x in range(w):
+            if ((x - 15) / 15) ** 2 + ((y - 15) / 6) ** 2 <= 1:
+                px[x, y] = ((140, 100, 60) if (x + y) % 3 else (100, 70, 40)) + (255,)
+    px[11, 6] = px[18, 6] = (250, 240, 200, 255)
+    for k in range(3):
+        px[22 + k, 8] = (240, 170, 60, 255)
+        if beak_open:
+            px[22 + k, 10] = (240, 170, 60, 255)
+    return outline(img, (30, 22, 30))
+
+
+def weight_sprite(slump):
+    """Le Poids du Monde : une masse faite de toutes les silhouettes qu'il porte, les yeux las."""
+    w, h = 36, 42
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    rng = random.Random(5)
+    for i in range(14):  # tetes empilees
+        cx, cy = rng.randrange(6, 30), rng.randrange(4, 22) + slump
+        shade_k = rng.uniform(0.7, 1.0)
+        for y in range(h):
+            for x in range(w):
+                if (x - cx) ** 2 + (y - cy) ** 2 <= 16:
+                    px[x, y] = shade((110, 100, 130), shade_k) + (255,)
+    for y in range(18, h):  # le grand corps qui porte tout
+        half = 10 + (y - 18) // 3
+        for x in range(max(0, 18 - half), min(w, 18 + half)):
+            px[x, y] = (84, 76, 104, 255)
+    for ex in (13, 22):
+        for dx in range(3):
+            px[ex + dx, 28 + slump // 2] = (230, 220, 240, 255)  # yeux mi-clos
+    return outline(img, (24, 20, 34))
+
+
+def vendredi_sprites():
+    fardeau = rim_light(from_ascii(*VENDREDI_FARDEAU))
+    passager = from_ascii(*VENDREDI_PASSAGER)
+    sangsue = rim_light(from_ascii(*VENDREDI_SANGSUE))
+    soignant = rim_light(from_ascii(*VENDREDI_SOIGNANT))
+    bougie = rim_light(from_ascii(*VENDREDI_BOUGIE))
+    oeuf = from_ascii(*VENDREDI_OEUF)
+    horloge = rim_light(from_ascii(*VENDREDI_HORLOGE))
+    return {
+        "fardeau": [fardeau, squash(fardeau, 6)],
+        "passager": [passager, shift_rows(passager, 5, 6, 1)],
+        "sangsue": [sangsue, squash(sangsue, 3)],
+        "soignant": [soignant, shift_rows(soignant, 12, 13, 1)],
+        "bougie_fondue": [bougie, shift_rows(bougie, 0, 4, 1)],
+        "oeuf": [oeuf, shift_rows(oeuf, 0, 8, 1)],
+        "atlas": [atlas_sprite(0), atlas_sprite(1)],
+        "nid": [nest_sprite(False), nest_sprite(True)],
+        "balancier": [horloge, shift_rows(horloge, 0, 2, 1)],
+        "poids_du_monde": [weight_sprite(0), weight_sprite(2)],
+    }
+
+
 def save(img, *parts):
     path = os.path.join(ROOT, *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1375,6 +1555,8 @@ def main():
         save(sheet(frames), "mobs", "mercredi", f"{name}.png")
     for name, frames in jeudi_sprites().items():
         save(sheet(frames), "mobs", "jeudi", f"{name}.png")
+    for name, frames in vendredi_sprites().items():
+        save(sheet(frames), "mobs", "vendredi", f"{name}.png")
 
     frames = player_frames()
     save(frames[0], "player", "idle.png")
