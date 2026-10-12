@@ -821,6 +821,186 @@ def lundi_sprites(rng):
     }
 
 
+# --- Bestiaire du mardi (Stress) --------------------------------------------------------
+
+MARDI_TROTTEUSE = ([
+    "..............A.",
+    ".............AAA",
+    "GGGGGGGGGGGGAeAA",
+    "GGGGGGGGGGGGAAAA",
+    ".............AAA",
+    "..............A.",
+    ".l...l...l...l..",
+    ".l...l...l...l..",
+], {"G": rgba(220, 186, 90), "A": rgba(170, 130, 50), "e": rgba(30, 20, 20), "l": rgba(70, 50, 40)})
+
+MARDI_PILE = ([
+    "..PPPPPPPPPP..",
+    "..PlllllllllP.",
+    "..PPPPPPPPPPP.",
+    ".PPPPPPPPPPP..",
+    ".PlllllllllP..",
+    ".PPPPPPPPPPP..",
+    "..PPPPPPPPPPP.",
+    "..PlllllllllP.",
+    "..PPPPPPPPPPP.",
+    ".PPPPPPPPPPPP.",
+    ".PPeePPPPeePP.",
+    ".PPPPPmmPPPPP.",
+    ".PPPPPPPPPPPP.",
+    ".pppppppppppp.",
+], {"P": rgba(242, 240, 230), "l": rgba(150, 170, 214), "e": rgba(40, 30, 40), "m": rgba(190, 60, 60),
+    "p": rgba(190, 186, 176)})
+
+MARDI_STYLO = ([
+    "..CC..",
+    ".CRRC.",
+    ".RRRR.",
+    ".RRRR.",
+    ".ReRe.",
+    ".RRRR.",
+    ".RkkR.",
+    ".RRRR.",
+    ".RRRR.",
+    ".rrrr.",
+    ".SSSS.",
+    "..SS..",
+    "..SS..",
+    "..NN..",
+    "...N..",
+], {"C": rgba(240, 240, 240), "R": rgba(206, 46, 56), "r": rgba(140, 26, 36), "e": rgba(250, 250, 250),
+    "k": rgba(60, 10, 20), "S": rgba(180, 180, 190), "N": rgba(150, 0, 20)})
+
+MARDI_COEUR = ([
+    "..HHH....HHH..",
+    ".HHhHH..HHHHH.",
+    "HHhHHHHHHHHHHH",
+    "HHHHHHHHHHHHHH",
+    "HHHeHHHHHHeHHH",
+    "HHHHHHHHHHHHHH",
+    ".HHHHHmmHHHHH.",
+    "..HHHHHHHHHH..",
+    "...HHHHHHHH...",
+    "....HHHHHH....",
+    ".....HHHH.....",
+    "......HH......",
+], {"H": rgba(222, 62, 84), "h": rgba(255, 150, 160), "e": rgba(40, 10, 20), "m": rgba(110, 20, 40)})
+
+MARDI_TABLEAU = ([
+    "WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+    "WBBBBBBBBBBBBBBBBBBBBBBBBBBW",
+    "WBBcBBBBcccBBBBBBBcBBBcBBBBW",
+    "WBcBcBBBBBcBBccBBBcBBcBcBBBW",
+    "WBcccBBBBccBBBBBBBcBBcBcBBBW",
+    "WBcBcBBBcBBBBccBBBcBBBcBBBBW",
+    "WBcBcBBBccccBBBBBBcBBBBBBBBW",
+    "WBBBBBBBBBBBBBBBBBBBBBBBBBBW",
+    "WBBBBBccBBBBBBBBBBBBccBBBBBW",
+    "WBBBBBccBBBBBBBBBBBBccBBBBBW",
+    "WBBBBBBBBBBBBBBBBBBBBBBBBBBW",
+    "WBBBBBBBBccccccccccBBBBBBBBW",
+    "WBBBBBBBBBBBBBBBBBBBBBBBBBBW",
+    "WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+    "..LL....................LL..",
+    "..LL....................LL..",
+], {"W": rgba(140, 92, 56), "B": rgba(42, 72, 58), "c": rgba(232, 236, 226), "L": rgba(96, 60, 36)})
+
+MARDI_CLOCHE = ([
+    ".........hh.........",
+    "........hhhh........",
+    ".......YYYYYY.......",
+    "......YYYYYYYY......",
+    ".....YYyYYYYYYY.....",
+    ".....YYYYYYYYYY.....",
+    "....YYYYYYYYYYYY....",
+    "....YYeYYYYYYeYY....",
+    "....YYYYYYYYYYYY....",
+    "...YYYYYYYYYYYYYY...",
+    "...YYYYYmmmmYYYYY...",
+    "..YYYYYYYYYYYYYYYY..",
+    ".YYYYYYYYYYYYYYYYYY.",
+    "dddddddddddddddddddd",
+    "........kk..........",
+    ".......kkkk.........",
+], {"Y": rgba(226, 184, 70), "y": rgba(255, 236, 160), "d": rgba(160, 120, 40), "h": rgba(110, 70, 40),
+    "e": rgba(40, 30, 20), "m": rgba(110, 60, 30), "k": rgba(90, 80, 70)})
+
+
+def wall_clock(hand_angle):
+    """L'Horloge de Classe : cadran rond, chiffres en points, deux yeux et des aiguilles."""
+    size = 28
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    px = img.load()
+    c = (size - 1) / 2
+    for y in range(size):
+        for x in range(size):
+            d = math.hypot(x - c, y - c)
+            if d <= c:
+                px[x, y] = ((60, 64, 80) if d > c - 2.5 else (240, 236, 222)) + (255,)
+    for i in range(12):  # graduations
+        a = i * math.pi / 6
+        px[int(round(c + math.cos(a) * (c - 4))), int(round(c + math.sin(a) * (c - 4)))] = (60, 60, 70, 255)
+    for ex in (9, 18):  # yeux
+        px[ex, 10] = px[ex, 11] = (30, 24, 40, 255)
+    for r, a in ((9, hand_angle), (6, hand_angle * 0.3 + 1.2)):  # aiguilles
+        for k in range(r):
+            px[int(round(c + math.cos(a) * k)), int(round(c + math.sin(a) * k))] = (190, 50, 50, 255)
+    return outline(img, (24, 20, 30))
+
+
+def exam_sheet(eye_open):
+    """L'Examen : grande copie a lignes, coin corne, un oeil enorme et des points d'interrogation."""
+    w, h = 30, 38
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    for y in range(h):
+        for x in range(w):
+            if x + y > w + h - 8:
+                continue  # coin corne
+            c = (244, 242, 232)
+            if y % 4 == 0 and 3 < x < w - 2:
+                c = (170, 190, 226)
+            if x == 4:
+                c = (226, 120, 130)  # marge rouge
+            px[x, y] = c + (255,)
+    cx, cy = 15, 17
+    for y in range(cy - 5, cy + 6):
+        for x in range(cx - 8, cx + 9):
+            if ((x - cx) / 8) ** 2 + ((y - cy) / 5) ** 2 <= 1:
+                px[x, y] = (255, 255, 255, 255) if eye_open else (200, 196, 190, 255)
+    if eye_open:
+        for y in range(cy - 3, cy + 4):
+            for x in range(cx - 3, cx + 4):
+                if (x - cx) ** 2 + (y - cy) ** 2 <= 9:
+                    px[x, y] = (40, 20, 30, 255) if (x - cx) ** 2 + (y - cy) ** 2 <= 3 else (200, 40, 50, 255)
+    else:
+        for x in range(cx - 7, cx + 8):
+            px[x, cy] = (60, 40, 50, 255)
+    for qx, qy in ((7, 28), (20, 29), (12, 33)):  # "?" rouges
+        for dx, dy in ((0, 0), (1, -1), (2, 0), (2, 1), (1, 2), (1, 4)):
+            px[qx + dx, qy + dy] = (200, 30, 40, 255)
+    return outline(img, (30, 24, 34))
+
+
+def mardi_sprites():
+    trotteuse = rim_light(from_ascii(*MARDI_TROTTEUSE))
+    pile = rim_light(from_ascii(*MARDI_PILE))
+    stylo = rim_light(from_ascii(*MARDI_STYLO))
+    coeur = rim_light(from_ascii(*MARDI_COEUR))
+    tableau = from_ascii(*MARDI_TABLEAU)
+    cloche = rim_light(from_ascii(*MARDI_CLOCHE))
+    return {
+        "trotteuse": [trotteuse, shift_rows(trotteuse, 7, 12, 1)],
+        "pile_devoirs": [pile, shift_rows(pile, 0, 6, 1)],
+        "stylo_rouge": [stylo, shift_rows(stylo, 0, 20, 1)],
+        "battement": [coeur, squash(coeur, 6)],
+        "tableau_noir": [tableau, shift_rows(tableau, 14, 20, 1)],
+        "horloge_classe": [wall_clock(-1.2), wall_clock(-0.9)],
+        "cloche": [cloche, shift_rows(cloche, 14, 20, 2)],
+        "examen": [exam_sheet(False), exam_sheet(True)],
+    }
+
+
 def save(img, *parts):
     path = os.path.join(ROOT, *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -855,6 +1035,8 @@ def main():
 
     for name, frames in lundi_sprites(random.Random(7)).items():
         save(sheet(frames), "mobs", "lundi", f"{name}.png")
+    for name, frames in mardi_sprites().items():
+        save(sheet(frames), "mobs", "mardi", f"{name}.png")
 
     frames = player_frames()
     save(frames[0], "player", "idle.png")

@@ -46,6 +46,5 @@ func _on_telegraph_begin() -> void:
 	Hazards.beam(global_position, direction, 36.0 if nightmare else 26.0, telegraph_duration, attack_duration)
 
 func _on_attack_end() -> void:
-	await get_tree().create_timer(OPEN_AFTER_SHOT).timeout
-	if state != State.DEAD and state != State.TELEGRAPH:
+	if await pause(OPEN_AFTER_SHOT) and state != State.TELEGRAPH:
 		_close()
