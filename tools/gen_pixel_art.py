@@ -1515,6 +1515,144 @@ def vendredi_sprites():
     }
 
 
+# --- Bestiaire du samedi (Solitude) -------------------------------------------------------
+
+SAMEDI_SILHOUETTE = ([
+    "...SSSS...",
+    "..SSSSSS..",
+    "..SSSSSS..",
+    "...SSSS...",
+    "....SS....",
+    ".SSSSSSSS.",
+    "SSSSSSSSSS",
+    "SS.SSSS.SS",
+    "SS.SSSS.SS",
+    "...SSSS...",
+    "...SSSS...",
+    "...S..S...",
+    "...S..S...",
+    "..SS..SS..",
+], {"S": (70, 70, 96, 200)})
+SAMEDI_CHAISE = ([
+    "..BBBBBBBB....",
+    "..BbbbbbbB....",
+    "..BbBBBBbB....",
+    "..BbbbbbbB....",
+    "..BbBBBBbB....",
+    "..BbbbbbbB....",
+    "..BBBBBBBB....",
+    "..BSSSSSSSSSS.",
+    "..BSSSSSSSSSS.",
+    "..BBBBBBBBBBB.",
+    "..L.......L...",
+    "..L.......L...",
+    "..L.......L...",
+    "..L.......L...",
+], {"B": rgba(120, 80, 54), "b": rgba(160, 110, 74), "S": rgba(176, 124, 84), "L": rgba(96, 62, 40)})
+SAMEDI_LETTRE = ([
+    "WWWWWWWWWWWWWWWW",
+    "WFWWWWWWWWWWWWFW",
+    "WWFFWWWWWWWWFFWW",
+    "WWWWFFWWWWFFWWWW",
+    "WWWWWWFRRFWWWWWW",
+    "WWWeWWWRRWWWeWWW",
+    "WWWWWWWWWWWWWWWW",
+    "WWWWWWkkkkWWWWWW",
+    "WWWWWWWWWWWWWWWW",
+    "wwwwwwwwwwwwwwww",
+], {"W": rgba(240, 236, 224), "w": rgba(190, 184, 170), "F": rgba(200, 192, 176), "R": rgba(190, 40, 50),
+    "e": rgba(40, 30, 40), "k": rgba(90, 70, 70)})
+SAMEDI_TELEPHONE = ([
+    "..PPPPPPPPPPPPPP..",
+    ".PPPPPPPPPPPPPPPP.",
+    ".PP............PP.",
+    "..................",
+    "....BBBBBBBBBB....",
+    "...BBBBBBBBBBBB...",
+    "..BBBDDDDDDDDBBB..",
+    "..BBDDeDDDDeDDBB..",
+    "..BBDDDDDDDDDDBB..",
+    "..BBDDDDkkDDDDBB..",
+    "..BBBDDDDDDDDBBB..",
+    "..BBBBBBBBBBBBBB..",
+    "..bbbbbbbbbbbbbb..",
+], {"P": rgba(50, 50, 60), "B": rgba(60, 60, 72), "b": rgba(36, 36, 44), "D": rgba(220, 216, 200),
+    "e": rgba(30, 30, 36), "k": rgba(80, 70, 70)})
+
+
+def echo_sprite(phase):
+    """Echo : une forme floue entouree de contours qui tremblent."""
+    w, h = 18, 20
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    cx, cy = 8.5, 9.5
+    for y in range(h):
+        for x in range(w):
+            d = math.hypot((x - cx) / 0.85, y - cy)
+            if d < 6:
+                px[x, y] = (170, 180, 220, 230)
+            elif int(d + phase) % 3 == 0 and d < 9.5:
+                px[x, y] = (150, 160, 210, 120)
+    px[6, 8] = px[11, 8] = (40, 40, 70, 255)
+    return img
+
+
+def empty_house(lit):
+    """La Maison Vide : une maison sombre, une seule fenetre allumee."""
+    w, h = 30, 32
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    for y in range(12):  # toit
+        for x in range(15 - y - 2, 15 + y + 2):
+            if 0 <= x < w:
+                px[x, y] = (80, 50, 60, 255)
+    for y in range(12, h):
+        for x in range(3, w - 3):
+            px[x, y] = (110, 104, 120, 255)
+    windows = [(7, 15), (19, 15), (7, 23)]
+    for i, (wx, wy) in enumerate(windows):
+        on = lit and i == 1
+        for dy in range(5):
+            for dx in range(5):
+                px[wx + dx, wy + dy] = ((250, 220, 130) if on else (30, 28, 40)) + (255,)
+    for y in range(23, h):  # porte
+        for x in range(19, 24):
+            px[x, y] = (60, 40, 40, 255)
+    return outline(img, (24, 18, 28))
+
+
+def absence_sprite(warm):
+    """L'Absence : une silhouette pale aux bras ouverts, la forme d'un etre aime."""
+    w, h = 22, 32
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    body = (250, 220, 200) if warm else (200, 210, 240)
+    for y in range(h):
+        for x in range(w):
+            head = (x - 11) ** 2 + (y - 5) ** 2 <= 14
+            torso = 10 <= y < 28 and abs(x - 11) <= 3 + (y - 10) // 4
+            arms = 11 <= y <= 13 and abs(x - 11) <= 10
+            if head or torso or arms:
+                px[x, y] = body + (150,)
+    return img
+
+
+def samedi_sprites():
+    silhouette = from_ascii(*SAMEDI_SILHOUETTE)
+    chaise = rim_light(from_ascii(*SAMEDI_CHAISE))
+    lettre = rim_light(from_ascii(*SAMEDI_LETTRE))
+    telephone = rim_light(from_ascii(*SAMEDI_TELEPHONE))
+    return {
+        "silhouette": [silhouette, shift_rows(silhouette, 11, 16, 1)],
+        "echo": [echo_sprite(0), echo_sprite(1)],
+        "chaise": [chaise, shift_rows(chaise, 10, 16, 1)],
+        "lettre": [lettre, squash(lettre, 4)],
+        "maison_vide": [empty_house(False), empty_house(True)],
+        "telephone": [telephone, shift_rows(telephone, 0, 3, -1)],
+        "absence": [absence_sprite(False), absence_sprite(True)],
+    }
+
+
 def save(img, *parts):
     path = os.path.join(ROOT, *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1557,6 +1695,8 @@ def main():
         save(sheet(frames), "mobs", "jeudi", f"{name}.png")
     for name, frames in vendredi_sprites().items():
         save(sheet(frames), "mobs", "vendredi", f"{name}.png")
+    for name, frames in samedi_sprites().items():
+        save(sheet(frames), "mobs", "samedi", f"{name}.png")
 
     frames = player_frames()
     save(frames[0], "player", "idle.png")
