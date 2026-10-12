@@ -29,6 +29,7 @@ func _initialize() -> void:
 	npc.quest = quest
 	root.add_child(npc)
 	await process_frame
+	npc.talk()  # premier echange : la replique de l'habitant (scripts/story.gd)
 	npc.talk()
 	assert(quest["state"] == "active" and quest["start_wins"] == 1 and not npc.is_complete())
 	gs.current_floor()["wins"] = 3

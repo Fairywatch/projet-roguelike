@@ -613,6 +613,20 @@ PADLOCK = ([
 ], {"k": rgba(150, 150, 170), "G": rgba(220, 170, 70)})
 
 
+BOOK = ([
+    ".bbbbbbbbbbbb.",
+    "bPPPPPPWPPPPPb",
+    "bPPPPPPWPPPPPb",
+    "bPPYYPPWPPYYPb",
+    "bPPPPPPWPPPPPb",
+    "bPPYYPPWPPYYPb",
+    "bPPPPPPWPPPPPb",
+    "bbbbbbbbbbbbbb",
+    ".gggggggggggg.",
+], {"b": rgba(60, 40, 90), "P": rgba(130, 100, 190), "W": rgba(240, 230, 250), "Y": rgba(255, 220, 120),
+    "g": rgba(40, 28, 60)})
+
+
 def save(img, *parts):
     path = os.path.join(ROOT, *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -643,6 +657,7 @@ def main():
     for day, name in enumerate(DAYS):
         save(tower_sprite(day), "hub", f"tower_{name}.png")
     save(from_ascii(*PADLOCK), "hub", "padlock.png")
+    save(from_ascii(*BOOK), "hub", "book.png")
 
     frames = player_frames()
     save(frames[0], "player", "idle.png")

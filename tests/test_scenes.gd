@@ -6,6 +6,7 @@ extends SceneTree
 const SCENES := [
 	"res://scenes/menu/MainMenu.tscn",
 	"res://scenes/hub/Hub.tscn",
+	"res://scenes/story/Cutscene.tscn",
 	"res://scenes/exploration/Map.tscn",
 	"res://scenes/combat/CombatArena.tscn",
 ]
@@ -22,6 +23,7 @@ func _initialize() -> void:
 	for tower in Towers.LIST.size():
 		gs.new_run(tower)
 		for path in SCENES:
+			gs.cutscene_id = "intro"  # la scene de recit a besoin d'une histoire a raconter
 			change_scene_to_file(path)
 			for i in 30:
 				await process_frame

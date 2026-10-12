@@ -23,7 +23,11 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - Une seconde dimension, indépendante de la famille : l'**intensité** de l'étage, **rêve** ou **cauchemar** (palette claire ou sombre). La part de cauchemars dépend de la nuit.
 - **Les PNJ font partie intégrante du rêve lui-même** — ce sont des habitants propres à cet univers onirique, pas des représentations d'autres personnes (hibou insomniaque, lapin horloger, marchande de lune...).
 - **Tours difficiles = nuits plus tourmentées** : les nuits les plus dures correspondent à des périodes où le personnage porte des peurs plus profondes ou des problèmes de vie plus lourds — la difficulté est donc directement liée à l'état intérieur du personnage à ce moment-là, et justifiée narrativement.
-- **Fil rouge narratif** : les nuits suivent une forme de chronologie dans la vie du personnage. En débloquant et en traversant les tours dans l'ordre, le joueur découvre progressivement des fragments de ce qui lui est arrivé — un moteur narratif pour donner envie d'avancer, au-delà du simple défi de gameplay. Chaque nuit tourmentée peut ainsi correspondre à un événement ou une période précise de sa vie.
+- **Fil rouge narratif** : la semaine est l'image d'une vie entière et des épreuves qu'on y traverse. Chaque nuit est un âge de la vie, avec sa peine et une petite lueur d'espoir à la fin : lundi l'enfance (les disputes entendues derrière la porte), mardi l'école (la pression), mercredi la jeunesse (qui devenir), jeudi la vie active (les efforts sans récompense), vendredi le soin des autres (l'épuisement), samedi les départs (la solitude), dimanche la fin (l'angoisse), jusqu'au réveil apaisé.
+- **Comment le récit est raconté** (textes dans `scripts/story.gd`, premier jet à retravailler) :
+  - une **introduction animée** façon *The Binding of Isaac* (tableaux illustrés et texte qui s'écrit), jouée la première fois qu'on va choisir une nuit et relisible dans le hub (Livre des songes) ;
+  - les **habitants du rêve** : au premier échange, chacun dit une réplique liée à la nuit en cours ;
+  - une **fin à chaque nuit**, racontée après son dernier boss.
 
 ---
 
@@ -134,7 +138,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 
 ## 11. Questions ouvertes à trancher
 
-- **Détail du fil rouge narratif** : comment les fragments de vie du personnage sont-ils révélés concrètement (cinématiques courtes, objets/journaux à trouver en jeu, dialogues de PNJ, texte entre les tours) ? Et l'ordre des tours débloquées suit-il forcément la chronologie de vie, ou peut-il y avoir des sauts temporels ?
+- **Texte définitif du récit** : le premier jet de `scripts/story.gd` est à relire et réécrire.
 - **Contenu propre à chaque nuit** : histoire, bestiaire, biomes et boss spécifiques (les 7 nuits ne diffèrent encore que par leurs paramètres).
 - **Fin du jeu global** : que se passe-t-il quand le dimanche est terminé (fin de la semaine, nouvelle semaine plus dure) ?
 - **Méta-progression au-delà des passifs** : capacités permanentes, cosmétiques ?

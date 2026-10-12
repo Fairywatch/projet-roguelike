@@ -87,6 +87,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func talk() -> void:
 	match quest["state"]:
 		"offered":
+			# Premier echange : l'habitant parle du reveur (scripts/story.gd), puis propose la quete.
+			if not quest.get("told", false):
+				quest["told"] = true
+				_say(story_line())
+				refresh()
+				return
 			quest["state"] = "active"
 			quest["start_wins"] = GameState.current_floor()["wins"]
 			Sound.play("quest")
@@ -111,6 +117,10 @@ func talk() -> void:
 		_:
 			_say("Bonne nuit, voyageur.")
 	refresh()
+
+func story_line() -> String:
+	var lines: Array = Story.NPC_LINES.get(GameState.tower()["id"], [])
+	return lines[quest["npc"] % lines.size()] if not lines.is_empty() else "Bonne nuit, voyageur."
 
 func _say(text: String) -> void:
 	said.emit("%s : %s" % [npc["name"], text])
