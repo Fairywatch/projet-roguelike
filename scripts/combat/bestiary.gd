@@ -17,6 +17,11 @@ const NIGHTS := {
 		"bosses": ["mardi/tableau_noir", "mardi/horloge_classe", "mardi/cloche"],
 		"final": "mardi/examen",
 	},
+	"mercredi": {
+		"creatures": ["mercredi/reflet", "mercredi/pile_ou_face", "mercredi/carrefour", "mercredi/masque"],
+		"bosses": ["mercredi/miroir_brise", "mercredi/labyrinthe", "mercredi/deux_voies"],
+		"final": "mercredi/autre_soi",
+	},
 }
 const ELITE_CHANCE := 0.1
 const ALT_CHANCE := 0.5

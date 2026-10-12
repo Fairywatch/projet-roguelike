@@ -116,3 +116,25 @@ static func shrink(speed: float = 18.0, telegraph: float = 1.0) -> Node2D:
 	s.telegraph = telegraph
 	_scene().add_child(s)
 	return s
+
+# Mur temporaire (labyrinthe) : bloque le joueur, les ennemis et les projectiles, puis disparait.
+static func wall(rect: Rect2, duration: float, color: Color = Color(0.4, 0.45, 0.42)) -> StaticBody2D:
+	var body := StaticBody2D.new()
+	var shape := CollisionShape2D.new()
+	shape.shape = RectangleShape2D.new()
+	shape.shape.size = rect.size
+	body.add_child(shape)
+	var visual := ColorRect.new()
+	visual.color = color
+	visual.size = rect.size
+	visual.position = -rect.size / 2.0
+	body.add_child(visual)
+	_scene().add_child(body)
+	body.global_position = rect.get_center()
+	body.modulate.a = 0.0
+	var tween := body.create_tween()
+	tween.tween_property(body, "modulate:a", 1.0, 0.3)
+	tween.tween_interval(duration)
+	tween.tween_property(body, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(body.queue_free)
+	return body
