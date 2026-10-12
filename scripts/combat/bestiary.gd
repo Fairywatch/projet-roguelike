@@ -37,6 +37,11 @@ const NIGHTS := {
 		"bosses": ["samedi/maison_vide", "samedi/telephone", "samedi/foule_lointaine"],
 		"final": "samedi/absence",
 	},
+	"dimanche": {
+		"creatures": ["dimanche/compte_a_rebours", "dimanche/mains", "dimanche/spirale", "dimanche/ombre_portee"],
+		"bosses": ["dimanche/dimanche_soir", "dimanche/liste_lendemain", "dimanche/coeur_qui_bat"],
+		"final": "dimanche/derniere_nuit",
+	},
 }
 const ELITE_CHANCE := 0.1
 const ALT_CHANCE := 0.5
