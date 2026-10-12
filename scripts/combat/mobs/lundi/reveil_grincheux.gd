@@ -41,8 +41,7 @@ func _on_attack_begin() -> void:
 		return
 	for i in 3 if nightmare else 2:
 		if i > 0:
-			await get_tree().create_timer(0.45).timeout
-			if state == State.DEAD:
+			if not await pause(0.45):
 				return
 		var gap := randf() * TAU
 		Hazards.ring(global_position, RING_SPEED, [[gap, GAP_WIDTH], [gap + PI, GAP_WIDTH]], RING_COLOR)
@@ -51,7 +50,7 @@ func _snooze() -> void:
 	snoozing = true
 	zzz.visible = true
 	stun(SNOOZE_TIME)
-	await get_tree().create_timer(SNOOZE_TIME).timeout
+	await pause(SNOOZE_TIME)
 	snoozing = false
 	zzz.visible = false
 

@@ -9,6 +9,8 @@ const ProjectileScene := preload("res://scenes/combat/Projectile.tscn")
 const RingWave := preload("res://scripts/combat/hazards/ring_wave.gd")
 const Beam := preload("res://scripts/combat/hazards/beam.gd")
 const Zone := preload("res://scripts/combat/hazards/zone.gd")
+const Sweep := preload("res://scripts/combat/hazards/sweep.gd")
+const Shrink := preload("res://scripts/combat/hazards/shrink.gd")
 # Surface jouable de l'arene (900 x 540 moins une marge).
 const ARENA := Rect2(50, 50, 800, 440)
 
@@ -78,9 +80,11 @@ static func beam(origin: Vector2, direction: Vector2, width: float, telegraph: f
 	b.global_position = origin
 	return b
 
-# kind : "damage" (blesse au contact une fois armee) ou "slow" (ralentit tant qu'on est dedans).
-static func zone(center: Vector2, radius: float, kind: String, arm_delay: float, active_time: float, color: Color) -> Node2D:
+# kind : "damage" (blesse au contact une fois armee), "slow" (ralentit tant qu'on est dedans)
+# ou "push" (pousse le joueur dans la direction push).
+static func zone(center: Vector2, radius: float, kind: String, arm_delay: float, active_time: float, color: Color, push: Vector2 = Vector2.ZERO) -> Node2D:
 	var z: Node2D = Zone.new()
+	z.push = push
 	z.radius = radius
 	z.kind = kind
 	z.arm_delay = arm_delay
@@ -89,3 +93,26 @@ static func zone(center: Vector2, radius: float, kind: String, arm_delay: float,
 	_scene().add_child(z)
 	z.global_position = center
 	return z
+
+# Bras rotatif autour de center. swing > 0 : oscille de +/- swing radians au lieu de tourner.
+static func sweep(center: Vector2, angle: float, angular_speed: float, length: float, width: float, telegraph: float, duration: float, color: Color = Color(1, 0.85, 0.5), swing: float = 0.0) -> Node2D:
+	var s: Node2D = Sweep.new()
+	s.angle = angle
+	s.angular_speed = angular_speed
+	s.swing = swing
+	s.length = length
+	s.width = width
+	s.telegraph = telegraph
+	s.duration = duration
+	s.color = color
+	_scene().add_child(s)
+	s.global_position = center
+	return s
+
+# L'arene se resserre jusqu'a stop() (voir hazards/shrink.gd).
+static func shrink(speed: float = 18.0, telegraph: float = 1.0) -> Node2D:
+	var s: Node2D = Shrink.new()
+	s.speed = speed
+	s.telegraph = telegraph
+	_scene().add_child(s)
+	return s

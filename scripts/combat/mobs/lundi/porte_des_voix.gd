@@ -78,7 +78,7 @@ func _creak() -> void:
 		shake.tween_property(sprite, "offset:x", 1.5 if i % 2 == 0 else -1.5, CREAK_WARNING / 4.0)
 	shake.tween_property(sprite, "offset:x", 0.0, 0.05)
 	await shake.finished
-	if state != State.DEAD and phase == 2:
+	if is_inside_tree() and state != State.DEAD and phase == 2:
 		invulnerable = false
 		open_timer = CREAK_OPEN
 		Fx.flash(sprite, Color(1, 0.95, 0.6), 0.3)

@@ -12,6 +12,11 @@ const NIGHTS := {
 		"bosses": ["lundi/grande_couette", "lundi/reveil_grincheux", "lundi/choeur_baillements"],
 		"final": "lundi/porte_des_voix",
 	},
+	"mardi": {
+		"creatures": ["mardi/trotteuse", "mardi/pile_devoirs", "mardi/stylo_rouge", "mardi/battement"],
+		"bosses": ["mardi/tableau_noir", "mardi/horloge_classe", "mardi/cloche"],
+		"final": "mardi/examen",
+	},
 }
 const ELITE_CHANCE := 0.1
 const ALT_CHANCE := 0.5

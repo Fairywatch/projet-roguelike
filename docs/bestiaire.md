@@ -5,7 +5,8 @@
 | Nuit | État |
 |---|---|
 | Lundi | **Produit** (`scripts/combat/mobs/lundi/`, testé par `tests/test_monday.gd`) |
-| Mardi à dimanche | À produire (ces nuits utilisent encore les anciens monstres en attendant) |
+| Mardi | **Produit** (`scripts/combat/mobs/mardi/`, testé par `tests/test_mardi.gd`) |
+| Mercredi à dimanche | À produire (ces nuits utilisent encore les anciens monstres en attendant) |
 
 ## Règles retenues
 

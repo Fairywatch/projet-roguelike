@@ -71,6 +71,20 @@ func _enter_tree() -> void:
 func _texture_path() -> String:
 	return ""
 
+# Fait apparaitre un allie du bestiaire (ex. "mardi/trotteuse") ; ajout differe, sans danger
+# pendant un _ready ou un signal.
+func spawn_ally(path: String, pos: Vector2, props: Dictionary = {}) -> BaseMob:
+	var ally: BaseMob = load("res://scripts/combat/mobs/" + path + ".gd").new()
+	for key in props:
+		ally.set(key, props[key])
+	ally.position = pos.clamp(Vector2(60, 60), Vector2(840, 480))
+	get_parent().add_child.call_deferred(ally)
+	return ally
+
+# Nombre d'ennemis vivants portant ce nom (pour limiter les invocations).
+func alive_count(mob_name: String) -> int:
+	return get_tree().get_nodes_in_group("mobs").filter(func(m): return m.display_name == mob_name and m.state != State.DEAD).size()
+
 func _ready() -> void:
 	add_to_group("mobs")
 	base_color = sprite.modulate
@@ -155,12 +169,19 @@ func _physics_process(_delta: float) -> void:
 func _chase_velocity(to_player: Vector2) -> Vector2:
 	return to_player.normalized() * chase_speed
 
+# Attend ; renvoie false si le mob est mort ou n'est plus dans l'arene entre-temps (fin du
+# combat, changement de scene). A utiliser pour toute attente dans un pattern.
+func pause(seconds: float) -> bool:
+	if not is_inside_tree():
+		return false
+	await get_tree().create_timer(seconds).timeout
+	return is_inside_tree() and state != State.DEAD
+
 # Attend puis renvoie false si l'action a ete interrompue entre-temps (mort, etourdissement).
 func _wait(duration: float) -> bool:
 	action_id += 1
 	var id := action_id
-	await get_tree().create_timer(duration).timeout
-	return id == action_id and state != State.DEAD
+	return await pause(duration) and id == action_id
 
 func _start_telegraph() -> void:
 	state = State.TELEGRAPH
@@ -223,8 +244,7 @@ func apply_slow(duration: float, factor: float) -> void:
 	if state == State.DEAD:
 		return
 	chase_speed *= factor
-	await get_tree().create_timer(duration).timeout
-	if state != State.DEAD:
+	if await pause(duration):
 		chase_speed /= factor
 
 func stun(duration: float) -> void:
