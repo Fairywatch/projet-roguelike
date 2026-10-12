@@ -60,6 +60,7 @@ func _initialize() -> void:
 
 	# Paupiere fermee : invulnerable ; ouverte (telegraphe) : vulnerable.
 	var eye = _spawn(arena, "lundi/paupiere")
+	eye.attack_range = 0.0  # sinon elle peut s'ouvrir pour viser avant la verification
 	await process_frame
 	var hp: int = eye.hp
 	eye.take_hit(1)

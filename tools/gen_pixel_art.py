@@ -433,18 +433,6 @@ def remove_cols(src, cols):
     return img
 
 
-# Deuxieme image d'animation de chaque monstre, a partir du sprite d'origine.
-MOB_ANIMATIONS = {
-    "berceuse": lambda im: shift_rows(im, 12, 22, 1),
-    "eveilleur_de_peur": lambda im: shift_rows(im, 17, 24, 1),
-    "nounours_egare": lambda im: squash(im, 11),
-    "ombre_rampante": lambda im: shift_rows(im, 12, 19, 1),
-    "songe_papillon": lambda im: remove_cols(im, [2, 3, 18, 19]),
-    "terreur_nocturne": lambda im: shift_rows(shift_rows(im, 0, 4, 1), 24, 28, -1),
-    "voix_murmurante": lambda im: shift_rows(im, 14, 22, 1),
-}
-SOURCES = os.path.join(os.path.dirname(__file__), "sprite_sources")
-
 ITEM_ICONS = {
     "item_passive": ([
         "..CCCC..",
@@ -1844,9 +1832,6 @@ def main():
     frames = player_frames()
     save(frames[0], "player", "idle.png")
     save(sheet(frames), "player", "sheet.png")
-    for name, animate in MOB_ANIMATIONS.items():
-        base = rim_light(Image.open(os.path.join(SOURCES, f"{name}.png")).convert("RGBA"))
-        save(sheet([base, animate(base)]), "mobs", name, "idle.png")
 
 
 if __name__ == "__main__":

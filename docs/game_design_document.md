@@ -52,9 +52,9 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - **Rencontres** : 2 à 4 ennemis (un de plus tous les 4 étages). Les **boss combattent seuls**.
 - Les mobs ont des patterns d'attaque **télégraphiés** clairement (lisibilité avant tout) : la difficulté augmente leurs PV, leur vitesse et leur cadence, **jamais la durée des télégraphes**.
 - Brève invincibilité après un coup encaissé (plusieurs ennemis peuvent frapper en même temps).
-- **Gardiens de portail** : un mob renforcé (aura violette) tiré au hasard ; le dernier portail de la nuit est gardé par la **Terreur nocturne**.
+- **Gardiens de portail** : un boss tiré au hasard dans le pool de la nuit (3 boss × 4 versions, jamais deux fois le même dans une nuit) ; le dernier portail de la nuit est gardé par le **boss final** de la nuit, multi-phases.
 - **Transition selon le type d'étage** : douce et ondulante (paradoxal), brutale et saccadée (profond ; fondu simple si les flashs sont désactivés).
-- Bestiaire actuel : Ombre rampante, Berceuse, Nounours égaré, Songe papillon, Voix murmurante, Éveilleur de peur, Terreur nocturne (boss).
+- Bestiaire : un par nuit (4 créatures, 3 boss, 1 boss final), détaillé dans [docs/bestiaire.md](bestiaire.md).
 
 ---
 
@@ -66,7 +66,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - **Courbe de difficulté** : +8 % par étage atteint, +15 % en sommeil profond (modificateur de type), plus le bonus propre à la nuit.
 - **À la mort** : le joueur redescend de 5 étages en dessous de sa position actuelle, avec un **nouveau tirage aléatoire des étages au-dessus** de ce point. Une run n'est donc jamais totalement perdue, mais recule concrètement.
 - **Quitter le jeu en plein combat compte comme une mort** (pas de fuite par la fermeture du jeu).
-- **Plongée négative** : à l'étage 0, un second portail (rouge) mène aux profondeurs (étages -1 à -10), plus dangereuses (la Terreur nocturne y rôde). Les remonter rapporte un butin ; y mourir referme le passage pour la partie.
+- **Plongée négative** : à l'étage 0, un second portail (rouge) mène aux profondeurs (étages -1 à -10), plus dangereuses (les boss de la nuit y rôdent). Les remonter rapporte un butin ; y mourir referme le passage pour la partie.
 
 ---
 

@@ -23,11 +23,12 @@ func _initialize() -> void:
 	gs.floor_data_by_index[-3] = {"seed": 1, "family": FloorGenerator.Family.PARADOXAL, "intensity": 0}
 	assert(gs.difficulty() > 1.0)
 
-	var mob = load("res://scenes/combat/OmbreRampante.tscn").instantiate()
+	var mob := Bestiary.make("lundi/bailleur")
 	root.add_child(mob)
 	var telegraph: float = mob.telegraph_duration
+	var base_hp: int = mob.hp
 	mob.apply_difficulty(2.0)
-	assert(mob.hp == 6)
+	assert(mob.hp == ceili(base_hp * 2.0))
 	assert(mob.telegraph_duration == telegraph)
 
 	gs.floor_index = gs.floor_count() - 1
