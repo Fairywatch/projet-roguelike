@@ -44,7 +44,7 @@ func _ready() -> void:
 	if GameState.run_started:
 		var mode := "  -  %s" % GameState.format_time(GameState.time_left) if GameState.speedrun else ""
 		_add_button("Continuer  (%s, etage %d%s)" % [Towers.title(GameState.tower_index), GameState.floor_index, mode], _go)
-	_add_button("Choisir une nuit", SceneTransition.change_scene.bind(GameState.HUB_PATH, SceneTransition.Style.DEFAULT))
+	_add_button("Choisir une nuit", _open_hub)
 	_add_button("Parametres", _open_panel.bind(SettingsPanel))
 	_add_button("Quitter", get_tree().quit)
 	buttons.get_child(0).grab_focus()
@@ -79,6 +79,15 @@ func _close_panel() -> void:
 	coins_label.text = "Pieces : %d" % GameState.coins
 	buttons.visible = true
 	buttons.get_child(0).grab_focus()
+
+# La toute premiere fois, l'intro raconte l'histoire avant d'arriver au hub.
+func _open_hub() -> void:
+	if GameState.intro_seen:
+		SceneTransition.change_scene(GameState.HUB_PATH)
+		return
+	GameState.intro_seen = true
+	GameState.save_meta()
+	GameState.play_cutscene("intro", GameState.HUB_PATH)
 
 func _go() -> void:
 	for button in buttons.get_children():

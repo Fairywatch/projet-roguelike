@@ -36,7 +36,10 @@ func _initialize() -> void:
 	gs.take_item("plume_de_reve")
 	gs.complete_tower()
 	assert(gs.floor_index == 0 and gs.passive_count() == 0 and gs.floor_data_by_index.is_empty())
-	assert(not gs.run_started and gs.after_combat_scene() == gs.MENU_PATH)
+	# Fin de nuit racontee d'abord (scene de recit), puis retour au menu.
+	assert(not gs.run_started and gs.after_combat_scene() == gs.CUTSCENE_PATH)
+	gs.cutscene_id = ""
+	assert(gs.after_combat_scene() == gs.MENU_PATH)
 	gs.new_run()
 	assert(gs.run_started and gs.after_combat_scene() == gs.return_map_path)
 

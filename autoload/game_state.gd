@@ -23,6 +23,7 @@ const GAMEPLAY_SCENES := ["Map", "CombatArena"]
 
 const MENU_PATH := "res://scenes/menu/MainMenu.tscn"
 const HUB_PATH := "res://scenes/hub/Hub.tscn"
+const CUTSCENE_PATH := "res://scenes/story/Cutscene.tscn"
 const SAVE_VERSION := 1
 # Etat de la partie sauvegarde entre deux sessions (voir save_run / load_run).
 const SAVED_FIELDS := [
@@ -30,7 +31,7 @@ const SAVED_FIELDS := [
 	"run_started", "passive_items", "active_item_id", "active_charges", "next_fight_bonus_hp",
 	"pending_ground_item", "tower_index", "speedrun", "time_left", "run_time", "in_combat",
 ]
-const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag", "shop_offers", "best_times"]
+const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag", "shop_offers", "best_times", "intro_seen"]
 
 var save_path := "user://run.save"
 var meta_path := "user://meta.save"
@@ -66,6 +67,12 @@ var pending_ground_item: String = ""
 var coins: int = 0
 var unlocked_towers: int = 1
 var completed_towers: Array = []  # ids des nuits deja terminees au moins une fois
+var intro_seen: bool = false
+
+# Scene de recit a jouer (scripts/story.gd) : "intro" ou "ending_<id de nuit>", puis cutscene_next.
+var cutscene_id: String = ""
+var cutscene_tower: int = 0
+var cutscene_next: String = MENU_PATH
 var start_bag: Array = []  # passifs achetes hors partie, donnes au debut de la prochaine nuit
 var shop_offers: Array = []  # ids proposes par la boutique ; "" = deja vendu
 var best_times: Dictionary = {}  # id de tour -> meilleur temps en mode speedrun (secondes)
@@ -203,7 +210,15 @@ func new_run(index: int = tower_index, speedrun_mode: bool = false) -> void:
 	run_started = true
 
 # Ou aller apres un combat : la carte, ou le menu si la nuit est terminee.
+func play_cutscene(id: String, next_scene: String) -> void:
+	cutscene_id = id
+	cutscene_tower = tower_index
+	cutscene_next = next_scene
+	SceneTransition.change_scene(CUTSCENE_PATH)
+
 func after_combat_scene() -> String:
+	if cutscene_id != "":  # fin de nuit a raconter avant le retour au menu
+		return CUTSCENE_PATH
 	return return_map_path if run_started else MENU_PATH
 
 static func format_time(seconds: float) -> String:
@@ -223,6 +238,9 @@ func _end_run() -> void:
 func complete_tower() -> void:
 	_end_run()
 	coins += tower()["reward"]
+	cutscene_id = "ending_" + tower()["id"]
+	cutscene_tower = tower_index
+	cutscene_next = MENU_PATH
 	if tower()["id"] not in completed_towers:
 		completed_towers.append(tower()["id"])
 	menu_message = "Le reveur se reveille... %s terminee ! +%d pieces." % [tower()["name"], tower()["reward"]]

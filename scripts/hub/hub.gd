@@ -11,11 +11,13 @@ const TOWER_STEP := 170.0
 const SPAWN := Vector2(700, 440)
 const MERCHANT_POS := Vector2(90, 430)
 const CLOCK_POS := Vector2(1310, 430)
+const BOOK_POS := Vector2(540, 480)
 const TRIGGER_RADIUS := 56.0
 const PadlockTexture := preload("res://assets/sprites/hub/padlock.png")
 const StarTexture := preload("res://assets/sprites/decor/paradoxal/etoile.png")
 const MerchantTexture := preload("res://assets/sprites/npcs/marchande.png")
 const ClockTexture := preload("res://assets/sprites/decor/paradoxal/horloge.png")
+const BookTexture := preload("res://assets/sprites/hub/book.png")
 
 # Choix du mode speedrun, garde tant que le jeu tourne.
 static var speedrun_choice := false
@@ -41,6 +43,7 @@ func _ready() -> void:
 		_build_tower(i)
 	_add_spot("shop", MERCHANT_POS, MerchantTexture, "Marchande de lune", Color(1, 0.9, 0.6))
 	_add_spot("clock", CLOCK_POS, ClockTexture, "Horloge du reveil", Color(1, 0.8, 0.4))
+	_add_spot("book", BOOK_POS, BookTexture, "Livre des songes", Color(0.7, 0.75, 1))
 	player.global_position = SPAWN
 	player.add_child(DreamTheme.make_light(Color(1, 0.95, 0.85), 220.0, 0.8))
 	player.add_child(DreamTheme.make_ambient_particles(FloorGenerator.Family.PARADOXAL))
@@ -145,6 +148,8 @@ func _refresh_ui() -> void:
 	prompt_label.visible = near != ""
 	if near == "shop":
 		prompt_label.text = "E : ouvrir la boutique"
+	elif near == "book":
+		prompt_label.text = "E : relire l'histoire du reveur"
 	elif near == "clock":
 		prompt_label.text = "E : %s le mode speedrun (le reveil sonne a la fin du chrono)" % ("desactiver" if speedrun_choice else "activer")
 	elif near.begins_with("tower_"):
@@ -175,6 +180,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func interact() -> void:
 	if near == "shop":
 		_open_shop()
+	elif near == "book":
+		player.frozen = true
+		GameState.play_cutscene("intro", GameState.HUB_PATH)
 	elif near == "clock":
 		speedrun_choice = not speedrun_choice
 		Sound.play("ui_select")
