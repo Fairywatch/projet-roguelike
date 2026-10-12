@@ -1165,6 +1165,176 @@ def mercredi_sprites():
     }
 
 
+# --- Bestiaire du jeudi (Frustration) ----------------------------------------------------
+
+JEUDI_GROGNE = ([
+    "..f.f..f.f....",
+    ".fRRRRRRRRRf..",
+    "fRRRRRRRRRRRf.",
+    "RRRkkRRRRkkRRR",
+    "RRRRwkRRkwRRRR",
+    "RRRRRRRRRRRRRR",
+    "RRRRmmmmmmRRRR",
+    "RRRmRRRRRRmRRR",
+    ".RRRRRRRRRRRR.",
+    "..rrrrrrrrrr..",
+], {"f": rgba(240, 110, 90), "R": rgba(204, 62, 52), "r": rgba(140, 36, 34), "k": rgba(40, 10, 10),
+    "w": rgba(255, 230, 200), "m": rgba(70, 10, 10)})
+
+JEUDI_PORTE = ([
+    ".DDDDDDDDDDDD.",
+    "DDddddddddddDD",
+    "DdWWWWWWWWWWdD",
+    "DdWWkkWWkkWWdD",
+    "DdWWWeWWeWWWdD",
+    "DdWWWWWWWWWWdD",
+    "DdWWWWmmWWWWdD",
+    "DdWWWWWWWWWWdD",
+    "DdWWWWWWWWWYdD",
+    "DdWWWWWWWWWWdD",
+    "DdWWWWWWWWWWdD",
+    "DddddddddddddD",
+    ".DDDDDDDDDDDD.",
+    "..ll......ll..",
+    "..ll......ll..",
+], {"W": rgba(156, 100, 62), "D": rgba(80, 48, 32), "d": rgba(116, 72, 46), "k": rgba(30, 16, 10),
+    "e": rgba(250, 220, 120), "m": rgba(40, 20, 12), "Y": rgba(240, 200, 80), "l": rgba(60, 40, 30)})
+
+JEUDI_RESSORT = ([
+    "...HHHHHH...",
+    "..HHeHHeHH..",
+    "..HHHHHHHH..",
+    "...HHmmHH...",
+    ".CCCCCCCCCC.",
+    "..CCCCCCCC..",
+    ".CCCCCCCCCC.",
+    "..CCCCCCCC..",
+    ".CCCCCCCCCC.",
+    "..CCCCCCCC..",
+    ".BBBBBBBBBB.",
+], {"H": rgba(120, 204, 140), "e": rgba(20, 40, 20), "m": rgba(30, 80, 40), "C": rgba(196, 196, 206),
+    "B": rgba(80, 80, 96)})
+
+JEUDI_COCOTTE = ([
+    "........VV........",
+    ".......VVVV.......",
+    "..LLLLLLLLLLLLLL..",
+    ".LLLLLLLLLLLLLLLL.",
+    "HHPPPPPPPPPPPPPPHH",
+    ".PPPPPPPPPPPPPPPP.",
+    ".PPPkkPPPPPPkkPPP.",
+    ".PPPPePPPPPPePPPP.",
+    ".PPPPPPPPPPPPPPPP.",
+    ".PPPPPPmmmmPPPPPP.",
+    ".PPPPPmPPPPmPPPPP.",
+    ".PPPPPPPPPPPPPPPP.",
+    "..pppppppppppppp..",
+], {"V": rgba(210, 50, 50), "L": rgba(140, 144, 156), "H": rgba(40, 40, 46), "P": rgba(178, 182, 192),
+    "p": rgba(120, 124, 134), "k": rgba(30, 30, 36), "e": rgba(250, 120, 60), "m": rgba(40, 30, 30)})
+
+JEUDI_PATRON = ([
+    "......HHHHHH......",
+    ".....HHHHHHHH.....",
+    ".....HHHHHHHH.....",
+    ".....HHHHHHHH.....",
+    "......HHHHHH......",
+    ".......HHHH.......",
+    "..SSSSSWWWWSSSSS..",
+    ".SSSSSSWTTWSSSSSS.",
+    "SSSSSSSSTTSSSSSSSS",
+    "SSSSSSSSTTSSSSSSSS",
+    "SSSSSSSSTTSSSSSSSS",
+    "SSSSSSSSSSSSSSSSSS",
+    "SSSSSSSSSSSSSSSSSS",
+    ".SSSSSSSSSSSSSSSS.",
+    "..SSSSSS..SSSSSS..",
+    "..SSSSS....SSSSS..",
+    "..kkkkk....kkkkk..",
+], {"H": rgba(212, 206, 200), "S": rgba(52, 52, 66), "W": rgba(240, 240, 240), "T": rgba(190, 40, 50),
+    "k": rgba(20, 20, 24)})
+
+
+def conveyor(offset):
+    """Le Tapis Roulant : une bande striee qui defile, deux rouleaux qui regardent."""
+    w, h = 34, 12
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    for y in range(2, h - 2):
+        for x in range(2, w - 2):
+            px[x, y] = ((70, 70, 80) if (x + offset) % 6 < 3 else (100, 100, 112)) + (255,)
+    for cx in (3, w - 4):  # rouleaux avec un oeil
+        for y in range(h):
+            for x in range(cx - 3, cx + 4):
+                if (x - cx) ** 2 + (y - h // 2) ** 2 <= 10:
+                    px[x, y] = (160, 160, 170, 255)
+        px[cx, h // 2] = px[cx, h // 2 - 1] = (220, 40, 40, 255)
+    return outline(img, (24, 24, 30))
+
+
+def brick_wall(cracked):
+    """Le Mur : un pan de briques qui avance, deux yeux fermes de colere."""
+    w, h = 22, 38
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    for y in range(h):
+        for x in range(w):
+            row = y // 5
+            mortar = y % 5 == 0 or (x + (5 if row % 2 else 0)) % 10 == 0
+            c = (150, 70, 56) if not mortar else (190, 180, 170)
+            if not mortar and (x * 7 + y * 3) % 11 == 0:
+                c = (128, 58, 46)
+            px[x, y] = c + (255,)
+    for ex in (6, 14):
+        for dx in range(3):
+            px[ex + dx, 12] = (30, 10, 10, 255)
+        px[ex, 11] = px[ex + 2, 13] = (30, 10, 10, 255)
+    if cracked:
+        x = 11
+        for y in range(16, 34):
+            x = max(1, min(w - 2, x + ((y * 5) % 3) - 1))
+            px[x, y] = (40, 20, 20, 255)
+    return outline(img, (40, 20, 20))
+
+
+def storm_cloud(bolt):
+    """La Colere : un nuage d'orage aux yeux rouges, un eclair qui gronde dessous."""
+    w, h = 36, 26
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    for cx, cy, r in ((9, 10, 7), (18, 7, 8), (27, 10, 7), (14, 13, 7), (23, 13, 7)):
+        for y in range(h):
+            for x in range(w):
+                if (x - cx) ** 2 + (y - cy) ** 2 <= r * r:
+                    px[x, y] = ((70, 66, 84) if y > 10 else (100, 96, 116)) + (255,)
+    for ex in (13, 22):
+        px[ex, 11] = px[ex + 1, 11] = px[ex, 12] = (230, 40, 40, 255)
+    color = (255, 240, 120) if bolt else (160, 150, 90)
+    x = 17
+    for y in range(19, h):
+        x += 1 if (y // 2) % 2 == 0 else -1
+        px[x, y] = color + (255,)
+        px[x + 1, y] = color + (255,)
+    return outline(img, (30, 26, 40))
+
+
+def jeudi_sprites():
+    grogne = rim_light(from_ascii(*JEUDI_GROGNE))
+    porte = rim_light(from_ascii(*JEUDI_PORTE))
+    ressort = rim_light(from_ascii(*JEUDI_RESSORT))
+    cocotte = rim_light(from_ascii(*JEUDI_COCOTTE))
+    patron = rim_light(from_ascii(*JEUDI_PATRON))
+    return {
+        "grogne": [grogne, squash(grogne, 5)],
+        "porte_close": [porte, shift_rows(porte, 13, 20, 1)],
+        "ressort": [ressort, squash(ressort, 7)],
+        "cocotte": [cocotte, shift_rows(cocotte, 0, 2, 1)],
+        "patron": [patron, shift_rows(patron, 14, 20, 1)],
+        "tapis_roulant": [conveyor(0), conveyor(3)],
+        "mur": [brick_wall(False), brick_wall(True)],
+        "colere": [storm_cloud(False), storm_cloud(True)],
+    }
+
+
 def save(img, *parts):
     path = os.path.join(ROOT, *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1203,6 +1373,8 @@ def main():
         save(sheet(frames), "mobs", "mardi", f"{name}.png")
     for name, frames in mercredi_sprites().items():
         save(sheet(frames), "mobs", "mercredi", f"{name}.png")
+    for name, frames in jeudi_sprites().items():
+        save(sheet(frames), "mobs", "jeudi", f"{name}.png")
 
     frames = player_frames()
     save(frames[0], "player", "idle.png")

@@ -22,6 +22,11 @@ const NIGHTS := {
 		"bosses": ["mercredi/miroir_brise", "mercredi/labyrinthe", "mercredi/deux_voies"],
 		"final": "mercredi/autre_soi",
 	},
+	"jeudi": {
+		"creatures": ["jeudi/grogne", "jeudi/porte_close", "jeudi/ressort", "jeudi/cocotte"],
+		"bosses": ["jeudi/patron", "jeudi/tapis_roulant", "jeudi/mur"],
+		"final": "jeudi/colere",
+	},
 }
 const ELITE_CHANCE := 0.1
 const ALT_CHANCE := 0.5
