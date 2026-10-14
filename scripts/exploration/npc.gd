@@ -79,7 +79,7 @@ func refresh() -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not player_near or not (event is InputEventKey) or not event.pressed or event.echo:
 		return
-	if event.physical_keycode != KEY_E:
+	if event.physical_keycode != Controls.INTERACT:
 		return
 	get_viewport().set_input_as_handled()
 	talk()

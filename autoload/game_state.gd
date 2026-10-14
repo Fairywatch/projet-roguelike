@@ -401,7 +401,7 @@ func active_summary() -> String:
 	if not has_active_item():
 		return "Aucun objet actif"
 	var charges := "o".repeat(active_charges) + "-".repeat(ACTIVE_MAX_CHARGES - active_charges)
-	return "E : %s  %s" % [Items.find_active(active_item_id)["name"], charges]
+	return "L : %s  %s" % [Items.find_active(active_item_id)["name"], charges]
 
 func passive_count() -> int:
 	var total := 0

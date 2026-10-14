@@ -27,12 +27,7 @@ func _physics_process(_delta: float) -> void:
 		velocity = Vector2.ZERO
 		move_and_slide()
 		return
-	var input_vector := Vector2(
-		Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left"),
-		Input.get_action_strength("ui_down") - Input.get_action_strength("ui_up")
-	)
-	if input_vector.length() > 1.0:
-		input_vector = input_vector.normalized()
+	var input_vector := Controls.move_vector()
 	if abs(input_vector.x) > 0.1:
 		sprite.flip_h = input_vector.x < 0
 	velocity = input_vector * SPEED
