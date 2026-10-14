@@ -14,7 +14,6 @@ const ATTACK_DURATION := 0.15
 const ATTACK_COOLDOWN := 0.35
 const ATTACK_REACH := 30.0
 const HURT_INVINCIBILITY := 0.8
-const BASE_MAX_HP := 3
 const MIN_COOLDOWN_MULT := 0.3
 const MIN_SPEED_MULT := 0.5
 const MAX_EVASION := 0.5
@@ -56,8 +55,8 @@ var slow_factor := 1.0
 var last_attack_time := -100.0  # secondes (Time), pour les ennemis qui reagissent a nos attaques
 
 # Statistiques calculees a partir des passifs (apply_items).
-var max_hp := BASE_MAX_HP
-var hp := BASE_MAX_HP
+var max_hp := GameState.BASE_MAX_HP
+var hp := GameState.BASE_MAX_HP
 var attack_damage := 1
 var move_speed := SPEED
 var dash_cooldown_effective := DASH_COOLDOWN_BASE
@@ -83,13 +82,11 @@ func _ready() -> void:
 	attack_shape.disabled = true
 	attack_hitbox.area_entered.connect(_on_attack_area_entered)
 	apply_items()
-	# Bonus d'une etoile ramassee sur la carte : PV en plus pour ce combat seulement.
-	max_hp += GameState.next_fight_bonus_hp
-	GameState.next_fight_bonus_hp = 0
-	hp = max_hp
+	hp = GameState.current_hp()  # les PV perdus aux combats precedents le restent
 
 func apply_items() -> void:
-	max_hp = maxi(1, BASE_MAX_HP + int(GameState.mod("max_hp")))
+	var lost := max_hp - hp
+	max_hp = GameState.max_hp()
 	attack_damage = 1 + int(GameState.mod("damage"))
 	move_speed = SPEED * maxf(MIN_SPEED_MULT, 1.0 + GameState.mod("speed"))
 	dash_cooldown_effective = DASH_COOLDOWN_BASE * maxf(MIN_COOLDOWN_MULT, 1.0 + GameState.mod("dash_cooldown"))
@@ -107,7 +104,7 @@ func apply_items() -> void:
 	thorns = int(GameState.mod("thorns"))
 	extra_lives = int(GameState.mod("extra_lives"))
 	shield = int(GameState.mod("shield"))
-	hp = min(hp, max_hp)
+	hp = clampi(max_hp - lost, 1, max_hp)  # un +PV max arrive plein
 
 func _process(delta: float) -> void:
 	slash_timer = max(0.0, slash_timer - delta)

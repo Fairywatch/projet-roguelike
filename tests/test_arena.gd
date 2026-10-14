@@ -63,7 +63,10 @@ func _initialize() -> void:
 	assert(mob.state == BaseMob.State.COOLDOWN)
 
 	# Victoire quand tous les ennemis sont morts, et l'objet actif se recharge.
+	arena.player.invincible = true  # plus de coups pendant qu'on tue les ennemis
+	arena.player.hp = arena.player.max_hp - 1
 	await _kill_all()
+	assert(gs.hp_lost == 1)  # les PV perdus suivent au combat suivant
 	assert(arena.combat_over)
 	assert(gs.current_floor()["wins"] == 1)
 	assert(gs.active_charges == gs.ACTIVE_MAX_CHARGES)
@@ -78,6 +81,7 @@ func _initialize() -> void:
 		await process_frame
 	arena = current_scene
 	assert(arena.is_boss_fight and get_nodes_in_group("mobs").size() == 1)
+	assert(arena.player.hp == arena.player.max_hp - 1)
 	# Combat de boss : sa propre musique, pas celle des combats normaux.
 	var boss_music := root.get_children().filter(func(n): return n is AudioStreamPlayer and n.get_meta("track", "") == "boss")
 	assert(boss_music.size() == 1 and boss_music[0].playing)

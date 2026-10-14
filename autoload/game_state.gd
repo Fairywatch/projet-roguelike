@@ -1,5 +1,6 @@
 extends Node
 
+const BASE_MAX_HP := 3
 const DEATH_SETBACK_FLOORS := 5
 const MIN_FLOOR_INDEX := -10
 const ACTIVE_MAX_CHARGES := 3
@@ -28,7 +29,7 @@ const SAVE_VERSION := 1
 # Etat de la partie sauvegarde entre deux sessions (voir save_run / load_run).
 const SAVED_FIELDS := [
 	"floor_index", "floor_data_by_index", "negative_dive_available", "return_position",
-	"run_started", "passive_items", "active_item_id", "active_charges", "next_fight_bonus_hp",
+	"run_started", "passive_items", "active_item_id", "active_charges", "hp_lost",
 	"pending_ground_item", "tower_index", "speedrun", "time_left", "run_time", "in_combat",
 	"boss_history",
 ]
@@ -62,7 +63,9 @@ var passive_items: Dictionary = {}  # id -> nombre d'exemplaires
 var mods: Dictionary = {}  # effets cumules des passifs
 var active_item_id: String = ""
 var active_charges: int = 0
-var next_fight_bonus_hp: int = 0
+# PV perdus pendant la nuit (facon Isaac) : ils restent perdus d'un combat a l'autre. On garde
+# les PV perdus plutot que les PV restants pour qu'un +PV max donne un coeur plein.
+var hp_lost: int = 0
 # Objet a deposer au sol a l'arrivee sur la carte (butin des profondeurs).
 var pending_ground_item: String = ""
 
@@ -379,7 +382,20 @@ func reset_run_items() -> void:
 	mods.clear()
 	active_item_id = ""
 	active_charges = 0
-	next_fight_bonus_hp = 0
+	hp_lost = 0
+
+func max_hp() -> int:
+	return maxi(1, BASE_MAX_HP + int(mod("max_hp")))
+
+func current_hp() -> int:
+	return clampi(max_hp() - hp_lost, 1, max_hp())
+
+# Rend des PV perdus ; faux si on est deja au maximum.
+func heal(amount: int) -> bool:
+	if current_hp() >= max_hp():
+		return false
+	hp_lost = max_hp() - mini(max_hp(), current_hp() + amount)
+	return true
 
 func active_summary() -> String:
 	if not has_active_item():

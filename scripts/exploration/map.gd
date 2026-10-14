@@ -93,7 +93,7 @@ func _process(delta: float) -> void:
 	guide_arrow.rotation = (exit_position - player.global_position).angle()
 
 func _refresh_hud() -> void:
-	items_label.text = "%s\nPassifs : %d  (Tab)   Pieces : %d" % [GameState.active_summary(), GameState.passive_count(), GameState.coins]
+	items_label.text = "PV %d / %d\n%s\nPassifs : %d  (Tab)   Pieces : %d" % [GameState.current_hp(), GameState.max_hp(), GameState.active_summary(), GameState.passive_count(), GameState.coins]
 
 func _show_message(text: String) -> void:
 	message_serial += 1
@@ -248,8 +248,11 @@ func _spawn_decor(floor_data, floor_seed: int) -> void:
 func _on_decor_touched(decor: DreamDecor) -> void:
 	match decor.decor_name:
 		"etoile":
-			GameState.next_fight_bonus_hp += 1
-			_consume(decor, Color(1, 0.9, 0.5), "Etoile filante : +1 PV au prochain combat !")
+			if not GameState.heal(1):  # comme un coeur dans Isaac : on la laisse si on est en forme
+				_show_message("Tu es deja en pleine forme.")
+				return
+			_consume(decor, Color(1, 0.9, 0.5), "Etoile filante : +1 PV !")
+			_refresh_hud()
 		"lune":
 			guide_timer = GUIDE_DURATION
 			_consume(decor, Color(1, 0.95, 0.8), "La lune t'indique le chemin du portail...")
