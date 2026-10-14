@@ -2,7 +2,7 @@ extends Node2D
 
 # Scene de recit (intro, fins de nuit) : une suite de tableaux animes avec un texte qui
 # s'ecrit, facon intro de The Binding of Isaac. Les textes viennent de scripts/story.gd.
-# E / Espace / Entree : texte suivant ; Echap : passer.
+# E / J / Espace / Entree : texte suivant ; Echap : passer.
 
 const TYPE_SPEED := 40.0  # caracteres par seconde
 const CENTER := Vector2(320, 150)
@@ -38,7 +38,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if event.physical_keycode == KEY_ESCAPE:
 		finish()
-	elif event.physical_keycode in [KEY_E, KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
+	elif event.physical_keycode in [Controls.INTERACT, Controls.ATTACK, KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
 		if shown < text_label.text.length():
 			shown = text_label.text.length()  # premier appui : affiche tout le texte
 		else:

@@ -45,10 +45,10 @@ func _initialize() -> void:
 	assert(music_players[0].stream.loop)
 
 	# Mouchoir a PV pleins : pas de charge gaspillee. Blesse : soigne et consomme.
-	await _press(KEY_E)
+	await _press(KEY_L)
 	assert(gs.active_charges == gs.ACTIVE_MAX_CHARGES)
 	arena.player.hp -= 1
-	await _press(KEY_E)
+	await _press(KEY_L)
 	assert(gs.active_charges == gs.ACTIVE_MAX_CHARGES - 1)
 	assert(arena.player.hp == arena.player.max_hp)
 
@@ -57,7 +57,7 @@ func _initialize() -> void:
 	var mob = mobs[0]
 	mob.global_position = arena.player.global_position + Vector2(60, 0)
 	mob._start_telegraph()
-	await _press(KEY_E)
+	await _press(KEY_L)
 	assert(mob.state == BaseMob.State.COOLDOWN)
 	await create_timer(mob.telegraph_duration + 0.1).timeout
 	assert(mob.state == BaseMob.State.COOLDOWN)

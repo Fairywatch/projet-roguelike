@@ -147,12 +147,7 @@ func _physics_process(delta: float) -> void:
 		if hurt_timer <= 0.0 and not dashing:
 			invincible = false
 
-	var input_vector := Vector2(
-		Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left"),
-		Input.get_action_strength("ui_down") - Input.get_action_strength("ui_up")
-	)
-	if input_vector.length() > 1.0:
-		input_vector = input_vector.normalized()
+	var input_vector := Controls.move_vector()
 	if input_vector.length() > 0.1:
 		facing = input_vector.normalized()
 		if abs(facing.x) > 0.1:
@@ -171,7 +166,7 @@ func _physics_process(delta: float) -> void:
 			modulate.a = 1.0
 		velocity = facing * DASH_SPEED
 	else:
-		if Input.is_physical_key_pressed(KEY_SHIFT) and dash_cooldown_timer <= 0.0:
+		if Input.is_physical_key_pressed(Controls.DASH) and dash_cooldown_timer <= 0.0:
 			_start_dash()
 		velocity = input_vector * move_speed * (CAFE_SPEED_MULT if speed_boost_timer > 0.0 else 1.0)
 		if slow_timer > 0.0:
@@ -195,9 +190,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if not (event is InputEventKey) or not event.pressed or event.echo:
 		return
-	if event.physical_keycode == KEY_SPACE:
+	if event.physical_keycode == Controls.ATTACK:
 		_try_attack()
-	elif event.physical_keycode == KEY_E:
+	elif event.physical_keycode == Controls.ACTIVE:
 		_use_active_item()
 
 func _start_dash() -> void:

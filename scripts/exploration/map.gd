@@ -308,7 +308,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		GameState.return_position = player.global_position
 		SceneTransition.change_scene(GameState.MENU_PATH)
 		return
-	if event.physical_keycode != KEY_E:
+	if event.physical_keycode != Controls.INTERACT:
 		return
 	if not GameState.has_active_item():
 		_show_message("Aucun objet actif. Tab : voir tes objets passifs.")

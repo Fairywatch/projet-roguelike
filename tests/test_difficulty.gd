@@ -9,6 +9,18 @@ func _initialize() -> void:
 	gs.meta_path = "user://test_meta.save"
 	gs.new_run(0)  # la sauvegarde de test peut venir d'une autre nuit
 
+	# Z (position de W) fait monter, en plus des fleches.
+	var z_key := InputEventKey.new()
+	z_key.physical_keycode = KEY_W
+	z_key.pressed = true
+	Input.parse_input_event(z_key)
+	await process_frame
+	assert(Controls.move_vector() == Vector2.UP)
+	z_key.pressed = false
+	Input.parse_input_event(z_key)
+	await process_frame
+	assert(Controls.move_vector() == Vector2.ZERO)
+
 	# PV perdus gardes d'un combat a l'autre ; une etoile en rend un ; un +PV max arrive plein.
 	assert(gs.hp_lost == 0 and gs.current_hp() == gs.max_hp() and not gs.heal(1))
 	gs.hp_lost = 2

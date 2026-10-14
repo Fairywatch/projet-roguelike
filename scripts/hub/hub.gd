@@ -174,7 +174,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if event.physical_keycode == KEY_ESCAPE:
 		player.frozen = true
 		SceneTransition.change_scene(GameState.MENU_PATH)
-	elif event.physical_keycode == KEY_E and near != "":
+	elif event.physical_keycode == Controls.INTERACT and near != "":
 		interact()
 
 func interact() -> void:
