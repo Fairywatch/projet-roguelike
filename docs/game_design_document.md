@@ -52,6 +52,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - **Rencontres** : 2 à 4 ennemis (un de plus tous les 4 étages). Les **boss combattent seuls**.
 - Les mobs ont des patterns d'attaque **télégraphiés** clairement (lisibilité avant tout) : la difficulté augmente leurs PV, leur vitesse et leur cadence, **jamais la durée des télégraphes**.
 - Brève invincibilité après un coup encaissé (plusieurs ennemis peuvent frapper en même temps).
+- **PV façon Isaac** : les PV perdus le restent d'un combat à l'autre pendant toute la nuit. On les récupère avec les étoiles de la carte (+1 PV, pas au-delà du max), le Mouchoir usagé et les passifs de soin. Un +PV max arrive plein. PV affichés sur la carte.
 - **Gardiens de portail** : un boss tiré au hasard dans le pool de la nuit (3 boss × 4 versions, jamais deux fois le même dans une nuit) ; le dernier portail de la nuit est gardé par le **boss final** de la nuit, multi-phases.
 - **Transition selon le type d'étage** : douce et ondulante (paradoxal), brutale et saccadée (profond ; fondu simple si les flashs sont désactivés).
 - Bestiaire : un par nuit (4 créatures, 3 boss, 1 boss final), détaillé dans [docs/bestiaire.md](bestiaire.md).
@@ -122,7 +123,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - Déplacement libre sur la carte de chaque étage.
 - Rencontres **aléatoires**, non visibles à l'avance (façon herbes hautes) : 4 % par demi-seconde de marche en sommeil paradoxal, 7 % en sommeil profond (oppression).
 - **PNJ** : présents sur 85 % des étages paradoxaux et 35 % des profonds. Ils proposent une quête courte : gagner N combats sur l'étage, ou rapporter un objet perdu à l'autre bout de l'étage.
-- **Décors interactifs** : étoiles (+1 PV au prochain combat), lunes (flèche vers le portail), horloges (pas de rencontre pendant 15 s), champignons (spores : embuscade), cristaux (peuvent contenir un objet), bougies (restent allumées), et d'autres qui réagissent simplement au passage.
+- **Décors interactifs** : étoiles (rendent 1 PV perdu ; laissées en place si les PV sont pleins), lunes (flèche vers le portail), horloges (pas de rencontre pendant 15 s), champignons (spores : embuscade), cristaux (peuvent contenir un objet), bougies (restent allumées), et d'autres qui réagissent simplement au passage.
 
 ---
 

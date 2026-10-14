@@ -141,6 +141,7 @@ func _on_victory() -> void:
 	Sound.play("victory")
 	combat_over = true
 	player.invincible = true
+	GameState.hp_lost = player.max_hp - player.hp  # les PV perdus le restent jusqu'aux etoiles
 	if not GameState.guardian_fight:
 		GameState.current_floor()["wins"] += 1
 	GameState.coins += GameState.COINS_PER_GUARDIAN if GameState.guardian_fight else GameState.COINS_PER_WIN

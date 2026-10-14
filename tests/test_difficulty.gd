@@ -7,7 +7,19 @@ func _initialize() -> void:
 	# Fichier a part : les tests ne touchent pas a la vraie sauvegarde du joueur.
 	gs.save_path = "user://test_run.save"
 	gs.meta_path = "user://test_meta.save"
+	gs.new_run(0)  # la sauvegarde de test peut venir d'une autre nuit
+
+	# PV perdus gardes d'un combat a l'autre ; une etoile en rend un ; un +PV max arrive plein.
+	assert(gs.hp_lost == 0 and gs.current_hp() == gs.max_hp() and not gs.heal(1))
+	gs.hp_lost = 2
+	assert(gs.current_hp() == gs.max_hp() - 2)
+	assert(gs.heal(1) and gs.hp_lost == 1)
+	gs.take_item("plume_de_reve")
+	assert(gs.current_hp() == gs.max_hp() - 1 and gs.max_hp() == gs.BASE_MAX_HP + 1)
+	gs.hp_lost = 99
+	assert(gs.current_hp() == 1)
 	gs.new_run()
+	assert(gs.hp_lost == 0)
 
 	gs.floor_index = 0
 	gs.floor_data_by_index[0] = {"seed": 1, "family": FloorGenerator.Family.PARADOXAL, "intensity": 0}
