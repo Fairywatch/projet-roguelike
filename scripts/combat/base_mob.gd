@@ -95,6 +95,8 @@ func alive_count(mob_name: String) -> int:
 
 func _ready() -> void:
 	add_to_group("mobs")
+	# Vue de dessus : sinon Godot traite le joueur comme un sol et le mob pose dessus le suit.
+	motion_mode = MOTION_MODE_FLOATING
 	base_color = sprite.modulate
 	sprite.hframes = ANIM_FRAMES
 	sprite.material = Fx.make_flash_material()
