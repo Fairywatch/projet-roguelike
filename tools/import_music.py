@@ -13,9 +13,6 @@ OUT_DIR = os.path.join(ROOT, "assets", "audio", "music")
 
 # morceau du jeu -> (titre, auteur, page OpenGameArt, fichier a telecharger)
 MUSIC = {
-    "profond": ("Enchanted Tiki 86", "cynicmusic",
-                "https://opengameart.org/content/enchanted-tiki-86",
-                "https://opengameart.org/sites/default/files/enchanted%20tiki%2086_0.mp3"),
     "combat": ("Battle Theme", "Wolfgang_",
                "https://opengameart.org/content/battle-theme-0",
                "https://opengameart.org/sites/default/files/Battle.mp3"),

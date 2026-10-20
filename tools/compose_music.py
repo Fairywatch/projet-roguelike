@@ -33,7 +33,11 @@ INSTRUMENTS = {
     "violins": ("Violins", "strings.violin", ("G", 2)),
     "cellos": ("Violoncellos", "strings.cello", ("F", 4)),
     "celesta": ("Celesta", "keyboard.celesta", ("G", 2)),
+    "violas": ("Violas", "strings.viola", ("C", 3)),
+    "choir": ("Choir", "voice.aahs", ("G", 2)),
 }
+# Instruments installes en Muse Sounds (les autres sonnent avec la banque de base, bien moins
+# belle) : piano, celesta, harpe, violons, altos, violoncelles, contrebasses, choeur.
 
 
 def pitch_xml(name):
@@ -181,8 +185,8 @@ def build(name, piece):
 
 # --- Partitions -------------------------------------------------------------------------------
 
-# Accords : arpege de harpe (5 notes montantes), nappe de cordes, basse de violoncelle.
-CHORDS = {
+# Accords de Reverie : arpege de harpe (5 notes montantes), nappe de cordes, basse de violoncelle.
+REVE_CHORDS = {
     "Dm9": (["D3", "A3", "D4", "E4", "F4"], ["D4", "F4", "A4"], "D2"),
     "Bbmaj7": (["Bb2", "F3", "Bb3", "D4", "A4"], ["D4", "F4", "A4"], "Bb2"),
     "F/A": (["A2", "F3", "C4", "F4", "A4"], ["C4", "F4", "A4"], "A2"),
@@ -195,21 +199,17 @@ CHORDS = {
     "F": (["F2", "C3", "F3", "A3", "C4"], ["C4", "F4", "A4"], "F2"),
     "Bb": (["Bb2", "F3", "Bb3", "D4", "F4"], ["D4", "F4", "Bb4"], "Bb2"),
 }
-ARPEGGIO = [0, 1, 2, 3, 4, 3, 2, 1]
 REST = "r8"
 
 
-def arpeggio(chord):
-    notes = CHORDS[chord][0]
-    return " ".join(f"{notes[i]}:1" for i in ARPEGGIO)
+def arpeggio(notes, pattern, dur):
+    """Une mesure d'arpege : les notes de `notes` dans l'ordre de `pattern`, chacune de `dur` croches."""
+    return " ".join(f"{notes[i]}:{dur}" for i in pattern)
 
 
-def pad(chord):
-    return ",".join(CHORDS[chord][1]) + ":8"
-
-
-def bass(chord):
-    return CHORDS[chord][2] + ":8"
+def held(notes):
+    """Une mesure tenue : accord (ou note seule) en ronde."""
+    return ",".join(notes) + ":8"
 
 
 def with_dynamics(measures, dynamics):
@@ -222,6 +222,7 @@ def reve():
     c = ["Bb", "C", "Am7", "Dm9", "Gm", "C", "F", "A"]
     d = ["Dm9", "Bbmaj7", "Gm7", "A", "Dm9", "Bbmaj7", "Gm7", "Asus4"]
     chords = a + a + c + d
+    arp, pad, bass = ([REVE_CHORDS[ch][i] for ch in chords] for i in range(3))
     melody = [REST] * 8 + [
         "r2 A4:2 D5:2 E5:2", "F5:6 E5:2", "D5:2 C5:2 A4:4", "G4:6 r2",
         "r2 A4:2 D5:2 F5:2", "G5:4 F5:2 D5:2", "E5:2 D5:2 Bb4:2 A4:2", "A4:8",
@@ -231,21 +232,63 @@ def reve():
     ] + [REST] * 4
     sparkle = ["r2 A5:1 D6:1 F6:4", "E6:4 D6:2 r2", "r4 D6:2 Bb5:2", "C#6:4 r4"]
     celesta = [REST] * 4 + sparkle + [REST] * 20 + sparkle
-    cellos = [REST] * 4 + [bass(ch) for ch in chords[4:28]] + [REST] * 4
+    cellos = [REST] * 4 + [held([b]) for b in bass[4:28]] + [REST] * 4
     return {
         "title": "Reverie", "tempo": 66, "fifths": -1,
         # (instrument, mesures, volume en dB, panoramique) : le piano reste en retrait, dans le decor.
         "parts": [
             ("piano", with_dynamics(melody, {9: "p", 17: "mp", 25: "p"}), -7.0, 0.0),
             ("celesta", with_dynamics(celesta, {5: "pp"}), 8.0, 0.35),  # tres doux a l'export
-            ("harp", with_dynamics([arpeggio(ch) for ch in chords], {1: "pp", 9: "p", 17: "mp", 25: "p", 29: "pp"}), 0.0, -0.25),
-            ("violins", with_dynamics([pad(ch) for ch in chords], {1: "pp", 17: "p", 25: "pp"}), -4.0, -0.15),
+            ("harp", with_dynamics([arpeggio(n, [0, 1, 2, 3, 4, 3, 2, 1], 1) for n in arp], {1: "pp", 9: "p", 17: "mp", 25: "p", 29: "pp"}), 0.0, -0.25),
+            ("violins", with_dynamics([held(n) for n in pad], {1: "pp", 17: "p", 25: "pp"}), -4.0, -0.15),
             ("cellos", with_dynamics(cellos, {5: "pp", 17: "p", 25: "pp"}), -2.0, 0.2),
         ],
     }
 
 
-PIECES = {"reve": reve}
+# Accords de Profond : battement de harpe (grave, medium, aigu), choeur, basse de violoncelle.
+PROFOND_CHORDS = {
+    "Cm": (["C3", "G3", "Eb4"], ["C4", "Eb4", "G4"], "C2"),
+    "Ab": (["Ab2", "Eb3", "C4"], ["C4", "Eb4", "Ab4"], "Ab2"),
+    "Fm": (["F2", "C3", "Ab3"], ["C4", "F4", "Ab4"], "F2"),
+    "Db": (["Db3", "Ab3", "F4"], ["Db4", "F4", "Ab4"], "Db2"),
+    "Bb": (["Bb2", "F3", "D4"], ["D4", "F4", "Bb4"], "Bb2"),
+    "Gsus": (["G2", "D3", "C4"], ["C4", "D4", "G4"], "G2"),
+    "G": (["G2", "D3", "B3"], ["B3", "D4", "G4"], "G2"),
+}
+
+
+def profond():
+    """Profond : etages du sommeil profond. Plus lent et plus sombre que Reverie, un peu oppressant :
+    bourdon grave, harpe qui bat comme un coeur, soupirs des altos, choeur. A la fin, le piano
+    reprend le theme de Reverie en mineur, comme si le reve s'enfoncait."""
+    a = ["Cm", "Cm", "Ab", "Ab", "Fm", "Fm", "Db", "Gsus"]
+    b = ["Cm", "Ab", "Fm", "Db", "Cm", "Ab", "Fm", "G"]
+    c = ["Ab", "Bb", "Cm", "Cm", "Db", "Db", "Gsus", "G"]
+    d = ["Cm", "Ab", "Fm", "Db", "Cm", "Cm", "Db", "G"]
+    chords = a + b + c + d
+    beat, choir, bass = ([PROFOND_CHORDS[ch][i] for ch in chords] for i in range(3))
+    piano = [REST] * 4 + ["r4 C6:4", "Ab5:8", "r4 F5:4", "G5:4 r4"] + [REST] * 16 + [
+        "r2 G4:2 C5:2 D5:2", "Eb5:6 D5:2", "C5:2 Bb4:2 Ab4:4", "F4:6 r2",  # theme de Reverie, en mineur
+        "r4 G5:4", "Eb5:8", REST, "r4 D5:2 B4:2",
+    ]
+    sighs = ["Eb4:4 D4:4", "C4:4 Bb3:4", "Ab3:4 G3:4", "F3:8", "Eb4:4 D4:4", "Eb4:4 C4:4", "C4:4 Ab3:4", "B3:8"]
+    violas = [REST] * 8 + sighs + [REST] * 16
+    violins = [REST] * 16 + ["C6:8", "D6:8", "Eb6:8", "D6:8", "F6:8", "Eb6:8", "D6:8", "B5:8"] + [REST] * 8
+    return {
+        "title": "Profond", "tempo": 54, "fifths": -3,
+        "parts": [
+            ("piano", with_dynamics(piano, {5: "pp", 25: "p", 29: "pp"}), -3.0, 0.1),
+            ("harp", with_dynamics([arpeggio(n, [0, 1, 2, 1], 2) for n in beat], {1: "p", 17: "mp", 25: "p"}), 0.0, -0.3),
+            ("choir", with_dynamics([REST] * 4 + [held(n) for n in choir[4:]], {5: "pp", 17: "p", 25: "pp"}), -1.0, 0.0),
+            ("violas", with_dynamics(violas, {9: "p"}), -5.0, 0.25),
+            ("violins", with_dynamics(violins, {17: "pp"}), 0.0, -0.2),
+            ("cellos", with_dynamics([held([n]) for n in bass], {1: "p", 17: "mp", 25: "p"}), -8.0, 0.15)  # bourdon : present sans couvrir,
+        ],
+    }
+
+
+PIECES = {"reve": reve, "profond": profond}
 
 if __name__ == "__main__":
     for name in sys.argv[1:] or PIECES:
