@@ -33,7 +33,7 @@ offset_top = 6.0
 offset_right = 330.0
 offset_bottom = 24.0
 theme_override_font_sizes/font_size = 13
-text = "La semaine du reveur"
+text = "La semaine du rêveur"
 
 [node name="Status" type="Label" parent="UI"]
 anchors_preset = 1
@@ -46,7 +46,7 @@ offset_bottom = 40.0
 theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
 theme_override_font_sizes/font_size = 12
 horizontal_alignment = 2
-text = "Pieces : 0"
+text = "Pièces : 0"
 
 [node name="Prompt" type="Label" parent="UI"]
 visible = false
@@ -79,4 +79,4 @@ offset_bottom = -4.0
 modulate = Color(1, 1, 1, 0.6)
 theme_override_font_sizes/font_size = 10
 horizontal_alignment = 1
-text = "Marche jusqu'a la nuit de ton choix  |  E : interagir  |  Echap : menu"
+text = "Marche jusqu'à la nuit de ton choix  |  E : interagir  |  Échap : menu"

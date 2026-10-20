@@ -99,7 +99,7 @@ func _initialize() -> void:
 	gs.floor_index = gs.floor_count() - 1
 	gs.start_guardian_fight(false)
 	gs.take_guardian_exit()
-	assert(gs.floor_index == 0 and gs.menu_message.begins_with("Le reveur") and not gs.run_started)
+	assert(gs.floor_index == 0 and gs.menu_message.begins_with("Le rêveur") and not gs.run_started)
 	gs.start_guardian_fight(true)
 	gs.take_guardian_exit()
 	assert(gs.floor_index == -1)
@@ -198,7 +198,7 @@ func _initialize() -> void:
 	var coins_before: int = gs.coins
 	assert(not gs.tick_speedrun(10.0) and is_equal_approx(gs.run_time, 10.0))
 	assert(gs.tick_speedrun(gs.time_left + 1.0))
-	assert(not gs.run_started and gs.coins == coins_before and gs.menu_message.begins_with("Le reveil sonne"))
+	assert(not gs.run_started and gs.coins == coins_before and gs.menu_message.begins_with("Le réveil sonne"))
 	# Record enregistre en terminant une nuit en speedrun.
 	gs.best_times.clear()
 	gs.new_run(0, true)

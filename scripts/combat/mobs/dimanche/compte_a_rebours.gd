@@ -17,7 +17,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/dimanche/compte_a_rebours.png"
 
 func _on_ready() -> void:
-	display_name = "Compte a rebours"
+	display_name = "Compte à rebours"
 	hp = 3
 	chase_speed = 50.0
 	attack_range = 0.0  # son seul danger : l'explosion

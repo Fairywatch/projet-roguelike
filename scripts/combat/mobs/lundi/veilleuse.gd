@@ -15,7 +15,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/lundi/veilleuse.png"
 
 func _on_ready() -> void:
-	display_name = "Veilleuse fatiguee"
+	display_name = "Veilleuse fatiguée"
 	hp = 3
 	chase_speed = 40.0
 	attack_range = 260.0

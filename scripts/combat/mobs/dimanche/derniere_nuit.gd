@@ -23,7 +23,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/dimanche/derniere_nuit.png"
 
 func _on_ready() -> void:
-	display_name = "La Derniere Nuit"
+	display_name = "La Dernière Nuit"
 	is_boss = true
 	hp = 54
 	chase_speed = 30.0
@@ -54,7 +54,7 @@ func _process(delta: float) -> void:
 	if phase != 3 or state == State.DEAD:
 		return
 	dawn -= delta
-	display_name = "Tenir jusqu'a l'aube : %d s" % ceili(maxf(dawn, 0.0))
+	display_name = "Tenir jusqu'à l'aube : %d s" % ceili(maxf(dawn, 0.0))
 	sprite.self_modulate.a = clampf(dawn / DAWN_TIME, 0.2, 1.0)  # la nuit palit
 	if dawn <= 0.0:
 		if is_instance_valid(dark):

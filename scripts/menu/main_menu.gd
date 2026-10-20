@@ -40,12 +40,12 @@ func _ready() -> void:
 	message_label.text = GameState.menu_message
 	GameState.menu_message = ""
 	GameState.save_run()
-	coins_label.text = "Pieces : %d" % GameState.coins
+	coins_label.text = "Pièces : %d" % GameState.coins
 	if GameState.run_started:
 		var mode := "  -  %s" % GameState.format_time(GameState.time_left) if GameState.speedrun else ""
-		_add_button("Continuer  (%s, etage %d%s)" % [Towers.title(GameState.tower_index), GameState.floor_index, mode], _go)
+		_add_button("Continuer  (%s, étage %d%s)" % [Towers.title(GameState.tower_index), GameState.floor_index, mode], _go)
 	_add_button("Choisir une nuit", _open_hub)
-	_add_button("Parametres", _open_panel.bind(SettingsPanel))
+	_add_button("Paramètres", _open_panel.bind(SettingsPanel))
 	_add_button("Quitter", get_tree().quit)
 	buttons.get_child(0).grab_focus()
 	$UI/Hint.text = Controls.help(["move", "attack", "dash", "active", "interact", "inventory", "pause"])
@@ -77,7 +77,7 @@ func _open_panel(panel_script: GDScript) -> void:
 	$UI.add_child(panel)
 
 func _close_panel() -> void:
-	coins_label.text = "Pieces : %d" % GameState.coins
+	coins_label.text = "Pièces : %d" % GameState.coins
 	buttons.visible = true
 	buttons.get_child(0).grab_focus()
 

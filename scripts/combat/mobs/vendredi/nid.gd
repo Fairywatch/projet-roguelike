@@ -24,7 +24,7 @@ func _on_ready() -> void:
 
 func _on_attack_begin() -> void:
 	cycle += 1
-	if cycle % 3 == 1 and alive_count("Oeuf") < MAX_EGGS:
+	if cycle % 3 == 1 and alive_count("Œuf") < MAX_EGGS:
 		var hatch := "vendredi/sangsue" if alt else "vendredi/soignant"
 		for i in 3 if nightmare else 2:
 			var spot := position + Vector2.from_angle(TAU * i / 3.0 + randf()) * 110.0

@@ -12,8 +12,8 @@ signal rewarded(entry: Dictionary)
 const NPCS := [
 	# my_object : dans la bouche du PNJ ; object : dans les messages du jeu.
 	{"id": "hibou", "name": "Hibou insomniaque", "my_object": "ma plume d'argent", "object": "la plume d'argent"},
-	{"id": "lapin", "name": "Lapin horloger", "my_object": "ma cle de remontoir", "object": "la cle de remontoir"},
-	{"id": "marchande", "name": "Marchande de lune", "my_object": "ma poussiere de lune", "object": "la poussiere de lune"},
+	{"id": "lapin", "name": "Lapin horloger", "my_object": "ma clé de remontoir", "object": "la clé de remontoir"},
+	{"id": "marchande", "name": "Marchande de lune", "my_object": "ma poussière de lune", "object": "la poussière de lune"},
 ]
 const KINDS := ["chasse", "objet_perdu"]
 const REWARD_OFFSET := Vector2(0, 60)
@@ -95,9 +95,9 @@ func talk() -> void:
 			quest["start_wins"] = GameState.current_floor()["wins"]
 			Sound.play("quest")
 			if quest["kind"] == "chasse":
-				_say("Des cauchemars rodent par ici... Gagne %d combats sur cet etage et je te recompenserai." % quest["target"])
+				_say("Des cauchemars rôdent par ici... Gagne %d combats sur cet étage et je te récompenserai." % quest["target"])
 			else:
-				_say("J'ai perdu %s a l'autre bout de l'etage. Tu pourrais me la rapporter ?" % npc["my_object"])
+				_say("J'ai perdu %s à l'autre bout de l'étage. Tu pourrais me la rapporter ?" % npc["my_object"])
 		"active":
 			if is_complete():
 				quest["state"] = "done"
@@ -106,10 +106,10 @@ func talk() -> void:
 				var entry := {"id": GameState.roll_item_id(GameState.QUEST_LOOT_BONUS), "pos": position + REWARD_OFFSET}
 				GameState.current_floor()["ground_items"].append(entry)
 				rewarded.emit(entry)
-				_say("Merci, voyageur ! Prends ceci : %s. (+%d pieces)" % [Items.find(entry["id"])["name"], GameState.COINS_PER_QUEST])
+				_say("Merci, voyageur ! Prends ceci : %s. (+%d pièces)" % [Items.find(entry["id"])["name"], GameState.COINS_PER_QUEST])
 			elif quest["kind"] == "chasse":
 				var left: int = quest["target"] - (GameState.current_floor()["wins"] - quest["start_wins"])
-				_say("Encore %d combat(s) a gagner." % left)
+				_say("Encore %d combat(s) à gagner." % left)
 			else:
 				_say("Tu n'as pas encore retrouve %s ? Cherche loin d'ici." % npc["my_object"])
 		_:

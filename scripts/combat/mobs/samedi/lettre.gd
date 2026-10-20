@@ -13,7 +13,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/samedi/lettre.png"
 
 func _on_ready() -> void:
-	display_name = "Lettre sans reponse"
+	display_name = "Lettre sans réponse"
 	hp = 3
 	chase_speed = 50.0
 	attack_range = 300.0

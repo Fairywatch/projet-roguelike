@@ -115,7 +115,7 @@ func load_run() -> void:
 	_recompute_mods()
 	if in_combat:
 		apply_combat_death()
-		menu_message = "Tu as fui un combat... le reve te rattrape. " + menu_message
+		menu_message = "Tu as fui un combat... le rêve te rattrape. " + menu_message
 
 func start_combat() -> void:
 	if not run_started:  # scene d'arene lancee seule (F6 dans l'editeur) : rien a proteger
@@ -151,7 +151,7 @@ func _load_fields(path: String, fields: Array) -> void:
 	var file := FileAccess.open(path, FileAccess.READ)
 	var data = file.get_var() if file else null
 	if not (data is Dictionary) or data.get("version") != SAVE_VERSION:
-		push_warning("Sauvegarde illisible ou d'une ancienne version, ignoree : %s" % path)
+		push_warning("Sauvegarde illisible ou d'une ancienne version, ignorée : %s" % path)
 		return
 	for field in fields:
 		if data.has(field):
@@ -202,7 +202,7 @@ func tick_speedrun(delta: float) -> bool:
 	if time_left > 0.0:
 		return false
 	_end_run()
-	menu_message = "Le reveil sonne ! Le reveur s'est reveille avant la fin de %s." % tower()["name"]
+	menu_message = "Le réveil sonne ! Le rêveur s'est réveillé avant la fin de %s." % tower()["name"]
 	return true
 
 func new_run(index: int = tower_index, speedrun_mode: bool = false) -> void:
@@ -258,7 +258,7 @@ func complete_tower() -> void:
 	cutscene_next = MENU_PATH
 	if tower()["id"] not in completed_towers:
 		completed_towers.append(tower()["id"])
-	menu_message = "Le reveur se reveille... %s terminee ! +%d pieces." % [tower()["name"], tower()["reward"]]
+	menu_message = "Le rêveur se réveille... %s terminée ! +%d pièces." % [tower()["name"], tower()["reward"]]
 	if speedrun:
 		var id: String = tower()["id"]
 		menu_message += " Temps : %s." % format_time(run_time)
@@ -267,7 +267,7 @@ func complete_tower() -> void:
 			menu_message += " Nouveau record !"
 	if tower_index + 1 < Towers.LIST.size() and unlocked_towers <= tower_index + 1:
 		unlocked_towers = tower_index + 2
-		menu_message += " Nouvelle nuit debloquee : %s !" % Towers.get_tower(tower_index + 1)["name"]
+		menu_message += " Nouvelle nuit débloquée : %s !" % Towers.get_tower(tower_index + 1)["name"]
 
 # Chaque portail est garde par un boss : on ne change d'etage qu'apres l'avoir vaincu.
 func start_guardian_fight(going_down: bool) -> void:
@@ -302,7 +302,7 @@ func apply_death_setback() -> void:
 	floor_index = new_index
 	return_position = Vector2.ZERO
 	reset_run_items()
-	menu_message = "Tu te reveilles en sursaut... Tu reprendras a l'etage %d, les mains vides." % floor_index
+	menu_message = "Tu te réveilles en sursaut... Tu reprendras à l'étage %d, les mains vides." % floor_index
 	shop_offers.clear()
 
 func apply_negative_death() -> void:

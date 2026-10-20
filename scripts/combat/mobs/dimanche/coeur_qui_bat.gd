@@ -14,7 +14,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/dimanche/coeur_qui_bat.png"
 
 func _on_ready() -> void:
-	display_name = "Le Coeur qui Bat"
+	display_name = "Le Cœur qui Bat"
 	is_boss = true
 	hp = 24
 	chase_speed = 0.0

@@ -24,7 +24,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/jeudi/colere.png"
 
 func _on_ready() -> void:
-	display_name = "La Colere"
+	display_name = "La Colère"
 	is_boss = true
 	hp = 48
 	chase_speed = 40.0

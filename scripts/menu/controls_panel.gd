@@ -22,8 +22,8 @@ func build() -> void:
 		grid.add_child(_bind_button(action, false))
 		grid.add_child(_bind_button(action, true))
 	box.add_child(grid)
-	add_note("Les fleches et le stick gauche deplacent toujours. Echap : annuler un changement.")
-	add_button("Touches par defaut", func(): Controls.reset(); rebuild())
+	add_note("Les flèches et le stick gauche déplacent toujours. Échap : annuler un changement.")
+	add_button("Touches par défaut", func(): Controls.reset(); rebuild())
 
 func _bind_button(action: String, gamepad: bool) -> Button:
 	var button := Button.new()

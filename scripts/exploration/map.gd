@@ -51,7 +51,7 @@ func _ready() -> void:
 	_spawn_npc(floor_data, floor_meta)
 	_spawn_decor(floor_data, floor_meta["seed"])
 	_setup_ambience(floor_data)
-	floor_label.text = "%s  -  Etage %d / %d\n%s" % [GameState.tower()["name"], GameState.floor_index, GameState.floor_count() - 1, FAMILY_NAMES[floor_meta["family"]]]
+	floor_label.text = "%s  -  Étage %d / %d\n%s" % [GameState.tower()["name"], GameState.floor_index, GameState.floor_count() - 1, FAMILY_NAMES[floor_meta["family"]]]
 	encounter_chance = ENCOUNTER_CHANCE_PROFOND if floor_meta["family"] == FloorGenerator.Family.PROFOND else ENCOUNTER_CHANCE_PARADOXAL
 	encounter_chance *= maxf(0.2, 1.0 + GameState.mod("encounter_rate"))
 	hearts.position = Vector2(10, 8)
@@ -99,7 +99,7 @@ func _process(delta: float) -> void:
 func _refresh_hud() -> void:
 	hearts.max_hp = GameState.max_hp()
 	hearts.hp = GameState.current_hp()
-	items_label.text = "%s\nPassifs : %d  (%s)   Pieces : %d" % [GameState.active_summary(), GameState.passive_count(), Controls.name_of("inventory"), GameState.coins]
+	items_label.text = "%s\nPassifs : %d  (%s)   Pièces : %d" % [GameState.active_summary(), GameState.passive_count(), Controls.name_of("inventory"), GameState.coins]
 
 func _show_message(text: String) -> void:
 	message_serial += 1
@@ -194,12 +194,12 @@ func _spawn_quest_item(pos: Vector2, npc: DreamNpc) -> void:
 		if not body.is_in_group("player"):
 			return
 		if npc.quest["state"] != "active":
-			_show_message("Un objet brille ici... quelqu'un l'a peut-etre perdu.")
+			_show_message("Un objet brille ici... quelqu'un l'a peut-être perdu.")
 			return
 		npc.quest["carried"] = true
 		npc.refresh()
 		Sound.play("pickup")
-		_show_message("Tu as trouve %s ! Rapporte-la a %s." % [npc.npc["object"], npc.npc["name"]])
+		_show_message("Tu as trouvé %s ! Rapporte-la à %s." % [npc.npc["object"], npc.npc["name"]])
 		item.queue_free())
 	generated_root.add_child(item)
 
@@ -255,9 +255,9 @@ func _on_decor_touched(decor: DreamDecor) -> void:
 	match decor.decor_name:
 		"etoile":
 			if not GameState.heal(1):  # comme un coeur dans Isaac : on la laisse si on est en forme
-				_show_message("Tu es deja en pleine forme.")
+				_show_message("Tu es déjà en pleine forme.")
 				return
-			_consume(decor, Color(1, 0.9, 0.5), "Etoile filante : +1 PV !")
+			_consume(decor, Color(1, 0.9, 0.5), "Étoile filante : +1 PV !")
 			_refresh_hud()
 		"lune":
 			guide_timer = GUIDE_DURATION
@@ -272,7 +272,7 @@ func _on_decor_touched(decor: DreamDecor) -> void:
 				_mark_used(decor)
 				decor.light_up()
 		"champignon":
-			_consume(decor, Color(0.4, 1, 0.85), "Des spores t'endorment plus profondement...")
+			_consume(decor, Color(0.4, 1, 0.85), "Des spores t'endorment plus profondément...")
 			_trigger_encounter()
 		"cristal":
 			var text := "Le cristal se brise."
@@ -280,7 +280,7 @@ func _on_decor_touched(decor: DreamDecor) -> void:
 				var entry := {"id": GameState.roll_item_id(), "pos": decor.position}
 				GameState.current_floor()["ground_items"].append(entry)
 				_spawn_pickup(entry)
-				text = "Le cristal se brise et libere %s !" % Items.find(entry["id"])["name"]
+				text = "Le cristal se brise et libère %s !" % Items.find(entry["id"])["name"]
 			_consume(decor, Color(0.75, 0.55, 1), text)
 
 func _consume(decor: DreamDecor, color: Color, text: String) -> void:

@@ -23,7 +23,7 @@ const MOVE_EXTRA := {
 	"move_up": [KEY_UP, JOY_AXIS_LEFT_Y, -1.0], "move_down": [KEY_DOWN, JOY_AXIS_LEFT_Y, 1.0],
 	"move_left": [KEY_LEFT, JOY_AXIS_LEFT_X, -1.0], "move_right": [KEY_RIGHT, JOY_AXIS_LEFT_X, 1.0],
 }
-const KEY_NAMES := {KEY_ESCAPE: "Echap", KEY_SPACE: "Espace", KEY_ENTER: "Entree", KEY_SHIFT: "Maj", KEY_CTRL: "Ctrl"}
+const KEY_NAMES := {KEY_ESCAPE: "Échap", KEY_SPACE: "Espace", KEY_ENTER: "Entrée", KEY_SHIFT: "Maj", KEY_CTRL: "Ctrl"}
 const PAD_NAMES := {
 	JOY_BUTTON_A: "A", JOY_BUTTON_B: "B", JOY_BUTTON_X: "X", JOY_BUTTON_Y: "Y",
 	JOY_BUTTON_BACK: "Select", JOY_BUTTON_START: "Start", JOY_BUTTON_LEFT_SHOULDER: "LB",

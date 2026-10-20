@@ -119,4 +119,4 @@ offset_right = 630.0
 offset_bottom = -4.0
 theme_override_font_sizes/font_size = 10
 modulate = Color(1, 1, 1, 0.7)
-text = "ZQSD : deplacement  |  J : attaque  |  K : dash  |  L : objet actif  |  E : prendre  |  Tab : objets passifs"
+text = "ZQSD : déplacement  |  J : attaque  |  K : dash  |  L : objet actif  |  E : prendre  |  Tab : objets passifs"

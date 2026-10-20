@@ -43,7 +43,7 @@ func _initialize() -> void:
 	change_scene_to_file("res://scenes/combat/CombatArena.tscn")
 	for i in 10:
 		await process_frame
-	var names := ["Bailleur", "Mouton insomniaque", "Veilleuse fatiguee", "Paupiere lourde"]
+	var names := ["Bâilleur", "Mouton insomniaque", "Veilleuse fatiguée", "Paupière lourde"]
 	for m in get_nodes_in_group("mobs"):
 		assert(m.display_name in names)
 

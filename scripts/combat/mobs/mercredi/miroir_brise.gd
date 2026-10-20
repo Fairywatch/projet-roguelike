@@ -15,7 +15,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/mercredi/miroir_brise.png"
 
 func _on_ready() -> void:
-	display_name = "Le Miroir Brise"
+	display_name = "Le Miroir Brisé"
 	is_boss = true
 	hp = 18
 	chase_speed = 0.0

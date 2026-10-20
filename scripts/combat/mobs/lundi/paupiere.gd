@@ -13,7 +13,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/lundi/paupiere.png"
 
 func _on_ready() -> void:
-	display_name = "Paupiere lourde"
+	display_name = "Paupière lourde"
 	hp = 3
 	chase_speed = 30.0
 	attack_range = 340.0

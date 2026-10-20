@@ -11,7 +11,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/samedi/echo.png"
 
 func _on_ready() -> void:
-	display_name = "Echo"
+	display_name = "Écho"
 	hp = 3
 	chase_speed = 40.0
 	attack_range = 0.0  # n'attaque qu'en repetant le joueur

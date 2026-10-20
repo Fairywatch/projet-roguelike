@@ -16,7 +16,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/lundi/choeur_baillements.png"
 
 func _on_ready() -> void:
-	display_name = "Le Choeur des Baillements"
+	display_name = "Le Chœur des Bâillements"
 	is_boss = true
 	hp = 18
 	chase_speed = 0.0

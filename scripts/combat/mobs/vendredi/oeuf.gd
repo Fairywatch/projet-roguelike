@@ -12,7 +12,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/vendredi/oeuf.png"
 
 func _on_ready() -> void:
-	display_name = "Oeuf"
+	display_name = "Œuf"
 	hp = 2
 	attack_range = 0.0
 	chase_speed = 0.0

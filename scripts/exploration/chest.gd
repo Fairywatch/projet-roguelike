@@ -40,7 +40,7 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	var missing: int = SEAL_WINS_REQUIRED - GameState.current_floor()["wins"]
 	if sealed and missing > 0:
-		message.emit("Coffre scelle : gagne encore %d combat(s) sur cet etage." % missing)
+		message.emit("Coffre scellé : gagne encore %d combat(s) sur cet étage." % missing)
 		return
 	Sound.play("chest")
 	var bonus := GameState.SEALED_CHEST_LOOT_BONUS if sealed else 0.0

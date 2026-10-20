@@ -47,4 +47,4 @@ func _on_attack_begin() -> void:
 			Hazards.zone(pos, 60.0, "damage", 1.0, 2.5, ZONE_COLOR)
 
 func _minion_count() -> int:
-	return get_tree().get_nodes_in_group("mobs").filter(func(m): return m.display_name == "Bailleur" and m.state != State.DEAD).size()
+	return get_tree().get_nodes_in_group("mobs").filter(func(m): return m.display_name == "Bâilleur" and m.state != State.DEAD).size()

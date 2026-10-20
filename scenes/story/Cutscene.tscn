@@ -48,4 +48,4 @@ offset_bottom = -3.0
 modulate = Color(1, 1, 1, 0.55)
 theme_override_font_sizes/font_size = 10
 horizontal_alignment = 1
-text = "E / J / Espace : continuer   |   Echap : passer"
+text = "E / J / Espace : continuer   |   Échap : passer"

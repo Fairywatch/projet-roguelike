@@ -17,7 +17,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/lundi/reveil_grincheux.png"
 
 func _on_ready() -> void:
-	display_name = "Le Reveil Grincheux"
+	display_name = "Le Réveil Grincheux"
 	is_boss = true
 	hp = 16
 	chase_speed = 50.0

@@ -164,7 +164,7 @@ func _drop_item() -> void:
 	add_child(pickup)
 	pickup.taken.connect(_on_pickup_taken)
 	waiting_to_leave = true
-	var go_on := "Start" if Controls.using_gamepad else "Entree"
+	var go_on := "Start" if Controls.using_gamepad else "Entrée"
 	_on_item_message("%s : prendre l'objet   |   %s : continuer" % [Controls.name_of("interact"), go_on], 0.0)
 
 func _on_pickup_taken(_pickup: ItemPickup, taken_id: String, old_id: String) -> void:

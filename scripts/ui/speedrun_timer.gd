@@ -20,6 +20,6 @@ func _process(_delta: float) -> void:
 	visible = GameState.speedrun and GameState.run_started
 	if not visible:
 		return
-	text = "Reveil dans " + GameState.format_time(GameState.time_left)
+	text = "Réveil dans " + GameState.format_time(GameState.time_left)
 	var urgent := GameState.time_left < WARNING_TIME
 	add_theme_color_override("font_color", Color(1, 0.35, 0.35) if urgent else Color(1, 0.95, 0.8))

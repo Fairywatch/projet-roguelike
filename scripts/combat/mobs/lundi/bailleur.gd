@@ -12,7 +12,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/lundi/bailleur.png"
 
 func _on_ready() -> void:
-	display_name = "Bailleur"
+	display_name = "Bâilleur"
 	hp = 4
 	chase_speed = 45.0
 	attack_range = 170.0

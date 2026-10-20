@@ -8,11 +8,11 @@ const PATH := "user://settings.cfg"
 const SECTION := "options"
 # Options on/off : nom -> libelle dans le menu.
 const LABELS := {
-	"screen_shake": "Secousses d'ecran",
-	"hitstop": "Arret sur image a l'impact",
+	"screen_shake": "Secousses d'écran",
+	"hitstop": "Arrêt sur image à l'impact",
 	"flashes": "Flashs lumineux",
 	"ambient_particles": "Particules d'ambiance",
-	"fullscreen": "Plein ecran",
+	"fullscreen": "Plein écran",
 }
 # Volumes de 0 (coupe) a 1 : nom -> libelle du curseur dans le menu.
 const SLIDERS := {

@@ -4,7 +4,7 @@ extends BaseMob
 # du haut de l'arene, en rangs serres avec des trous ou se glisser. Variante : la pluie tombe en
 # diagonale. Cauchemar : rangs plus serres.
 
-const WORDS := ["LUNDI", "REUNION", "FACTURES", "REVEIL", "A FAIRE", "EN RETARD"]
+const WORDS := ["LUNDI", "RÉUNION", "FACTURES", "RÉVEIL", "À FAIRE", "EN RETARD"]
 const INK := Color(0.95, 0.9, 0.8)
 const RAIN_SPEED := 130.0
 

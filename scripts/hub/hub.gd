@@ -42,11 +42,11 @@ func _ready() -> void:
 	for i in Towers.LIST.size():
 		_build_tower(i)
 	_add_spot("shop", MERCHANT_POS, MerchantTexture, "Marchande de lune", Color(1, 0.9, 0.6))
-	_add_spot("clock", CLOCK_POS, ClockTexture, "Horloge du reveil", Color(1, 0.8, 0.4))
+	_add_spot("clock", CLOCK_POS, ClockTexture, "Horloge du réveil", Color(1, 0.8, 0.4))
 	_add_spot("book", BOOK_POS, BookTexture, "Livre des songes", Color(0.7, 0.75, 1))
 	player.global_position = SPAWN
 	player.reset_physics_interpolation()
-	$UI/Hint.text = "Marche jusqu'a la nuit de ton choix  |  " + Controls.help(["interact", "pause"])
+	$UI/Hint.text = "Marche jusqu'à la nuit de ton choix  |  " + Controls.help(["interact", "pause"])
 	player.add_child(DreamTheme.make_light(Color(1, 0.95, 0.85), 220.0, 0.8))
 	player.add_child(DreamTheme.make_ambient_particles(FloorGenerator.Family.PARADOXAL))
 	var camera: Camera2D = player.get_node("Camera2D")
@@ -146,28 +146,28 @@ func _set_near(id: String) -> void:
 	_refresh_ui()
 
 func _refresh_ui() -> void:
-	status_label.text = "Pieces : %d\nSpeedrun : %s" % [GameState.coins, "oui" if speedrun_choice else "non"]
+	status_label.text = "Pièces : %d\nSpeedrun : %s" % [GameState.coins, "oui" if speedrun_choice else "non"]
 	prompt_label.visible = near != ""
 	if near == "shop":
 		prompt_label.text = "%s : ouvrir la boutique" % Controls.name_of("interact")
 	elif near == "book":
-		prompt_label.text = "%s : relire l'histoire du reveur" % Controls.name_of("interact")
+		prompt_label.text = "%s : relire l'histoire du rêveur" % Controls.name_of("interact")
 	elif near == "clock":
-		prompt_label.text = "%s : %s le mode speedrun (le reveil sonne a la fin du chrono)" % [Controls.name_of("interact"), "desactiver" if speedrun_choice else "activer"]
+		prompt_label.text = "%s : %s le mode speedrun (le réveil sonne à la fin du chrono)" % [Controls.name_of("interact"), "désactiver" if speedrun_choice else "activer"]
 	elif near.begins_with("tower_"):
 		prompt_label.text = _tower_prompt(near.trim_prefix("tower_").to_int())
 
 func _tower_prompt(i: int) -> String:
 	var tower: Dictionary = Towers.LIST[i]
-	var head := "%s  (%d etages)\n%s" % [Towers.title(i), tower["floors"], tower["desc"]]
+	var head := "%s  (%d étages)\n%s" % [Towers.title(i), tower["floors"], tower["desc"]]
 	if tower_state(i) == "locked":
-		return head + "\nVerrouillee : termine d'abord la nuit de %s." % Towers.LIST[i - 1]["name"]
+		return head + "\nVerrouillée : termine d'abord la nuit de %s." % Towers.LIST[i - 1]["name"]
 	if GameState.best_times.has(tower["id"]):
 		head += "  Record speedrun : %s" % GameState.format_time(GameState.best_times[tower["id"]])
 	if GameState.run_started and GameState.tower_index == i:
-		return head + "\n%s : reprendre la nuit (etage %d)" % [Controls.name_of("interact"), GameState.floor_index]
+		return head + "\n%s : reprendre la nuit (étage %d)" % [Controls.name_of("interact"), GameState.floor_index]
 	if GameState.run_started and confirm_abandon == i:
-		return head + "\n%s a nouveau : abandonner la nuit de %s en cours" % [Controls.name_of("interact"), GameState.tower()["name"]]
+		return head + "\n%s à nouveau : abandonner la nuit de %s en cours" % [Controls.name_of("interact"), GameState.tower()["name"]]
 	return head + "\n%s : entrer" % Controls.name_of("interact") + ("  (speedrun)" if speedrun_choice else "")
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -6,7 +6,7 @@ extends BaseMob
 
 const INK := Color(0.85, 0.2, 0.25)
 const PAPER := Color(0.95, 0.92, 0.85)
-const WORDS := ["REFUSE", "NON", "PAS ASSEZ", "REFAIS"]
+const WORDS := ["REFUSÉ", "NON", "PAS ASSEZ", "REFAIS"]
 
 var cycle := 0
 

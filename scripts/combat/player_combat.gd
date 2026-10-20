@@ -240,7 +240,7 @@ func _use_active_item() -> void:
 			_use_sept_ans_de_malheur()
 		"mouchoir_usage":
 			if hp >= max_hp:
-				item_message.emit("PV deja au maximum")
+				item_message.emit("PV déjà au maximum")
 				return
 			_heal(1)
 		"reveil_strident":
@@ -323,7 +323,7 @@ func take_damage() -> void:
 		shield -= 1
 		Fx.flash(sprite, Color(1, 0.9, 0.5), 0.3)
 		_start_hurt_invincibility()
-		item_message.emit("Doudou protecteur : coup bloque !")
+		item_message.emit("Doudou protecteur : coup bloqué !")
 		return
 	shake = 7.0
 	Sound.play("hurt")
@@ -334,7 +334,7 @@ func take_damage() -> void:
 	if hp <= 1 and extra_lives > 0:
 		extra_lives -= 1
 		_start_hurt_invincibility()
-		item_message.emit("Croque-mort au chomage : tu survis !")
+		item_message.emit("Croque-mort au chômage : tu survis !")
 		return
 	hp -= 1
 	hp_changed.emit(hp)

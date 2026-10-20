@@ -14,7 +14,7 @@ func _texture_path() -> String:
 	return "res://assets/sprites/mobs/samedi/telephone.png"
 
 func _on_ready() -> void:
-	display_name = "Le Telephone Muet"
+	display_name = "Le Téléphone Muet"
 	is_boss = true
 	hp = 22
 	chase_speed = 30.0

@@ -4,7 +4,7 @@ extends MenuPanel
 # Onglet Parametres du menu : un curseur par volume (Settings.SLIDERS), une case par option (Settings.LABELS).
 
 func build() -> void:
-	add_title("Parametres")
+	add_title("Paramètres")
 	add_button("Touches (clavier et manette)", _open_controls)
 	for option in Settings.SLIDERS:
 		_add_slider(option)
@@ -18,7 +18,7 @@ func build() -> void:
 		# Lance depuis l'editeur, le jeu est integre a l'onglet "Jeu" : pas de plein ecran possible.
 		if option == "fullscreen" and Engine.is_embedded_in_editor():
 			check.disabled = true
-			add_note("Indisponible quand le jeu tourne dans l'onglet Jeu de l'editeur")
+			add_note("Indisponible quand le jeu tourne dans l'onglet Jeu de l'éditeur")
 
 func _open_controls() -> void:
 	var panel := ControlsPanel.new()
