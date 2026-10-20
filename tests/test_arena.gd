@@ -42,7 +42,8 @@ func _initialize() -> void:
 	# La musique de combat tourne (lecteur ajoute a la racine, en boucle).
 	var music_players := root.get_children().filter(func(n): return n is AudioStreamPlayer and n.get_meta("track", "") == "combat")
 	assert(music_players.size() == 1 and music_players[0].playing)
-	assert(music_players[0].stream.loop)
+	var stream = music_players[0].stream  # WAV (compositions originales) ou mp3/ogg
+	assert(stream.loop_mode == AudioStreamWAV.LOOP_FORWARD if stream is AudioStreamWAV else stream.loop)
 
 	# Mouchoir a PV pleins : pas de charge gaspillee. Blesse : soigne et consomme.
 	await _press(KEY_L)

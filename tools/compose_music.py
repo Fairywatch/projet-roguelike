@@ -50,28 +50,36 @@ def pitch_xml(name):
     return f"<pitch><step>{step}</step>{alter_xml}<octave>{rest}</octave></pitch>"
 
 
-def note_xml(pitches, dur):
+ARTICULATIONS = {"s": "<staccato/>", "a": "<accent/>"}  # pique, accent
+
+
+def note_xml(pitches, dur, marks=""):
     kind, dotted = TYPES[dur]
     dot = "<dot/>" if dotted else ""
     if not pitches:
         return f"<note><rest/><duration>{dur}</duration><type>{kind}</type>{dot}</note>"
+    notations = ""
+    if marks:
+        notations = "<notations><articulations>%s</articulations></notations>" % "".join(ARTICULATIONS[m] for m in marks)
     out = []
     for i, p in enumerate(pitches):
         chord = "<chord/>" if i else ""
-        out.append(f"<note>{chord}{pitch_xml(p)}<duration>{dur}</duration><type>{kind}</type>{dot}</note>")
+        out.append(f"<note>{chord}{pitch_xml(p)}<duration>{dur}</duration><type>{kind}</type>{dot}{notations}</note>")
     return "".join(out)
 
 
 def parse_measure(text):
-    """'r2 A4:1 D5:1 F5,A5:4' -> [(pitches, duree)] ; r = silence, virgule = accord."""
+    """'r2 A4:1s D5:1 F5,A5:4a' -> [(pitches, duree, articulations)] ; r = silence, virgule =
+    accord, s = piqué (note courte), a = accent."""
     events = []
     for token in text.split():
         if token.startswith("r"):
-            events.append(([], int(token[1:])))
+            events.append(([], int(token[1:]), ""))
         else:
             notes, dur = token.split(":")
-            events.append((notes.split(","), int(dur)))
-    total = sum(d for _, d in events)
+            marks = dur.lstrip("0123456789")
+            events.append((notes.split(","), int(dur[:len(dur) - len(marks)]), marks))
+    total = sum(d for _, d, _ in events)
     assert total == MEASURE, f"mesure de {total} croches : {text}"
     return events
 
@@ -106,7 +114,7 @@ def score_xml(piece, only=None):
             if dynamic:
                 body.append(f'<direction placement="below"><direction-type><dynamics><{dynamic}/></dynamics>'
                             f'</direction-type></direction>')
-            body.extend(note_xml(p, d) for p, d in parse_measure(text))
+            body.extend(note_xml(*event) for event in parse_measure(text))
             body.append("</measure>")
         body.append("</part>")
     return "\n".join(head + body + ["</score-partwise>"])
@@ -288,7 +296,49 @@ def profond():
     }
 
 
-PIECES = {"reve": reve, "profond": profond}
+# Accords du combat : (fondamentale, quinte, octave) des violoncelles, contretemps des altos,
+# choeur, coups de piano graves.
+COMBAT_CHORDS = {
+    "Em": (["E2", "B2", "E3"], ["G3", "B3"], ["E4", "G4", "B4"], ["E1", "E2"]),
+    "C": (["C2", "G2", "C3"], ["G3", "C4"], ["C4", "E4", "G4"], ["C2", "C3"]),
+    "D": (["D2", "A2", "D3"], ["A3", "D4"], ["D4", "F#4", "A4"], ["D2", "D3"]),
+    "Am": (["A2", "E3", "A3"], ["A3", "C4"], ["C4", "E4", "A4"], ["A1", "A2"]),
+    "B": (["B2", "F#2", "B3"], ["B3", "D#4"], ["D#4", "F#4", "B4"], ["B1", "B2"]),
+}
+
+
+def combat():
+    """Combat : sombre et tendu mais pas frenetique (108 BPM), porte par les cordes facon Hollow
+    Knight. Moteur de violoncelles piques, contretemps des altos, piano grave en guise de
+    percussions (3-3-2), melodie aux violons, choeur dans la partie la plus intense."""
+    a = ["Em", "Em", "C", "D", "Em", "Em", "C", "B"]
+    b = ["Em", "C", "Am", "B", "Em", "C", "D", "B"]
+    c = ["C", "D", "Em", "Em", "C", "D", "B", "B"]
+    d = ["Em", "Em", "Am", "Am", "C", "C", "B", "B"]
+    chords = a + b + c + d
+    engine, offbeat, choir, hit = ([COMBAT_CHORDS[ch][i] for ch in chords] for i in range(4))
+    cellos = [arpeggio(n, [0, 0, 2, 0, 0, 1, 2, 1], "1s") for n in engine]
+    violas = [REST] * 4 + ["r1 {0}:1s r1 {0}:1s r1 {0}:1s r1 {0}:1s".format(",".join(n)) for n in offbeat[4:]]
+    piano = ["{0}:3a {0}:3a {0}:2a".format(",".join(n)) for n in hit]
+    violins = [REST] * 8 + [
+        "E5:3 F#5:1 G5:2 B5:2", "A5:4 G5:2 E5:2", "C6:3 B5:1 A5:2 G5:2", "F#5:6 D#5:2",
+        "E5:3 F#5:1 G5:2 B5:2", "E6:4 D6:2 C6:2", "B5:2 A5:2 F#5:2 D5:2", "F#5:4 D#5:4",
+        "G5:4 E6:4", "D6:6 A5:2", "B5:3 C6:1 B5:2 G5:2", "E5:8",
+        "G5:2 C6:2 E6:4", "F#6:4 D6:2 A5:2", "B5:4 A5:2 F#5:2", "D#5:8",
+    ] + [REST] * 6 + ["B4:2 D#5:2 F#5:2 A5:2", "B5:8"]
+    return {
+        "title": "Combat", "tempo": 108, "fifths": 1,
+        "parts": [
+            ("violins", with_dynamics(violins, {9: "f", 17: "ff", 31: "mf"}), 1.5, -0.2),
+            ("violas", with_dynamics(violas, {5: "mp", 17: "mf", 25: "mp"}), 12.0, 0.25),  # notes tres courtes
+            ("cellos", with_dynamics(cellos, {1: "mf", 17: "f", 25: "mf"}), 0.0, 0.1),
+            ("piano", with_dynamics(piano, {1: "mf", 17: "f", 25: "mf"}), -8.0, 0.0),
+            ("choir", with_dynamics([REST] * 16 + [held(n) for n in choir[16:24]] + [REST] * 8, {17: "f"}), -3.0, 0.0),
+        ],
+    }
+
+
+PIECES = {"reve": reve, "profond": profond, "combat": combat}
 
 if __name__ == "__main__":
     for name in sys.argv[1:] or PIECES:

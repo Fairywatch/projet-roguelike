@@ -13,9 +13,6 @@ OUT_DIR = os.path.join(ROOT, "assets", "audio", "music")
 
 # morceau du jeu -> (titre, auteur, page OpenGameArt, fichier a telecharger)
 MUSIC = {
-    "combat": ("Battle Theme", "Wolfgang_",
-               "https://opengameart.org/content/battle-theme-0",
-               "https://opengameart.org/sites/default/files/Battle.mp3"),
     "boss": ("Battle Theme A", "cynicmusic",
              "https://opengameart.org/content/battle-theme-a",
              "https://opengameart.org/sites/default/files/battleThemeA.mp3"),
