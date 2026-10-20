@@ -35,9 +35,14 @@ INSTRUMENTS = {
     "celesta": ("Celesta", "keyboard.celesta", ("G", 2)),
     "violas": ("Violas", "strings.viola", ("C", 3)),
     "choir": ("Choir", "voice.aahs", ("G", 2)),
+    "horns": ("Horns", "brass.french-horn", ("G", 2)),  # notes ecrites = notes jouees (verifie)
+    "trumpets": ("Trumpets", "brass.trumpet", ("G", 2)),
+    "trombones": ("Trombones", "brass.trombone", ("F", 4)),
+    "timpani": ("Timpani", "drum.timpani", ("F", 4)),
 }
 # Instruments installes en Muse Sounds (les autres sonnent avec la banque de base, bien moins
-# belle) : piano, celesta, harpe, violons, altos, violoncelles, contrebasses, choeur.
+# belle) : piano, celesta, harpe, violons, altos, violoncelles, contrebasses, choeur, cors,
+# trompettes, trombones, timbales, glockenspiel, marimba, vibraphone.
 
 
 def pitch_xml(name):
@@ -338,7 +343,78 @@ def combat():
     }
 
 
-PIECES = {"reve": reve, "profond": profond, "combat": combat}
+# Accords du boss : moteur des violoncelles (fondamentale, quinte, octave), trombones, choeur,
+# timbales (fondamentale, quinte).
+BOSS_CHORDS = {
+    "Cm": (["C2", "G2", "C3"], ["C3", "G3", "C4"], ["C4", "Eb4", "G4"], ["C3", "G2"]),
+    "Ab": (["Ab2", "Eb3", "Ab3"], ["Ab2", "Eb3", "C4"], ["C4", "Eb4", "Ab4"], ["Ab2", "Eb3"]),
+    "Fm": (["F2", "C3", "F3"], ["F2", "C3", "Ab3"], ["C4", "F4", "Ab4"], ["F2", "C3"]),
+    "G": (["G2", "D3", "G3"], ["G2", "D3", "B3"], ["B3", "D4", "G4"], ["G2", "D3"]),
+    "Eb": (["Eb2", "Bb2", "Eb3"], ["Eb3", "G3", "Bb3"], ["Bb3", "Eb4", "G4"], ["Eb3", "Bb2"]),
+    "Bb": (["Bb2", "F3", "Bb3"], ["Bb2", "F3", "D4"], ["Bb3", "D4", "F4"], ["Bb2", "F3"]),
+    "Db": (["Db2", "Ab2", "Db3"], ["Db3", "Ab3", "F4"], ["Db4", "F4", "Ab4"], ["Db3", "Ab2"]),
+}
+
+
+def up_octave(note):
+    return note[:-1] + str(int(note[-1]) + 1)
+
+
+def boss():
+    """Cauchemar : combats de boss. Dramatique et epique, en do mineur comme Profond (112 BPM).
+    Timbales et trombones en introduction, theme aux cors, apogee avec fanfare de trompettes,
+    choeur et accord de re bemol (tragique), puis retombee et remontee vers la boucle."""
+    a = ["Cm", "Cm", "Ab", "Ab", "Fm", "Fm", "G", "G"]
+    b = ["Cm", "Ab", "Eb", "Bb", "Cm", "Ab", "Fm", "G"]
+    c = ["Ab", "Bb", "Cm", "Cm", "Db", "Eb", "G", "G"]
+    d = ["Cm", "Cm", "Ab", "Ab", "Fm", "Fm", "G", "G"]
+    chords = a + b + c + d
+    engine, brass, choir, timp = ([BOSS_CHORDS[ch][i] for ch in chords] for i in range(4))
+
+    def drums(i, n):
+        root, fifth = n
+        if i < 4:  # introduction : coups isoles
+            return f"{root}:2a r2 {root}:2a r2"
+        if i == 31:  # roulement qui relance la boucle
+            return " ".join([f"{root}:1"] * 7 + [f"{root}:1a"])
+        if 16 <= i < 24:  # apogee : plus serre
+            return f"{root}:1a {root}:1 {fifth}:1 {fifth}:1 {root}:1a {root}:1 {fifth}:1 {root}:1"
+        return f"{root}:2a {fifth}:1 {fifth}:1 {root}:2a {fifth}:2"
+
+    timpani = [drums(i, n) for i, n in enumerate(timp)]
+    cellos = [REST] * 2 + [arpeggio(n, [0, 0, 2, 0, 0, 1, 2, 1], "1s") for n in engine[2:]]
+    chord = ",".join
+    trombones = ([held(n) for n in brass[:16]]
+                 + [f"{chord(n)}:3a {chord(n)}:3a {chord(n)}:2a" for n in brass[16:24]]
+                 + [REST] * 4 + [held(n) for n in brass[28:]])
+    theme = ["C4:3 Eb4:1 G4:4", "Ab4:3 G4:1 Eb4:4", "G4:2 Bb4:2 Eb5:4", "D5:6 Bb4:2",
+             "C5:3 Bb4:1 G4:4", "Ab4:3 C5:1 Eb5:4", "C5:4 Ab4:2 F4:2", "G4:4 B4:2 D5:2"]
+    fanfare = ["C5:3a C5:1 Eb5:4", "D5:3a D5:1 F5:4", "G5:6 Eb5:2", "C5:8",
+               "Db5:3a F5:1 Ab5:4", "G5:3a Eb5:1 Bb4:4", "B4:2a D5:2 G5:4", "G5:8"]
+    fanfare_low = ["C4:3a C4:1 Eb4:4", "D4:3a D4:1 F4:4", "G4:6 Eb4:2", "C4:8",
+                   "Db4:3a F4:1 Ab4:4", "G4:3a Eb4:1 Bb3:4", "B3:2a D4:2 G4:4", "G4:8"]
+    horns = [REST] * 8 + theme + fanfare_low + theme[:2] + ["F4:8", "G4:8"] + [REST] * 4
+    trumpets = [REST] * 16 + fanfare + [REST] * 8
+    high = ["G5:8", "Ab5:8", "G5:8", "F5:8", "G5:8", "C6:8", "Ab5:8", "B5:8"]
+    violins = ([REST] * 8 + high
+               + [arpeggio([up_octave(x) for x in n], [0, 1, 2, 1, 0, 1, 2, 1], "1") for n in choir[16:24]]
+               + [REST] * 4 + high[:4])
+    choir_part = [REST] * 16 + [held(n) for n in choir[16:24]] + [REST] * 4 + [held(n) for n in choir[28:]]
+    return {
+        "title": "Cauchemar", "tempo": 112, "fifths": -3,
+        "parts": [
+            ("trumpets", with_dynamics(trumpets, {17: "ff"}), 1.0, 0.15),
+            ("horns", with_dynamics(horns, {9: "f", 17: "ff", 25: "mp"}), -7.5, -0.2),
+            ("trombones", with_dynamics(trombones, {1: "mf", 9: "f", 17: "ff", 29: "f"}), -2.5, 0.25),
+            ("timpani", with_dynamics(timpani, {1: "f", 5: "mf", 17: "ff", 25: "mp", 29: "f"}), -4.5, 0.0),
+            ("violins", with_dynamics(violins, {9: "mf", 17: "f", 29: "mf"}), 4.0, -0.3),
+            ("cellos", with_dynamics(cellos, {3: "mf", 17: "f", 25: "mp", 29: "f"}), 0.0, 0.1),
+            ("choir", with_dynamics(choir_part, {17: "ff", 29: "mf"}), -1.0, 0.0),
+        ],
+    }
+
+
+PIECES = {"reve": reve, "profond": profond, "combat": combat, "boss": boss}
 
 if __name__ == "__main__":
     for name in sys.argv[1:] or PIECES:

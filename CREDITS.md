@@ -7,10 +7,7 @@ Composées pour le jeu (partitions dans music/, jouées par MuseScore 4 : tools/
 - **Rêverie** (menus et étages du sommeil paradoxal)
 - **Profond** (étages du sommeil profond)
 - **Combat** (combats)
-
-## Musiques (OpenGameArt, licence CC0)
-
-- **Battle Theme A** par cynicmusic (combats de boss) : https://opengameart.org/content/battle-theme-a
+- **Cauchemar** (combats de boss)
 
 ## Effets sonores (licence CC0)
 
