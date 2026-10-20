@@ -2,7 +2,7 @@ class_name Sound
 extends RefCounted
 
 # Effets sonores (enregistrements CC0 importes par tools/import_sfx.py, voir SfxManifest) et
-# musiques (morceaux CC0 telecharges par tools/import_music.py). Classe statique : les lecteurs sont ajoutes a la racine de
+# musiques (compositions originales jouees par MuseScore : tools/compose_music.py). Classe statique : les lecteurs sont ajoutes a la racine de
 # l'arbre, donc la musique survit aux changements de scene.
 
 const SFX_DIR := "res://assets/audio/sfx/"

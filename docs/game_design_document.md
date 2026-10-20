@@ -133,7 +133,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - Chaque famille d'étage a un traitement visuel distinct : paradoxal lumineux et coloré, profond dans la pénombre avec une lumière autour du joueur.
 - Rêve / cauchemar : palettes claires ou sombres.
 - Retours de combat : flash à l'impact, arrêt sur image, secousses, particules (chaque effet désactivable dans les Paramètres).
-- **Son** : uniquement des enregistrements sous licence CC0 (voir `CREDITS.md`). Effets : bruitages de Kenney (tissu, impacts doux, verre, cloches, pièces), plusieurs variantes tirées au hasard, importés par `tools/import_sfx.py`. Musiques : morceaux d'OpenGameArt téléchargés par `tools/import_music.py` (piano onirique pour le sommeil paradoxal, ambiance sombre pour le profond, thème orchestral tendu pour les combats, épique pour les boss).
+- **Son** : effets sonores enregistrés sous licence CC0 (voir `CREDITS.md`) : bruitages de Kenney (tissu, impacts doux, verre, cloches, pièces), plusieurs variantes tirées au hasard, importés par `tools/import_sfx.py`. **Musiques originales**, écrites dans `tools/compose_music.py` (partitions dans `music/`, retouchables dans MuseScore) et jouées par MuseScore 4 avec les Muse Sounds : *Rêverie* (menus et sommeil paradoxal : harpe, piano, célesta), *Profond* (sommeil profond : bourdon grave, chœur, soupirs des altos), *Combat* (cordes piquées façon Hollow Knight) et *Cauchemar* (boss : cuivres, timbales, chœur).
 
 ---
 
