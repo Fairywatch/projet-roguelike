@@ -53,7 +53,7 @@ func _add_button(label: String, action: Callable) -> void:
 	var button := Button.new()
 	button.text = label
 	button.custom_minimum_size = Vector2(240, 24)
-	MenuPanel.style_button(button, 13)
+	button.add_theme_font_size_override("font_size", 13)
 	button.pressed.connect(func(): Sound.play("ui_select"); action.call())
 	buttons.add_child(button)
 

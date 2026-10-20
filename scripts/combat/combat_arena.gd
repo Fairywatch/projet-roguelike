@@ -1,6 +1,5 @@
 extends Node2D
 
-const BAR_WIDTH := 100.0
 const DROP_CHANCE := 0.45
 const MAX_MOBS := 4
 const FLOORS_PER_EXTRA_MOB := 4
@@ -11,8 +10,6 @@ const MIN_SPAWN_DISTANCE := 220.0
 
 @onready var player: CharacterBody2D = $PlayerCombat
 @onready var background: Node2D = $Background
-@onready var hp_bar_fill: ColorRect = $UI/HPBarBack/HPBarFill
-@onready var hp_text: Label = $UI/HPBarBack/HPText
 @onready var dash_bar_fill: ColorRect = $UI/DashBarBack/DashBarFill
 @onready var mob_label: Label = $UI/MobLabel
 @onready var active_label: Label = $UI/ActiveLabel
@@ -22,6 +19,7 @@ var is_boss_fight := false
 var had_elite := false
 const ELITE_LOOT_BONUS := 0.2
 var combat_over := false
+var hearts := Hearts.new()
 var message_serial := 0
 var waiting_to_leave := false
 var leaving := false
@@ -29,6 +27,10 @@ var leaving := false
 func _ready() -> void:
 	player.died.connect(_on_player_died)
 	player.item_message.connect(_on_item_message)
+	hearts.position = Vector2(10, 8)
+	# Rappel des touches au debut du combat, puis il s'efface pour ne pas cacher les ennemis.
+	$UI/Instructions.create_tween().tween_property($UI/Instructions, "modulate:a", 0.0, 1.0).set_delay(4.0)
+	$UI.add_child(hearts)
 	$UI.add_child(InventoryPanel.new())
 	$UI.add_child(SpeedrunTimer.new())
 
@@ -94,11 +96,11 @@ func _alive_mobs() -> Array:
 	return get_tree().get_nodes_in_group("mobs").filter(func(m): return m.state != BaseMob.State.DEAD)
 
 func _process(_delta: float) -> void:
-	hp_bar_fill.size.x = BAR_WIDTH * clampf(float(player.hp) / player.max_hp, 0.0, 1.0)
-	hp_text.text = "%d / %d" % [max(player.hp, 0), player.max_hp]
+	hearts.max_hp = player.max_hp
+	hearts.hp = player.hp
 
 	var dash_ratio: float = 1.0 - clampf(player.dash_cooldown_timer / player.dash_cooldown_effective, 0.0, 1.0)
-	dash_bar_fill.size.x = BAR_WIDTH * dash_ratio
+	dash_bar_fill.size.x = dash_bar_fill.get_parent().size.x * dash_ratio
 
 	active_label.text = "%s\nPassifs : %d  (Tab)" % [GameState.active_summary(), GameState.passive_count()]
 

@@ -33,6 +33,7 @@ var exit_position := Vector2.ZERO
 var guide_timer := 0.0
 var encounter_pause := 0.0
 var guide_arrow := Polygon2D.new()
+var hearts := Hearts.new()
 
 func _ready() -> void:
 	var floor_meta := GameState.current_floor()
@@ -53,6 +54,8 @@ func _ready() -> void:
 	floor_label.text = "%s  -  Etage %d / %d\n%s" % [GameState.tower()["name"], GameState.floor_index, GameState.floor_count() - 1, FAMILY_NAMES[floor_meta["family"]]]
 	encounter_chance = ENCOUNTER_CHANCE_PROFOND if floor_meta["family"] == FloorGenerator.Family.PROFOND else ENCOUNTER_CHANCE_PARADOXAL
 	encounter_chance *= maxf(0.2, 1.0 + GameState.mod("encounter_rate"))
+	hearts.position = Vector2(10, 8)
+	$UI.add_child(hearts)
 	$UI.add_child(InventoryPanel.new())
 	$UI.add_child(SpeedrunTimer.new())
 
@@ -93,7 +96,9 @@ func _process(delta: float) -> void:
 	guide_arrow.rotation = (exit_position - player.global_position).angle()
 
 func _refresh_hud() -> void:
-	items_label.text = "PV %d / %d\n%s\nPassifs : %d  (Tab)   Pieces : %d" % [GameState.current_hp(), GameState.max_hp(), GameState.active_summary(), GameState.passive_count(), GameState.coins]
+	hearts.max_hp = GameState.max_hp()
+	hearts.hp = GameState.current_hp()
+	items_label.text = "%s\nPassifs : %d  (Tab)   Pieces : %d" % [GameState.active_summary(), GameState.passive_count(), GameState.coins]
 
 func _show_message(text: String) -> void:
 	message_serial += 1

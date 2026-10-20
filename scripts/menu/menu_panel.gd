@@ -8,31 +8,8 @@ signal closed
 
 var box := VBoxContainer.new()
 
-static func style_button(button: Button, font_size: int = 12) -> void:
-	button.add_theme_font_size_override("font_size", font_size)
-	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
-		var style := StyleBoxFlat.new()
-		match state:
-			"normal":
-				style.bg_color = Color(0.1, 0.07, 0.2, 0.85)
-			"disabled":
-				style.bg_color = Color(0.08, 0.06, 0.12, 0.6)
-			_:
-				style.bg_color = Color(0.32, 0.22, 0.52, 0.95)
-		style.border_color = Color(0.6, 0.5, 0.9, 0.9 if state != "disabled" else 0.3)
-		style.set_border_width_all(1)
-		style.set_corner_radius_all(3)
-		style.set_content_margin_all(4)
-		button.add_theme_stylebox_override(state, style)
-
+# Apparence (cadre, boutons) : theme du projet, assets/ui/theme.tres.
 func _ready() -> void:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.06, 0.04, 0.12, 0.95)
-	style.border_color = Color(0.6, 0.5, 0.9, 0.9)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(4)
-	style.set_content_margin_all(12)
-	add_theme_stylebox_override("panel", style)
 	box.add_theme_constant_override("separation", 5)
 	add_child(box)
 	rebuild()
@@ -73,7 +50,6 @@ func add_note(text: String, color: Color = Color(1, 1, 1, 0.65)) -> void:
 func add_button(text: String, action: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
-	style_button(button)
 	button.pressed.connect(func(): Sound.play("ui_select"); action.call())
 	box.add_child(button)
 	return button

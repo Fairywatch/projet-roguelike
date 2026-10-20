@@ -58,52 +58,16 @@ position = Vector2(450, 270)
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="HPBarLabel" type="Label" parent="UI"]
-offset_left = 10.0
-offset_top = 6.0
-offset_right = 40.0
-offset_bottom = 24.0
-theme_override_font_sizes/font_size = 13
-text = "PV"
-
-[node name="HPBarBack" type="ColorRect" parent="UI"]
-offset_left = 42.0
-offset_top = 8.0
-offset_right = 142.0
-offset_bottom = 22.0
-color = Color(0.12, 0.06, 0.1, 0.9)
-
-[node name="HPBarFill" type="ColorRect" parent="UI/HPBarBack"]
-offset_right = 100.0
-offset_bottom = 14.0
-color = Color(0.9, 0.25, 0.32, 1)
-
-[node name="HPText" type="Label" parent="UI/HPBarBack"]
-offset_right = 100.0
-offset_bottom = 14.0
-theme_override_font_sizes/font_size = 10
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "3 / 3"
-
-[node name="DashBarLabel" type="Label" parent="UI"]
-offset_left = 10.0
-offset_top = 24.0
-offset_right = 40.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 10
-text = "Dash"
-
 [node name="DashBarBack" type="ColorRect" parent="UI"]
-offset_left = 42.0
-offset_top = 28.0
-offset_right = 142.0
-offset_bottom = 34.0
+offset_left = 10.0
+offset_top = 26.0
+offset_right = 70.0
+offset_bottom = 30.0
 color = Color(0.12, 0.1, 0.16, 0.9)
 
 [node name="DashBarFill" type="ColorRect" parent="UI/DashBarBack"]
-offset_right = 100.0
-offset_bottom = 6.0
+offset_right = 60.0
+offset_bottom = 4.0
 color = Color(0.4, 0.85, 0.9, 1)
 
 [node name="MobLabel" type="Label" parent="UI"]
