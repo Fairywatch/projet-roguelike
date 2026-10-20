@@ -46,6 +46,7 @@ func _ready() -> void:
 	_add_spot("book", BOOK_POS, BookTexture, "Livre des songes", Color(0.7, 0.75, 1))
 	player.global_position = SPAWN
 	player.reset_physics_interpolation()
+	$UI/Hint.text = "Marche jusqu'a la nuit de ton choix  |  " + Controls.help(["interact", "pause"])
 	player.add_child(DreamTheme.make_light(Color(1, 0.95, 0.85), 220.0, 0.8))
 	player.add_child(DreamTheme.make_ambient_particles(FloorGenerator.Family.PARADOXAL))
 	var camera: Camera2D = player.get_node("Camera2D")
@@ -148,11 +149,11 @@ func _refresh_ui() -> void:
 	status_label.text = "Pieces : %d\nSpeedrun : %s" % [GameState.coins, "oui" if speedrun_choice else "non"]
 	prompt_label.visible = near != ""
 	if near == "shop":
-		prompt_label.text = "E : ouvrir la boutique"
+		prompt_label.text = "%s : ouvrir la boutique" % Controls.name_of("interact")
 	elif near == "book":
-		prompt_label.text = "E : relire l'histoire du reveur"
+		prompt_label.text = "%s : relire l'histoire du reveur" % Controls.name_of("interact")
 	elif near == "clock":
-		prompt_label.text = "E : %s le mode speedrun (le reveil sonne a la fin du chrono)" % ("desactiver" if speedrun_choice else "activer")
+		prompt_label.text = "%s : %s le mode speedrun (le reveil sonne a la fin du chrono)" % [Controls.name_of("interact"), "desactiver" if speedrun_choice else "activer"]
 	elif near.begins_with("tower_"):
 		prompt_label.text = _tower_prompt(near.trim_prefix("tower_").to_int())
 
@@ -164,18 +165,18 @@ func _tower_prompt(i: int) -> String:
 	if GameState.best_times.has(tower["id"]):
 		head += "  Record speedrun : %s" % GameState.format_time(GameState.best_times[tower["id"]])
 	if GameState.run_started and GameState.tower_index == i:
-		return head + "\nE : reprendre la nuit (etage %d)" % GameState.floor_index
+		return head + "\n%s : reprendre la nuit (etage %d)" % [Controls.name_of("interact"), GameState.floor_index]
 	if GameState.run_started and confirm_abandon == i:
-		return head + "\nE a nouveau : abandonner la nuit de %s en cours" % GameState.tower()["name"]
-	return head + "\nE : entrer" + ("  (speedrun)" if speedrun_choice else "")
+		return head + "\n%s a nouveau : abandonner la nuit de %s en cours" % [Controls.name_of("interact"), GameState.tower()["name"]]
+	return head + "\n%s : entrer" % Controls.name_of("interact") + ("  (speedrun)" if speedrun_choice else "")
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if panel_open or not (event is InputEventKey) or not event.pressed or event.echo:
+func _unhandled_input(event: InputEvent) -> void:
+	if panel_open:
 		return
-	if event.physical_keycode == KEY_ESCAPE:
+	if event.is_action_pressed("pause"):
 		player.frozen = true
 		SceneTransition.change_scene(GameState.MENU_PATH)
-	elif event.physical_keycode == Controls.INTERACT and near != "":
+	elif event.is_action_pressed("interact") and near != "":
 		interact()
 
 func interact() -> void:

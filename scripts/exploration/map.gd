@@ -99,7 +99,7 @@ func _process(delta: float) -> void:
 func _refresh_hud() -> void:
 	hearts.max_hp = GameState.max_hp()
 	hearts.hp = GameState.current_hp()
-	items_label.text = "%s\nPassifs : %d  (Tab)   Pieces : %d" % [GameState.active_summary(), GameState.passive_count(), GameState.coins]
+	items_label.text = "%s\nPassifs : %d  (%s)   Pieces : %d" % [GameState.active_summary(), GameState.passive_count(), Controls.name_of("inventory"), GameState.coins]
 
 func _show_message(text: String) -> void:
 	message_serial += 1
@@ -304,23 +304,21 @@ func _setup_ambience(floor_data) -> void:
 	camera.limit_right = floor_data.size.x * FloorGenerator.CELL_SIZE
 	camera.limit_bottom = floor_data.size.y * FloorGenerator.CELL_SIZE
 
-# E pres d'un objet au sol est gere par ItemPickup ; sinon on rappelle l'objet actif.
-# Echap : retour au menu, la partie continue ou on l'a laissee.
-func _unhandled_key_input(event: InputEvent) -> void:
-	if not (event is InputEventKey) or not event.pressed or event.echo:
-		return
-	if event.physical_keycode == KEY_ESCAPE and not player.frozen:
+# Interagir pres d'un objet au sol est gere par ItemPickup ; sinon on rappelle l'objet actif.
+# Menu : retour au menu, la partie continue ou on l'a laissee.
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("pause") and not player.frozen:
 		player.frozen = true
 		GameState.return_position = player.global_position
 		SceneTransition.change_scene(GameState.MENU_PATH)
 		return
-	if event.physical_keycode != Controls.INTERACT:
+	if not event.is_action_pressed("interact"):
 		return
 	if not GameState.has_active_item():
-		_show_message("Aucun objet actif. Tab : voir tes objets passifs.")
+		_show_message("Aucun objet actif. %s : voir tes objets passifs." % Controls.name_of("inventory"))
 		return
 	var item := Items.find_active(GameState.active_item_id)
-	_show_message("%s s'utilise en combat avec E (%d/%d charges)." % [item["name"], GameState.active_charges, GameState.ACTIVE_MAX_CHARGES])
+	_show_message("%s s'utilise en combat avec %s (%d/%d charges)." % [item["name"], Controls.name_of("active"), GameState.active_charges, GameState.ACTIVE_MAX_CHARGES])
 
 func _cell_to_world(cell: Vector2i) -> Vector2:
 	var half := FloorGenerator.CELL_SIZE / 2.0

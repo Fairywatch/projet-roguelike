@@ -2,7 +2,7 @@ extends Node2D
 
 # Scene de recit (intro, fins de nuit) : une suite de tableaux animes avec un texte qui
 # s'ecrit, facon intro de The Binding of Isaac. Les textes viennent de scripts/story.gd.
-# E / J / Espace / Entree : texte suivant ; Echap : passer.
+# Interagir / attaque / Entree : texte suivant ; menu : passer.
 
 const TYPE_SPEED := 40.0  # caracteres par seconde
 const CENTER := Vector2(320, 150)
@@ -20,6 +20,7 @@ var finishing := false
 
 func _ready() -> void:
 	DreamTheme.set_family(FloorGenerator.Family.PROFOND)
+	$UI/Hint.text = "%s : continuer   |   %s : passer" % [Controls.name_of("interact"), Controls.name_of("pause")]
 	# Coupure des lignes calculee sur le texte entier : il ne se reorganise pas en s'ecrivant.
 	text_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 	if GameState.cutscene_id == "intro":
@@ -33,12 +34,10 @@ func _process(delta: float) -> void:
 	shown += delta * TYPE_SPEED
 	text_label.visible_characters = int(shown)
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if not (event is InputEventKey) or not event.pressed or event.echo:
-		return
-	if event.physical_keycode == KEY_ESCAPE:
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("pause"):
 		finish()
-	elif event.physical_keycode in [Controls.INTERACT, Controls.ATTACK, KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
+	elif event.is_action_pressed("interact") or event.is_action_pressed("attack") or event.is_action_pressed("ui_accept"):
 		if shown < text_label.text.length():
 			shown = text_label.text.length()  # premier appui : affiche tout le texte
 		else:

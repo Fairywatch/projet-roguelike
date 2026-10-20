@@ -171,7 +171,7 @@ func _physics_process(delta: float) -> void:
 			move_velocity = facing * move_speed  # on sort du dash en courant, sans a-coup
 		velocity = facing * DASH_SPEED
 	else:
-		if Input.is_physical_key_pressed(Controls.DASH) and dash_cooldown_timer <= 0.0:
+		if Input.is_action_pressed("dash") and dash_cooldown_timer <= 0.0:
 			_start_dash()
 		var target := input_vector * move_speed * (CAFE_SPEED_MULT if speed_boost_timer > 0.0 else 1.0)
 		move_velocity = move_velocity.move_toward(target, (ACCELERATION if target != Vector2.ZERO else FRICTION) * delta)
@@ -192,14 +192,12 @@ func apply_slow(duration: float, factor: float) -> void:
 	slow_timer = maxf(slow_timer, duration)
 	slow_factor = factor
 
-func _unhandled_key_input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if dead:
 		return
-	if not (event is InputEventKey) or not event.pressed or event.echo:
-		return
-	if event.physical_keycode == Controls.ATTACK:
+	if event.is_action_pressed("attack"):
 		_try_attack()
-	elif event.physical_keycode == Controls.ACTIVE:
+	elif event.is_action_pressed("active"):
 		_use_active_item()
 
 func _start_dash() -> void:

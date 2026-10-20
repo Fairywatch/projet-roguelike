@@ -47,7 +47,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 
 ## 4. Combat
 
-- **Temps réel**, inspiration directe *Hadès* : dash avec i-frames, attaque en arc, objet actif. Touches : ZQSD (ou flèches) pour se déplacer, J attaque, K dash, L objet actif, E interagir, Tab passifs.
+- **Temps réel**, inspiration directe *Hadès* : dash avec i-frames, attaque en arc, objet actif. Touches : ZQSD (ou flèches) pour se déplacer, J attaque, K dash, L objet actif, E interagir, Tab passifs. **Manette** : stick gauche ou croix, X attaque, B dash, Y objet actif, A interagir, Select passifs, Start menu. Toutes les touches se changent dans Paramètres > Touches.
 - Arène séparée de la map d'exploration, habillée avec les tuiles du type d'étage.
 - **Rencontres** : 2 à 4 ennemis (un de plus tous les 4 étages). Les **boss combattent seuls**.
 - Les mobs ont des patterns d'attaque **télégraphiés** clairement (lisibilité avant tout) : la difficulté augmente leurs PV, leur vitesse et leur cadence, **jamais la durée des télégraphes**.

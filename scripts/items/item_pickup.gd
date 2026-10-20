@@ -56,14 +56,12 @@ func _refresh() -> void:
 	glow.color = Items.rarity_color(item_id)
 	var rarity_name: String = Items.RARITY_NAMES[item["rarity"]]
 	if player_near:
-		label.text = "E : prendre %s (%s)\n%s" % [item["name"], rarity_name, item["desc"]]
+		label.text = "%s : prendre %s (%s)\n%s" % [Controls.name_of("interact"), item["name"], rarity_name, item["desc"]]
 	else:
 		label.text = item["name"]
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if not player_near or not (event is InputEventKey) or not event.pressed or event.echo:
-		return
-	if event.physical_keycode != Controls.INTERACT:
+func _unhandled_input(event: InputEvent) -> void:
+	if not player_near or not event.is_action_pressed("interact"):
 		return
 	get_viewport().set_input_as_handled()
 	var taken_id := item_id

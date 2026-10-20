@@ -29,6 +29,7 @@ func _ready() -> void:
 	player.item_message.connect(_on_item_message)
 	hearts.position = Vector2(10, 8)
 	# Rappel des touches au debut du combat, puis il s'efface pour ne pas cacher les ennemis.
+	$UI/Instructions.text = Controls.help(["move", "attack", "dash", "active", "interact", "inventory"])
 	$UI/Instructions.create_tween().tween_property($UI/Instructions, "modulate:a", 0.0, 1.0).set_delay(4.0)
 	$UI.add_child(hearts)
 	$UI.add_child(InventoryPanel.new())
@@ -102,7 +103,7 @@ func _process(_delta: float) -> void:
 	var dash_ratio: float = 1.0 - clampf(player.dash_cooldown_timer / player.dash_cooldown_effective, 0.0, 1.0)
 	dash_bar_fill.size.x = dash_bar_fill.get_parent().size.x * dash_ratio
 
-	active_label.text = "%s\nPassifs : %d  (Tab)" % [GameState.active_summary(), GameState.passive_count()]
+	active_label.text = "%s\nPassifs : %d  (%s)" % [GameState.active_summary(), GameState.passive_count(), Controls.name_of("inventory")]
 
 	if combat_over:
 		return
@@ -116,15 +117,14 @@ func _process(_delta: float) -> void:
 	else:
 		mob_label.text = "Ennemis : %d" % alive.size()
 
+# Apres la victoire, Entree / Start (ou A loin de l'objet) : continuer. Pendant le combat, menu = fuir.
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
+	if waiting_to_leave and (event.is_action_pressed("ui_accept") or event.is_action_pressed("pause")):
+		_leave()
+	elif event.is_action_pressed("pause") and not combat_over:
 		GameState.end_combat()
 		GameState.guardian_fight = false
 		SceneTransition.change_scene(GameState.return_map_path)
-
-func _unhandled_key_input(event: InputEvent) -> void:
-	if waiting_to_leave and event is InputEventKey and event.pressed and event.physical_keycode in [KEY_ENTER, KEY_KP_ENTER]:
-		_leave()
 
 # duration <= 0 : le message reste affiche.
 func _on_item_message(text: String, duration: float = 2.0) -> void:
@@ -155,7 +155,7 @@ func _on_victory() -> void:
 	await get_tree().create_timer(1.4).timeout
 	_leave()
 
-# Le butin tombe au sol : on choisit de le prendre (E) ou de garder son objet (Entree).
+# Le butin tombe au sol : on choisit de le prendre (interagir) ou de garder son objet (continuer).
 func _drop_item() -> void:
 	var pickup := ItemPickup.new()
 	var bonus := GameState.BOSS_LOOT_BONUS if is_boss_fight else (ELITE_LOOT_BONUS if had_elite else 0.0)
@@ -164,7 +164,8 @@ func _drop_item() -> void:
 	add_child(pickup)
 	pickup.taken.connect(_on_pickup_taken)
 	waiting_to_leave = true
-	_on_item_message("E : prendre l'objet   |   Entree : continuer", 0.0)
+	var go_on := "Start" if Controls.using_gamepad else "Entree"
+	_on_item_message("%s : prendre l'objet   |   %s : continuer" % [Controls.name_of("interact"), go_on], 0.0)
 
 func _on_pickup_taken(_pickup: ItemPickup, taken_id: String, old_id: String) -> void:
 	Sound.play("pickup")

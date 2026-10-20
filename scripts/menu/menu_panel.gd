@@ -23,8 +23,8 @@ func rebuild() -> void:
 	await get_tree().process_frame
 	reset_size()
 	position = (get_viewport_rect().size - size) / 2.0
-	for child in box.get_children():
-		if child is BaseButton and not child.disabled and not child.is_queued_for_deletion():
+	for child in box.find_children("*", "BaseButton", true, false):  # aussi dans les grilles
+		if not child.disabled and not child.is_queued_for_deletion():
 			child.grab_focus()
 			break
 
@@ -54,8 +54,8 @@ func add_button(text: String, action: Callable) -> Button:
 	box.add_child(button)
 	return button
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		get_viewport().set_input_as_handled()
 		close()
 

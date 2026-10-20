@@ -5,6 +5,7 @@ extends MenuPanel
 
 func build() -> void:
 	add_title("Parametres")
+	add_button("Touches (clavier et manette)", _open_controls)
 	for option in Settings.SLIDERS:
 		_add_slider(option)
 	for option in Settings.LABELS:
@@ -18,6 +19,16 @@ func build() -> void:
 		if option == "fullscreen" and Engine.is_embedded_in_editor():
 			check.disabled = true
 			add_note("Indisponible quand le jeu tourne dans l'onglet Jeu de l'editeur")
+
+func _open_controls() -> void:
+	var panel := ControlsPanel.new()
+	visible = false
+	set_process_unhandled_input(false)  # Echap ne doit fermer que le panneau des touches
+	panel.closed.connect(func():
+		visible = true
+		set_process_unhandled_input(true)
+		rebuild())
+	get_parent().add_child(panel)
 
 func _add_slider(option: String) -> void:
 	var row := HBoxContainer.new()

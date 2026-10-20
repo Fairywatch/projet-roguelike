@@ -1,7 +1,7 @@
 class_name InventoryPanel
 extends Label
 
-# Liste des objets passifs, affichee tant que Tab est enfoncee (carte et arene).
+# Liste des objets passifs, affichee tant que la touche des passifs est enfoncee (carte et arene).
 
 func _ready() -> void:
 	var style := StyleBoxFlat.new()
@@ -18,7 +18,7 @@ func _ready() -> void:
 	visible = false
 
 func _process(_delta: float) -> void:
-	var show_panel := Input.is_physical_key_pressed(KEY_TAB)
+	var show_panel := Input.is_action_pressed("inventory")
 	if show_panel and not visible:
 		text = "Objets passifs (%d)\n\n%s" % [GameState.passive_count(), GameState.passives_detail()]
 		reset_size()

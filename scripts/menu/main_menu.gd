@@ -48,6 +48,7 @@ func _ready() -> void:
 	_add_button("Parametres", _open_panel.bind(SettingsPanel))
 	_add_button("Quitter", get_tree().quit)
 	buttons.get_child(0).grab_focus()
+	$UI/Hint.text = Controls.help(["move", "attack", "dash", "active", "interact", "inventory", "pause"])
 
 func _add_button(label: String, action: Callable) -> void:
 	var button := Button.new()

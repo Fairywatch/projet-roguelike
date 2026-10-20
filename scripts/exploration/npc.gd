@@ -1,7 +1,7 @@
 class_name DreamNpc
 extends Area2D
 
-# Habitant du reve qui propose une petite quete (E pour lui parler). L'etat de la quete vit
+# Habitant du reve qui propose une petite quete (interagir pour lui parler). L'etat de la quete vit
 # dans current_floor()["quest"] : il survit aux combats et a la sauvegarde.
 #   chasse      : gagner N combats sur l'etage apres avoir accepte ;
 #   objet_perdu : rapporter l'objet pose a l'autre bout de l'etage.
@@ -76,10 +76,8 @@ func refresh() -> void:
 		_:
 			marker.text = ""
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if not player_near or not (event is InputEventKey) or not event.pressed or event.echo:
-		return
-	if event.physical_keycode != Controls.INTERACT:
+func _unhandled_input(event: InputEvent) -> void:
+	if not player_near or not event.is_action_pressed("interact"):
 		return
 	get_viewport().set_input_as_handled()
 	talk()

@@ -83,10 +83,15 @@ var start_bag: Array = []  # passifs achetes hors partie, donnes au debut de la 
 var shop_offers: Array = []  # ids proposes par la boutique ; "" = deja vendu
 var best_times: Dictionary = {}  # id de tour -> meilleur temps en mode speedrun (secondes)
 
+# Les aides a l'ecran montrent les boutons de l'appareil utilise en dernier (clavier ou manette).
+func _input(event: InputEvent) -> void:
+	Controls.note_device(event)
+
 func _ready() -> void:
 	# Interpolation physique (project.godot) seulement pour le joueur et sa camera (leurs scenes la
 	# reactivent) : fluide sur les ecrans 120/144 Hz, sans risquer de trainees quand un mob se teleporte.
 	get_tree().root.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	Controls.setup()
 	Settings.load_settings()
 	load_run()
 	_load_fields(meta_path, META_FIELDS)
@@ -404,7 +409,7 @@ func active_summary() -> String:
 	if not has_active_item():
 		return "Aucun objet actif"
 	var charges := "o".repeat(active_charges) + "-".repeat(ACTIVE_MAX_CHARGES - active_charges)
-	return "L : %s  %s" % [Items.find_active(active_item_id)["name"], charges]
+	return "%s : %s  %s" % [Controls.name_of("active"), Items.find_active(active_item_id)["name"], charges]
 
 func passive_count() -> int:
 	var total := 0
