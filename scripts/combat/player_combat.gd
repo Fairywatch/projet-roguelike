@@ -8,6 +8,9 @@ signal attacked(at: Vector2)
 
 const SPEED := 200.0
 const DASH_SPEED := 600.0
+# Prise de vitesse et freinage tres courts (~0,08 s et ~0,1 s) : du liant sans perdre en reactivite.
+const ACCELERATION := 2600.0
+const FRICTION := 2000.0
 const DASH_DURATION := 0.18
 const DASH_COOLDOWN_BASE := 0.6
 const ATTACK_DURATION := 0.15
@@ -52,6 +55,7 @@ var speed_boost_timer := 0.0
 var external_velocity := Vector2.ZERO
 var slow_timer := 0.0
 var slow_factor := 1.0
+var move_velocity := Vector2.ZERO  # deplacement voulu, lisse (hors dash et forces externes)
 var last_attack_time := -100.0  # secondes (Time), pour les ennemis qui reagissent a nos attaques
 
 # Statistiques calculees a partir des passifs (apply_items).
@@ -164,11 +168,14 @@ func _physics_process(delta: float) -> void:
 			dashing = false
 			invincible = hurt_timer > 0.0
 			modulate.a = 1.0
+			move_velocity = facing * move_speed  # on sort du dash en courant, sans a-coup
 		velocity = facing * DASH_SPEED
 	else:
 		if Input.is_physical_key_pressed(Controls.DASH) and dash_cooldown_timer <= 0.0:
 			_start_dash()
-		velocity = input_vector * move_speed * (CAFE_SPEED_MULT if speed_boost_timer > 0.0 else 1.0)
+		var target := input_vector * move_speed * (CAFE_SPEED_MULT if speed_boost_timer > 0.0 else 1.0)
+		move_velocity = move_velocity.move_toward(target, (ACCELERATION if target != Vector2.ZERO else FRICTION) * delta)
+		velocity = move_velocity
 		if slow_timer > 0.0:
 			velocity *= slow_factor
 		velocity += external_velocity  # le dash permet d'echapper a une attraction

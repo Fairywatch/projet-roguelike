@@ -63,6 +63,7 @@ func _ready() -> void:
 		player.global_position = GameState.return_position
 	else:
 		player.global_position = _cell_to_world(floor_data.spawn_cell)
+	player.reset_physics_interpolation()  # sinon il glisse depuis (0, 0) a la premiere image
 
 	if GameState.pending_ground_item != "":
 		floor_meta["ground_items"].append({"id": GameState.pending_ground_item, "pos": player.global_position + Vector2(70, 0)})

@@ -21,6 +21,7 @@ animations = [{
 }]
 
 [node name="PlayerCombat" type="CharacterBody2D"]
+physics_interpolation_mode = 1
 motion_mode = 1
 script = ExtResource("1")
 

@@ -84,6 +84,9 @@ var shop_offers: Array = []  # ids proposes par la boutique ; "" = deja vendu
 var best_times: Dictionary = {}  # id de tour -> meilleur temps en mode speedrun (secondes)
 
 func _ready() -> void:
+	# Interpolation physique (project.godot) seulement pour le joueur et sa camera (leurs scenes la
+	# reactivent) : fluide sur les ecrans 120/144 Hz, sans risquer de trainees quand un mob se teleporte.
+	get_tree().root.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	Settings.load_settings()
 	load_run()
 	_load_fields(meta_path, META_FIELDS)

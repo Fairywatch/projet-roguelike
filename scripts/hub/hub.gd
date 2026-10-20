@@ -45,6 +45,7 @@ func _ready() -> void:
 	_add_spot("clock", CLOCK_POS, ClockTexture, "Horloge du reveil", Color(1, 0.8, 0.4))
 	_add_spot("book", BOOK_POS, BookTexture, "Livre des songes", Color(0.7, 0.75, 1))
 	player.global_position = SPAWN
+	player.reset_physics_interpolation()
 	player.add_child(DreamTheme.make_light(Color(1, 0.95, 0.85), 220.0, 0.8))
 	player.add_child(DreamTheme.make_ambient_particles(FloorGenerator.Family.PARADOXAL))
 	var camera: Camera2D = player.get_node("Camera2D")

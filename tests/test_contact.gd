@@ -19,6 +19,7 @@ func _initialize() -> void:
 	p.invincible = true
 	for key in [KEY_A, KEY_D, KEY_S]:  # Q, D, S : on s'eloigne du mob (pose un peu au-dessus)
 		p.global_position = Vector2(450, 300)
+		p.move_velocity = Vector2.ZERO  # pas d'elan du tour precedent
 		var mob: BaseMob = Bestiary.make("lundi/mouton")
 		arena.add_child(mob)
 		mob.global_position = p.global_position + Vector2(0, -10)
