@@ -8,7 +8,7 @@
 | Mardi | **Produit** (règle : `scripts/exploration/rules/mardi.gd`) |
 | Mercredi | **Produit** (règle : `scripts/exploration/rules/mercredi.gd`) |
 | Jeudi | **Produit** (règle : `scripts/exploration/rules/jeudi.gd`) |
-| Vendredi | Fiche |
+| Vendredi | **Produit** (règle : `scripts/exploration/rules/vendredi.gd`) |
 | Samedi | Fiche |
 | Dimanche | Fiche |
 

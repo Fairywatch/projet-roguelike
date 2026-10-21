@@ -91,5 +91,17 @@ func _initialize() -> void:
 		await process_frame
 	assert(current_scene.rule.barriers.is_empty())
 
+	# Vendredi : le joueur ralentit avec le temps, le the le soulage ; en combat le dash est plus lent.
+	map = await _open_map(gs, 4)
+	map.rule._process(60.0)
+	assert(is_equal_approx(map.player.speed_factor, 0.7))
+	map.rule.on_decor("etoile")
+	map.rule._process(0.0)
+	assert(map.player.speed_factor == 1.0)
+	change_scene_to_file("res://scenes/combat/CombatArena.tscn")
+	for i in 10:
+		await process_frame
+	assert(is_equal_approx(current_scene.player.dash_cooldown_effective, current_scene.player.DASH_COOLDOWN_BASE * 1.25))
+
 	print("test_places OK")
 	quit()

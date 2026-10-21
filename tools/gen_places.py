@@ -849,7 +849,167 @@ def jeudi():
     save(from_ascii(*JEUDI_PORTE), "decor", "jeudi", "porte_close.png")
 
 
-NIGHTS = {"lundi": lundi, "mardi": mardi, "mercredi": mercredi, "jeudi": jeudi}
+# --- Vendredi (Epuisement) ------------------------------------------------------------------
+
+def tape_floor(variant, rng):
+    """Parquet clair de demenagement, rubans adhesifs colles en croix."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        row = y // 8
+        off = (row * 23) % TILE
+        tone = (row * 0.41) % 1
+        for x in range(TILE):
+            c = mix((204, 170, 120), (222, 190, 140), tone * 0.7 + (math.sin(x * 0.5 + row) + 1) * 0.1)
+            if y % 8 == 0 or (x + off) % TILE == 0:
+                c = (160, 124, 84)
+            px[x, y] = c + (255,)
+    if variant in (1, 2):  # ruban adhesif
+        horizontal = variant == 1
+        start = rng.randrange(14, 30)
+        for i in range(TILE):
+            for w in range(5):
+                x, y = (i, start + w) if horizontal else (start + w, i)
+                px[x, y] = ((186, 140, 80) if w in (0, 4) else (210, 168, 104)) + (255,)
+    elif variant == 3:  # croix de ruban
+        for i in range(8, 42):
+            for w in range(4):
+                px[i, i + w - 2] = (210, 168, 104, 255)
+                px[i, 49 - i + w - 2] = (210, 168, 104, 255)
+    return img
+
+
+def box_wall_top(rng):
+    img = Image.new("RGBA", (TILE, TILE), (52, 38, 30, 255))
+    px = img.load()
+    for _ in range(3):
+        x0, y0, w, h = rng.randrange(0, 36), rng.randrange(0, 36), rng.randrange(10, 16), rng.randrange(8, 14)
+        for y in range(y0, min(TILE, y0 + h)):
+            for x in range(x0, min(TILE, x0 + w)):
+                px[x, y] = (66, 50, 38, 255)
+    return img
+
+
+def box_wall_face(rng):
+    """Cartons empiles : kraft, ruban au milieu, bords plus sombres."""
+    img = Image.new("RGBA", (TILE, TILE), (120, 90, 60, 255))
+    px = img.load()
+    boxes = [(0, 0, 26, 18), (26, 0, 24, 18), (0, 18, 18, 16), (18, 18, 32, 16), (0, 34, 30, 16), (30, 34, 20, 16)]
+    for bx, by, w, h in boxes:
+        tone = rng.random()
+        for y in range(by, by + h):
+            for x in range(bx, bx + w):
+                c = mix((190, 148, 96), (206, 164, 110), tone)
+                if x in (bx, bx + w - 1) or y in (by, by + h - 1):
+                    c = (120, 88, 56)
+                elif abs(x - (bx + w // 2)) <= 1:
+                    c = (220, 190, 130)  # ruban
+                px[x, y] = shade(c, 1.0 - 0.25 * (y / TILE)) + (255,)
+    return img
+
+
+def mine_floor(variant, rng):
+    """Roche sombre et graviers ; rails ou eclats de plomb."""
+    img = blank()
+    px = img.load()
+    for y in range(0, TILE, 2):
+        for x in range(0, TILE, 2):
+            c = mix((50, 54, 66), (66, 70, 84), rng.random())
+            for dy in (0, 1):
+                for dx in (0, 1):
+                    px[x + dx, y + dy] = c + (255,)
+    if variant == 1:  # bout de rails abandonne
+        for x in range(TILE):
+            for y in (18, 31):
+                px[x, y] = (150, 150, 160, 255)
+                px[x, y + 1] = (80, 80, 92, 255)
+            if x % 8 < 3:
+                for y in range(16, 35):
+                    if y not in (18, 19, 31, 32):
+                        px[x, y] = (96, 70, 50, 255)
+    elif variant == 2:  # eclats de plomb
+        for _ in range(6):
+            x, y = rng.randrange(2, 47), rng.randrange(2, 47)
+            px[x, y] = (150, 156, 170, 255)
+    return img
+
+
+def mine_wall_top(rng):
+    img = Image.new("RGBA", (TILE, TILE), (16, 18, 26, 255))
+    px = img.load()
+    blobs(px, rng, 2, (8, 14), (28, 30, 40), 0.6)
+    return img
+
+
+def timber_wall_face(rng):
+    """Roche etayee : poutres de bois verticales et linteau."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        k = 1.0 - 0.3 * (y / TILE)
+        for x in range(TILE):
+            c = mix((58, 60, 72), (76, 78, 90), rng.random())
+            if x % 25 in range(2, 7) or y < 6:
+                c = (120, 86, 56) if (x + y) % 7 else (96, 68, 44)
+            px[x, y] = shade(c, k) + (255,)
+    return img
+
+
+VENDREDI_PARADOXAL = {
+    "etoile": ([  # tasse de the chaud
+        "..s.s....", "...s.s...", "WWWWWWW..", "WttttWWWW", "WttttW..W", "WttttWWWW", "WWWWWWW..", "ggggggggg",
+    ], {"W": rgba(250, 246, 236), "t": rgba(230, 170, 80), "s": rgba(220, 220, 230), "g": rgba(180, 150, 110)}),
+    "lune": ([  # phare de poche (lampe torche)
+        "......YY", "....YYWY", "kkkkGGWY", "kkkkGGWY", "....YYWY", "......YY",
+    ], {"k": rgba(70, 60, 60), "G": rgba(150, 150, 160), "Y": rgba(255, 240, 180), "W": rgba(255, 255, 230)}),
+    "horloge": ([  # banc
+        "BBBBBBBBBBBB", "bbbbbbbbbbbb", "............", "BBBBBBBBBBBB", "bbbbbbbbbbbb", ".k........k.", ".k........k.",
+    ], {"B": rgba(200, 150, 90), "b": rgba(150, 104, 60), "k": rgba(70, 60, 60)}),
+    "bulle": ([  # bulle de soupir
+        "...CCCC...", "..CWccccC.", ".CWcccccC.", "CccccccccC", "CcckkkcccC", "CccccccccC", ".CccccccC.", "..CCCCCC..",
+    ], {"C": rgba(230, 210, 180), "W": rgba(255, 255, 255), "c": (230, 210, 180, 70), "k": (140, 110, 80, 200)}),
+    "carton": ([
+        "TTTTTTTTTT", "TBBBBYBBBT", "TBBBBYBBBT", "TBBBBYBBBT", "TBBBBYBBBT", "TTTTTTTTTT",
+    ], {"T": rgba(140, 100, 60), "B": rgba(200, 156, 100), "Y": rgba(226, 196, 136)}),
+    "sac": ([
+        "...kk...", "..BBBB..", ".BBBBBB.", "BBbBBBBB", "BBBBBbBB", "BBBBBBBB", ".BBBBBB.",
+    ], {"k": rgba(90, 70, 50), "B": rgba(170, 150, 120), "b": rgba(130, 110, 86)}),
+    "pile": ([
+        "...TTTTT", "...TBBBT", "..TTTTTT.", "..TBBBBT.", ".TTTTTTT.", ".TBBBBBT.", "TTTTTTTT.", "TBBBBBBT.",
+    ], {"T": rgba(140, 100, 60), "B": rgba(200, 156, 100)}),
+}
+
+VENDREDI_PROFOND = {
+    "bougie": ([  # lampe de mineur
+        "..kkk..", ".kYYYk.", ".kYWYk.", ".kYYYk.", "..kkk..", "...k...", "..kkk..",
+    ], {"k": rgba(70, 70, 80), "Y": rgba(255, 200, 110), "W": rgba(255, 240, 200)}),
+    "champignon": ([  # sac qui bouge
+        ".....kk...", "...TTTTT..", "..TTTTTTT.", ".TTtTTTTTT", "TTTTTTtTTT", "TTTTTTTTTT", ".TTTTTTTT.",
+    ], {"k": rgba(40, 60, 60), "T": rgba(90, 170, 160), "t": rgba(60, 120, 116)}),
+    "cristal": ([  # filon
+        "RRRRRRRRR", "RRVRRRRRR", "RVVVRRVRR", "RRVRRVVVR", "RRRRRRVRR", "RRRRRRRRR",
+    ], {"R": rgba(70, 72, 86), "V": rgba(190, 150, 255)}),
+    "wagonnet": ([
+        "kkkkkkkkkk", "kGGGGGGGGk", "kGrGrGrGGk", ".kGGGGGGk.", ".kkkkkkkk.", "..O....O..",
+    ], {"k": rgba(50, 50, 60), "G": rgba(110, 100, 96), "r": rgba(150, 150, 160), "O": rgba(40, 40, 46)}),
+    "pioche": ([
+        "GGGGGGG.", "G..W...G", "...W....", "...W....", "...W....", "...W....",
+    ], {"G": rgba(160, 160, 176), "W": rgba(130, 96, 60)}),
+    "gravats": ([
+        "...rr.....", ".rRRr..r..", "rRRRRrrRr.", "rrrrrrrrrr",
+    ], {"R": rgba(96, 98, 110), "r": rgba(66, 68, 80)}),
+}
+
+
+def vendredi():
+    rng = random.Random(505)
+    tiles("vendredi", "paradoxal", [tape_floor(v, rng) for v in range(4)], box_wall_top(rng), box_wall_face(rng))
+    tiles("vendredi", "profond", [mine_floor(v, rng) for v in range(4)], mine_wall_top(rng), timber_wall_face(rng))
+    decors("vendredi", "paradoxal", VENDREDI_PARADOXAL)
+    decors("vendredi", "profond", VENDREDI_PROFOND)
+
+
+NIGHTS = {"lundi": lundi, "mardi": mardi, "mercredi": mercredi, "jeudi": jeudi, "vendredi": vendredi}
 
 if __name__ == "__main__":
     for night in sys.argv[1:] or NIGHTS:

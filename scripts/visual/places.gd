@@ -87,6 +87,22 @@ const LIST := {
 			"labels": {"champignon": "La cocotte siffle... et explose de colère !", "cristal": "Le coffre-fort cède"},
 		},
 	},
+	"vendredi": {
+		"paradoxal": {
+			"name": "la Montagne de cartons",
+			"ambient": Color(1.0, 0.86, 0.7),
+			"particles": [Color(1, 0.85, 0.6), Color(0.9, 0.8, 0.7)],
+			"decor": {"carton": ["push"], "sac": [], "pile": []},
+			"labels": {"etoile": "Tasse de thé chaud", "lune": "Le phare de poche", "horloge": "Le banc"},
+		},
+		"profond": {
+			"name": "les Mines de plomb",
+			"ambient": Color(0.4, 0.42, 0.52),
+			"particles": [Color(0.6, 0.62, 0.7, 0.5)],
+			"decor": {"wagonnet": ["push"], "pioche": [], "gravats": []},
+			"labels": {"champignon": "Le sac se met à bouger tout seul !", "cristal": "Le filon s'effrite"},
+		},
+	},
 }
 
 static func kind(family: int) -> String:
