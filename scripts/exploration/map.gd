@@ -34,18 +34,23 @@ var guide_timer := 0.0
 var encounter_pause := 0.0
 var guide_arrow := Polygon2D.new()
 var hearts := Hearts.new()
+var night := ""
+var rule: Node  # regle d'etage de la nuit (scripts/exploration/rules/), si elle en a une
+var family := 0
 
 func _ready() -> void:
 	var floor_meta := GameState.current_floor()
+	night = GameState.tower()["id"]
 	DreamTheme.set_family(floor_meta["family"])
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = floor_meta["seed"]
 	var size_ratio := float(abs(GameState.floor_index)) / (GameState.floor_count() - 1)
 	var floor_data := FloorGenerator.generate(floor_meta["family"], floor_meta["intensity"], rng, size_ratio)
+	family = floor_meta["family"]
 
 	_build_walls(floor_data)
-	background.setup(floor_data.floor_cells, floor_data.size, floor_meta["family"], floor_meta["intensity"], floor_meta["seed"])
+	background.setup(floor_data.floor_cells, floor_data.size, floor_meta["family"], floor_meta["intensity"], floor_meta["seed"], night)
 	_spawn_floor_exit(floor_data)
 	_spawn_chests(floor_data)
 	_spawn_npc(floor_data, floor_meta)
@@ -58,6 +63,7 @@ func _ready() -> void:
 	$UI.add_child(hearts)
 	$UI.add_child(InventoryPanel.new())
 	$UI.add_child(SpeedrunTimer.new())
+	_start_rule(floor_meta)
 
 	if GameState.return_position != Vector2.ZERO:
 		player.global_position = GameState.return_position
@@ -83,6 +89,18 @@ func _ready() -> void:
 	if GameState.pending_message != "":
 		_show_message(GameState.pending_message)
 		GameState.pending_message = ""
+
+# La regle monte au fil de la nuit : 0 au premier etage, 1 au dernier (et dans les profondeurs).
+func _start_rule(floor_meta: Dictionary) -> void:
+	rule = Places.rule(night)
+	if rule == null:
+		return
+	rule.map = self
+	rule.strength = clampf(absf(GameState.floor_index) / maxf(1.0, GameState.floor_count() - 1.0), 0.0, 1.0)
+	add_child(rule)
+	if not floor_meta.get("rule_seen", false) and GameState.pending_message == "":
+		floor_meta["rule_seen"] = true
+		GameState.pending_message = rule.INTRO
 
 func _notification(what: int) -> void:
 	# GameState sauvegarde avant nous (il est plus haut dans l'arbre) : on resauvegarde avec la position.
@@ -229,7 +247,7 @@ func _spawn_decor(floor_data, floor_seed: int) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = floor_seed + 1
 	var reserved: Array = [floor_data.spawn_cell, floor_data.exit_cell, floor_data.secondary_cell, floor_data.npc_cell, floor_data.quest_cell] + floor_data.chest_cells
-	var names: Array = DreamTheme.DECOR[floor_data.family]
+	var names: Array = DreamTheme.decor_names(floor_data.family, night)
 	var used: Array = GameState.current_floor()["used_decor"]
 	var cells: Array = floor_data.floor_cells.keys()
 	cells.sort()
@@ -246,6 +264,7 @@ func _spawn_decor(floor_data, floor_seed: int) -> void:
 		decor.decor_name = decor_name
 		decor.decor_id = decor_id
 		decor.family = floor_data.family
+		decor.night = night
 		decor.lit = decor_id in used
 		decor.position = _cell_to_world(cell) + offset
 		decor.touched.connect(_on_decor_touched)
@@ -257,14 +276,14 @@ func _on_decor_touched(decor: DreamDecor) -> void:
 			if not GameState.heal(1):  # comme un coeur dans Isaac : on la laisse si on est en forme
 				_show_message("Tu es déjà en pleine forme.")
 				return
-			_consume(decor, Color(1, 0.9, 0.5), "Étoile filante : +1 PV !")
+			_consume(decor, Color(1, 0.9, 0.5), "%s : +1 PV !" % Places.label(night, family, "etoile"))
 			_refresh_hud()
 		"lune":
 			guide_timer = GUIDE_DURATION
-			_consume(decor, Color(1, 0.95, 0.8), "La lune t'indique le chemin du portail...")
+			_consume(decor, Color(1, 0.95, 0.8), "%s t'indique le chemin du portail..." % Places.label(night, family, "lune"))
 		"horloge":
 			encounter_pause = CLOCK_PAUSE
-			_consume(decor, Color(1, 0.8, 0.4), "Le temps se fige : aucune rencontre pendant %d s." % CLOCK_PAUSE)
+			_consume(decor, Color(1, 0.8, 0.4), "%s : le temps se fige, aucune rencontre pendant %d s." % [Places.label(night, family, "horloge"), CLOCK_PAUSE])
 		"bulle":
 			_consume(decor, Color(0.7, 0.9, 1), "")
 		"bougie":
@@ -296,10 +315,10 @@ func _mark_used(decor: DreamDecor) -> void:
 func _setup_ambience(floor_data) -> void:
 	Sound.music("reve" if floor_data.family == FloorGenerator.Family.PARADOXAL else "profond")
 	var ambient := CanvasModulate.new()
-	ambient.color = DreamTheme.ambient_color(floor_data.family, floor_data.intensity)
+	ambient.color = DreamTheme.ambient_color(floor_data.family, floor_data.intensity, night)
 	add_child(ambient)
 	player.add_child(DreamTheme.make_light(Color(1, 0.95, 0.85), PLAYER_LIGHT_RADIUS, 0.9))
-	player.add_child(DreamTheme.make_ambient_particles(floor_data.family))
+	player.add_child(DreamTheme.make_ambient_particles(floor_data.family, night))
 	var camera: Camera2D = player.get_node("Camera2D")
 	camera.limit_right = floor_data.size.x * FloorGenerator.CELL_SIZE
 	camera.limit_bottom = floor_data.size.y * FloorGenerator.CELL_SIZE

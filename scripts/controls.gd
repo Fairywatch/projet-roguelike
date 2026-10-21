@@ -33,7 +33,7 @@ const PAD_NAMES := {
 }
 # Libelles courts des aides a l'ecran.
 const HELP := {
-	"move": "deplacement", "attack": "attaque", "dash": "dash", "active": "objet actif",
+	"move": "déplacement", "attack": "attaque", "dash": "dash", "active": "objet actif",
 	"interact": "interagir", "inventory": "passifs", "pause": "menu",
 }
 

@@ -37,12 +37,13 @@ func _ready() -> void:
 
 	var floor_meta := GameState.current_floor()
 	DreamTheme.set_family(floor_meta["family"])
-	background.setup(floor_meta["family"], floor_meta["intensity"])
+	var night: String = GameState.tower()["id"]
+	background.setup(floor_meta["family"], floor_meta["intensity"], night)
 	var ambient := CanvasModulate.new()
 	# Arene moins sombre que l'exploration : les telegraphes doivent rester lisibles.
-	ambient.color = DreamTheme.ambient_color(floor_meta["family"], floor_meta["intensity"]).lerp(Color.WHITE, 0.7)
+	ambient.color = DreamTheme.ambient_color(floor_meta["family"], floor_meta["intensity"], night).lerp(Color.WHITE, 0.7)
 	add_child(ambient)
-	player.add_child(DreamTheme.make_ambient_particles(floor_meta["family"]))
+	player.add_child(DreamTheme.make_ambient_particles(floor_meta["family"], night))
 
 	GameState.start_combat()
 	var mobs := _pick_mobs()

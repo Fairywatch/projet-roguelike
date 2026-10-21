@@ -11,19 +11,20 @@ const PUSH_DISTANCE := 24.0
 var decor_name := ""
 var decor_id := 0
 var family := 0
+var night := ""  # lieu propre a la nuit (Places), sinon decor d'origine
 var lit := false
 var sprite := Sprite2D.new()
 var light: PointLight2D
 
 func _ready() -> void:
-	sprite.texture = DreamTheme.decor_texture(family, decor_name)
+	sprite.texture = DreamTheme.decor_texture(family, decor_name, night)
 	sprite.scale = Vector2(2, 2)
 	add_child(sprite)
 	var shape := CollisionShape2D.new()
 	shape.shape = CircleShape2D.new()
 	shape.shape.radius = RADIUS
 	add_child(shape)
-	if decor_name in DreamTheme.FLOATING:
+	if decor_name in DreamTheme.FLOATING or Places.has_flag(night, family, decor_name, "float"):
 		var tween := sprite.create_tween().set_loops().set_trans(Tween.TRANS_SINE)
 		var period := randf_range(1.2, 2.2)
 		tween.tween_property(sprite, "position:y", -6.0, period)
@@ -39,7 +40,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group("player") or body.frozen:
 		return
 	_wobble()
-	if decor_name in ["cube", "nuage"]:
+	if decor_name in ["cube", "nuage"] or Places.has_flag(night, family, decor_name, "push"):
 		var away := (global_position - body.global_position).normalized() * PUSH_DISTANCE
 		create_tween().tween_property(self, "position", position + away.round(), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	elif decor_name == "arbre_mort":

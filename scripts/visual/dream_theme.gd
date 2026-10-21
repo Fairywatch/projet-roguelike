@@ -2,7 +2,8 @@ class_name DreamTheme
 extends RefCounted
 
 # Habillage visuel d'un etage : tuiles (tools/gen_pixel_art.py), decors, lumiere, particules.
-# Intensite (reve/cauchemar) = palette ; famille (paradoxal/profond) = ambiance et decors.
+# Intensite (reve/cauchemar) = palette ; famille (paradoxal/profond) = ambiance et decors ;
+# nuit = lieu propre (Places), sinon l'habillage d'origine (hub, menu, nuits pas encore faites).
 
 const TILE_DIR := "res://assets/sprites/tiles/"
 const DECOR_DIR := "res://assets/sprites/decor/"
@@ -27,10 +28,10 @@ static var light_scale := 1.0
 static func set_family(family: int) -> void:
 	light_scale = PARADOXAL_LIGHT_SCALE if family == FloorGenerator.Family.PARADOXAL else 1.0
 
-static func theme_name(family: int, intensity: int) -> String:
+static func theme_name(family: int, intensity: int, night: String = "") -> String:
 	var mood := "reve" if intensity == FloorGenerator.Intensity.REVE else "cauchemar"
-	var kind := "paradoxal" if family == FloorGenerator.Family.PARADOXAL else "profond"
-	return "%s_%s" % [mood, kind]
+	var theme := "%s_%s" % [mood, Places.kind(family)]
+	return "%s/%s" % [night, theme] if Places.has_place(night) else theme
 
 static func floor_textures(theme: String) -> Array:
 	var textures := []
@@ -41,13 +42,19 @@ static func floor_textures(theme: String) -> Array:
 static func wall_texture(theme: String, part: String) -> Texture2D:
 	return load("%s%s_wall_%s.png" % [TILE_DIR, theme, part])
 
-static func decor_texture(family: int, decor_name: String) -> Texture2D:
-	var folder := "paradoxal" if family == FloorGenerator.Family.PARADOXAL else "profond"
+static func decor_names(family: int, night: String = "") -> Array:
+	return Places.decor_names(night, family) if Places.has_place(night) else DECOR[family]
+
+static func decor_texture(family: int, decor_name: String, night: String = "") -> Texture2D:
+	var folder := Places.kind(family)
+	if Places.has_place(night):
+		folder = "%s/%s" % [night, folder]
 	return load("%s%s/%s.png" % [DECOR_DIR, folder, decor_name])
 
-# Sommeil profond : penombre oppressante ; paradoxal : lumiere vive.
-static func ambient_color(family: int, intensity: int) -> Color:
+# Sommeil profond : penombre oppressante ; paradoxal : lumiere vive. Chaque lieu a la sienne.
+static func ambient_color(family: int, intensity: int, night: String = "") -> Color:
 	var c := Color(0.95, 0.95, 1.0) if family == FloorGenerator.Family.PARADOXAL else Color(0.42, 0.42, 0.55)
+	c = Places.place(night, family).get("ambient", c)
 	if intensity == FloorGenerator.Intensity.CAUCHEMAR:
 		c = c * Color(1.0, 0.8, 0.85)
 	return c
@@ -75,7 +82,7 @@ static func make_light(color: Color, radius: float, energy: float = 1.0) -> Poin
 	return light
 
 # Particules d'ambiance qui suivent le joueur : etincelles colorees (paradoxal) ou cendres lentes (profond).
-static func make_ambient_particles(family: int) -> CPUParticles2D:
+static func make_ambient_particles(family: int, night: String = "") -> CPUParticles2D:
 	var p := CPUParticles2D.new()
 	p.emitting = Settings.enabled("ambient_particles")
 	p.local_coords = false
@@ -106,4 +113,10 @@ static func make_ambient_particles(family: int) -> CPUParticles2D:
 		p.initial_velocity_min = 4.0
 		p.initial_velocity_max = 10.0
 		p.color = Color(0.6, 0.6, 0.7, 0.6)
+	var colors: Array = Places.place(night, family).get("particles", [])
+	if not colors.is_empty():
+		var ramp := Gradient.new()
+		ramp.colors = PackedColorArray(colors + colors)  # un Gradient veut au moins deux couleurs
+		p.color_initial_ramp = ramp
+		p.color = Color.WHITE
 	return p

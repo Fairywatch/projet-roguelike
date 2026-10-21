@@ -88,7 +88,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 | Samedi | Solitude | 11 | +75 % | 80 % | 80 |
 | Dimanche | Angoisse | 12 | +90 % | 95 % | 120 |
 
-- Pour l'instant, les nuits ne diffèrent que par ces paramètres et leur tour dans le hub : leur contenu propre reste à concevoir.
+- Chaque nuit a son **bestiaire** (`docs/bestiaire.md`) et ses **deux lieux** (un pour le sommeil paradoxal, un pour le profond), avec tuiles, décors, lumière et une **règle d'étage** qui monte au fil de la nuit (`docs/nuits.md`, produits nuit par nuit).
 - **Mode Normal** : la boucle telle que décrite dans ce document.
 - **Mode Speedrun** : un **chrono unique pour toute la nuit** (75 s par étage), qui ne tourne qu'en jeu. À zéro, **le réveil sonne** : la nuit s'arrête, sans récompense. La mort garde sa règle habituelle, et le chrono continue de tourner. Meilleur temps enregistré par nuit.
 

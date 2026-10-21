@@ -10,8 +10,8 @@ var cell_seed := 0
 # Surface a couvrir (l'arene par defaut ; le hub et le menu en demandent une autre).
 var area := Vector2(ARENA_WIDTH, ARENA_HEIGHT)
 
-func setup(family: int, intensity: int) -> void:
-	floor_textures = DreamTheme.floor_textures(DreamTheme.theme_name(family, intensity))
+func setup(family: int, intensity: int, night: String = "") -> void:
+	floor_textures = DreamTheme.floor_textures(DreamTheme.theme_name(family, intensity, night))
 	cell_seed = randi()
 	queue_redraw()
 

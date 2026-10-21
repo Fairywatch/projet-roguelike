@@ -12,10 +12,10 @@ var wall_top: Texture2D
 var wall_face: Texture2D
 var cell_seed := 0
 
-func setup(cells: Dictionary, size: Vector2i, family: int, intensity: int, seed_value: int) -> void:
+func setup(cells: Dictionary, size: Vector2i, family: int, intensity: int, seed_value: int, night: String = "") -> void:
 	floor_cells = cells
 	grid_size = size
-	var theme := DreamTheme.theme_name(family, intensity)
+	var theme := DreamTheme.theme_name(family, intensity, night)
 	floor_textures = DreamTheme.floor_textures(theme)
 	wall_top = DreamTheme.wall_texture(theme, "top")
 	wall_face = DreamTheme.wall_texture(theme, "face")
