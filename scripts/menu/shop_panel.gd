@@ -13,7 +13,7 @@ func build() -> void:
 			continue
 		var item := Items.find(id)
 		var price := GameState.shop_price(id)
-		var button := add_button("%s  (%s)  -  %d pièces" % [item["name"], Items.RARITY_NAMES[item["rarity"]], price], _buy.bind(slot))
+		var button := add_button("[%s]  %s  (%s)  -  %d pièces" % [Items.tier(item["id"]), item["name"], Items.RARITY_NAMES[item["rarity"]], price], _buy.bind(slot))
 		button.add_theme_color_override("font_color", Items.rarity_color(id))
 		button.disabled = GameState.coins < price
 		add_note(item["desc"])

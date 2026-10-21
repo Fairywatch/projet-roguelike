@@ -82,7 +82,7 @@ func _on_attack_begin() -> void:
 	if phase == 2 and cycle % 3 == 0:
 		for side in [-1, 1]:
 			var copy := spawn_ally("mercredi/autre_soi", position + dash_dir.orthogonal() * side * 90.0, {"future": true})
-			get_tree().create_timer(2.2).timeout.connect(func(): if is_instance_valid(copy) and copy.is_inside_tree(): copy._die())
+			get_tree().create_timer(2.2, false).timeout.connect(func(): if is_instance_valid(copy) and copy.is_inside_tree(): copy._die())
 	if cycle % 4 == 0:
 		var gap := randf() * TAU
 		Hazards.ring(global_position, 170.0, [[gap, 0.6], [gap + PI, 0.6]], SLASH_COLOR)

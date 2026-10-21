@@ -168,7 +168,7 @@ func _chase_velocity(to_player: Vector2) -> Vector2:
 func pause(seconds: float) -> bool:
 	if not is_inside_tree():
 		return false
-	await get_tree().create_timer(seconds).timeout
+	await get_tree().create_timer(seconds, false).timeout
 	return is_inside_tree() and state != State.DEAD
 
 # Attend puis renvoie false si l'action a ete interrompue entre-temps (mort, etourdissement).

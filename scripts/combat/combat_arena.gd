@@ -135,7 +135,7 @@ func _on_item_message(text: String, duration: float = 2.0) -> void:
 	item_message_label.visible = true
 	if duration <= 0.0:
 		return
-	await get_tree().create_timer(duration).timeout
+	await get_tree().create_timer(duration, false).timeout
 	if serial == message_serial:
 		item_message_label.visible = false
 
@@ -153,7 +153,7 @@ func _on_victory() -> void:
 	if is_boss_fight or had_elite or randf() < DROP_CHANCE + GameState.mod("drop_chance"):
 		_drop_item()
 		return
-	await get_tree().create_timer(1.4).timeout
+	await get_tree().create_timer(1.4, false).timeout
 	_leave()
 
 # Le butin tombe au sol : on choisit de le prendre (interagir) ou de garder son objet (continuer).
@@ -175,7 +175,7 @@ func _on_pickup_taken(_pickup: ItemPickup, taken_id: String, old_id: String) -> 
 	if old_id != "":
 		text += " (tu laisses %s)" % Items.find(old_id)["name"]
 	_on_item_message(text, 0.0)
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(1.0, false).timeout
 	_leave()
 
 func _leave() -> void:
@@ -189,6 +189,6 @@ func _leave() -> void:
 func _on_player_died() -> void:
 	combat_over = true
 	mob_label.text = "Vaincu..."
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(1.0, false).timeout
 	GameState.apply_combat_death()
 	SceneTransition.change_scene(GameState.MENU_PATH)

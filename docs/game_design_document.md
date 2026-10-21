@@ -109,6 +109,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - **Objets passifs** : cumulables sans limite (y compris plusieurs exemplaires du même). Chacun est décrit par des effets chiffrés (PV, dégâts, vitesse, critiques, esquive, vol de vie, bouclier, ennemis affaiblis...) : ajouter un passif ne demande pas de code.
 - **Objet actif** : un seul à la fois, utilisé avec E en combat, 3 charges. Un combat gagné rend une charge. Prendre un nouvel actif laisse l'ancien au sol, avec ses charges restantes.
 - Le butin tombe **au sol** : le joueur choisit de le prendre (E) ou non. Les objets au sol restent sur l'étage.
+- **Chaque objet a son icône et un tier** (S, A, B, C : sa puissance ; la rareté, elle, dit s'il est fréquent). Le ramasser affiche une **bannière façon Isaac** (icône, tier, nom, effet). L'**inventaire** (Tab / Select) met le jeu en pause et liste l'objet actif et les passifs avec leur fiche.
 - Sources de loot :
   - Combats aléatoires (45 % de chance) et boss (garanti).
   - Coffres : deux par étage, dont un **scellé** qui s'ouvre après 2 combats gagnés sur l'étage.

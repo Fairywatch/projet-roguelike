@@ -433,30 +433,6 @@ def remove_cols(src, cols):
     return img
 
 
-ITEM_ICONS = {
-    "item_passive": ([
-        "..CCCC..",
-        ".CWWCCc.",
-        "CWWCCCcc",
-        "CWCCCCcc",
-        "CCCCCCcc",
-        "CCCCCccc",
-        ".cCCccc.",
-        "..cccc..",
-    ], {"C": rgba(150, 200, 255), "W": rgba(255, 255, 255), "c": rgba(80, 110, 200)}),
-    "item_active": ([
-        "...YY...",
-        "..YWWY..",
-        "YYYWWYYY",
-        ".YYWWYY.",
-        "..YYYY..",
-        ".YYyyYY.",
-        "YYy..yYY",
-        "Y......Y",
-    ], {"Y": rgba(255, 210, 90), "W": rgba(255, 250, 220), "y": rgba(200, 140, 50)}),
-}
-
-
 # Habitants du reve qui donnent des quetes (voir scripts/exploration/npc.gd).
 NPCS = {
     "hibou": ([
@@ -1802,8 +1778,6 @@ def main():
     save(from_ascii(CHEST_OPEN_ROWS, CHEST_PALETTE), "props", "chest_open.png")
     save(from_ascii(CHEST_ROWS, CHEST_SEALED_PALETTE), "props", "chest_sealed.png")
     save(portal(), "props", "portal.png")
-    for name, (rows, pal) in ITEM_ICONS.items():
-        save(from_ascii(rows, pal), "props", f"{name}.png")
 
     for name, (rows, pal) in NPCS.items():
         save(from_ascii(rows, pal), "npcs", f"{name}.png")

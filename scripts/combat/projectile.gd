@@ -10,7 +10,7 @@ var harmless := false # faux projectile (leurre) : ne blesse pas
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
-	get_tree().create_timer(lifetime).timeout.connect(queue_free)
+	get_tree().create_timer(lifetime, false).timeout.connect(queue_free)
 
 func _physics_process(delta: float) -> void:
 	if curve != 0.0:

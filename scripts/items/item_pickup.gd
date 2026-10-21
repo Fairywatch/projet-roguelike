@@ -6,8 +6,6 @@ extends Area2D
 
 signal taken(pickup: ItemPickup, taken_id: String, old_id: String)
 
-const ICON_PASSIVE := preload("res://assets/sprites/props/item_passive.png")
-const ICON_ACTIVE := preload("res://assets/sprites/props/item_active.png")
 const RADIUS := 36.0
 
 var item_id := ""
@@ -48,15 +46,13 @@ func _set_near(body: Node2D, near: bool) -> void:
 
 func _refresh() -> void:
 	var item := Items.find(item_id)
-	icon.texture = ICON_ACTIVE if Items.is_active(item_id) else ICON_PASSIVE
-	# Chaque passif a sa teinte, pour les reconnaitre d'un coup d'oeil.
-	icon.modulate = Color.WHITE if Items.is_active(item_id) else Color.from_hsv(float(hash(item_id) % 360) / 360.0, 0.45, 1.0)
+	icon.texture = Items.icon(item_id)
 	# Couleur du nom et de la lueur selon la rarete (commun, rare, legendaire).
 	label.add_theme_color_override("font_color", Items.rarity_color(item_id))
 	glow.color = Items.rarity_color(item_id)
 	var rarity_name: String = Items.RARITY_NAMES[item["rarity"]]
 	if player_near:
-		label.text = "%s : prendre %s (%s)\n%s" % [Controls.name_of("interact"), item["name"], rarity_name, item["desc"]]
+		label.text = "%s : prendre %s  [%s]  (%s)\n%s" % [Controls.name_of("interact"), item["name"], Items.tier(item_id), rarity_name, item["desc"]]
 	else:
 		label.text = item["name"]
 

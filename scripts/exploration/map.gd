@@ -125,7 +125,7 @@ func _show_message(text: String) -> void:
 	message_label.text = text
 	message_label.visible = true
 	_refresh_hud()
-	await get_tree().create_timer(MESSAGE_DURATION).timeout
+	await get_tree().create_timer(MESSAGE_DURATION, false).timeout
 	if serial == message_serial:
 		message_label.visible = false
 

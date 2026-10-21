@@ -224,7 +224,7 @@ func _try_attack() -> void:
 	last_attack_time = Time.get_ticks_msec() / 1000.0
 	attacked.emit(attack_hitbox.global_position)
 	attack_shape.disabled = false
-	await get_tree().create_timer(ATTACK_DURATION).timeout
+	await get_tree().create_timer(ATTACK_DURATION, false).timeout
 	attack_shape.disabled = true
 
 func _use_active_item() -> void:
@@ -261,7 +261,7 @@ func _use_sept_ans_de_malheur() -> void:
 	decoy.global_position = global_position
 	invincible = true
 	Fx.flash(sprite, Color(0.8, 0.9, 1.0), 0.4)
-	await get_tree().create_timer(decoy.DURATION).timeout
+	await get_tree().create_timer(decoy.DURATION, false).timeout
 	if not dashing and hurt_timer <= 0.0:
 		invincible = false
 

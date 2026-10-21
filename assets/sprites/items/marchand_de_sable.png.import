@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://chj5e6qpykcx2"
-path="res://.godot/imported/item_passive.png-274856014af75d0435ffb15dec604217.ctex"
+uid="uid://b2lqjc623xhic"
+path="res://.godot/imported/marchand_de_sable.png-71f8ac473d8448dd631a668cdd2f14eb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/props/item_passive.png"
-dest_files=["res://.godot/imported/item_passive.png-274856014af75d0435ffb15dec604217.ctex"]
+source_file="res://assets/sprites/items/marchand_de_sable.png"
+dest_files=["res://.godot/imported/marchand_de_sable.png-71f8ac473d8448dd631a668cdd2f14eb.ctex"]
 
 [params]
 

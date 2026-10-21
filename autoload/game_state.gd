@@ -372,6 +372,7 @@ func has_active_item() -> bool:
 # l'ancien actif ("" si aucun) pour le laisser au sol.
 # charges : celles de l'actif ramasse (-1 = objet neuf, charges pleines).
 func take_item(id: String, charges: int = -1) -> String:
+	ItemBanner.show_item(id)  # banniere facon Isaac : nom, tier et effet de l'objet
 	if not Items.is_active(id):
 		add_passive_item(id)
 		return ""
