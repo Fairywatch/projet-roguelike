@@ -686,7 +686,170 @@ def mercredi():
     decors("mercredi", "profond", MERCREDI_PROFOND)
 
 
-NIGHTS = {"lundi": lundi, "mardi": mardi, "mercredi": mercredi}
+# --- Jeudi (Frustration) --------------------------------------------------------------------
+
+def queue_floor(variant, rng):
+    """Dalles de beton gris ; bande jaune de file d'attente, fleche peinte ou ticket."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        for x in range(TILE):
+            c = mix((132, 134, 140), (150, 152, 158), rng.random() * 0.5 + 0.25)
+            if x % 25 == 0 or y % 25 == 0:
+                c = (98, 100, 108)
+            px[x, y] = c + (255,)
+    if variant == 1:  # bande jaune et noire
+        for y in range(21, 29):
+            for x in range(TILE):
+                px[x, y] = ((236, 190, 40) if ((x + y) // 4) % 2 == 0 else (40, 38, 40)) + (255,)
+    elif variant == 2:  # fleche peinte
+        for i in range(12):
+            px[19 + i, 25] = (230, 230, 236, 255)
+        for i in range(5):
+            px[30 - i, 25 - i] = px[30 - i, 25 + i] = (230, 230, 236, 255)
+    elif variant == 3:  # ticket tombe
+        for y in range(30, 36):
+            for x in range(14, 24):
+                px[x, y] = (236, 220, 170, 255) if y not in (30, 35) else (200, 160, 80, 255)
+        px[18, 32] = px[19, 32] = (200, 70, 60, 255)
+    return img
+
+
+def steel_wall_top(rng):
+    img = Image.new("RGBA", (TILE, TILE), (34, 36, 42, 255))
+    px = img.load()
+    for y in range(4, TILE, 12):
+        for x in range(4, TILE, 12):
+            px[x, y] = (70, 72, 80, 255)
+    return img
+
+
+def counter_wall_face(rng):
+    """Guichet ferme : rideau metallique baisse sous un bandeau orange."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        k = 1.0 - 0.25 * (y / TILE)
+        for x in range(TILE):
+            if y < 8:
+                c = (232, 130, 40) if 1 < y < 7 else (90, 50, 20)
+            elif x % 25 in (0, 24):
+                c = (70, 72, 80)
+            else:
+                c = (150, 154, 162) if (y // 3) % 2 == 0 else (120, 124, 132)
+            px[x, y] = shade(c, k) + (255,)
+    for x in (10, 11, 35, 36):  # cadenas
+        px[x, 44] = px[x, 45] = (220, 180, 60, 255)
+    return img
+
+
+def furnace_floor(variant, rng):
+    """Plaques de metal sombre rivetees ; fissures de braise."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        for x in range(TILE):
+            c = mix((58, 44, 44), (70, 54, 52), rng.random() * 0.4 + 0.3)
+            if x % 25 == 0 or y % 25 == 0:
+                c = (30, 22, 22)
+            elif x % 25 == 1 or y % 25 == 1:
+                c = shade(c, 1.2)
+            px[x, y] = c + (255,)
+    for cx in (4, 21, 29, 46):
+        for cy in (4, 21, 29, 46):
+            px[cx, cy] = (120, 100, 96, 255)
+    if variant == 1:  # longue fissure rougeoyante en travers de la plaque
+        x, y = rng.randrange(4, 12), rng.randrange(4, 12)
+        while x < 46 and y < 46:
+            px[x, y] = (255, 130, 50, 255)
+            px[x, y + 1] = (150, 50, 30, 255)
+            x += 1
+            y += rng.choice([0, 1, 1])
+    return img
+
+
+def ember_wall_top(rng):
+    img = Image.new("RGBA", (TILE, TILE), (18, 10, 10, 255))
+    px = img.load()
+    for _ in range(5):
+        px[rng.randrange(TILE), rng.randrange(TILE)] = (200, 80, 30, 255)
+    return img
+
+
+def hot_brick_wall_face(rng):
+    """Briques chauffees au rouge, plus brulantes vers le bas."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        row = y // 10
+        off = 8 if row % 2 else 0
+        heat = y / TILE
+        for x in range(TILE):
+            c = mix((110, 36, 30), (220, 90, 40), heat * 0.7 + rng.random() * 0.15)
+            if y % 10 == 0 or (x + off) % 16 == 0:
+                c = (40, 16, 14)
+            px[x, y] = c + (255,)
+    return img
+
+
+JEUDI_PARADOXAL = {
+    "etoile": ([  # ticket gagnant dore
+        "YYYYYYYYYYY", "Y.y.y.y.y.Y", "YWWWWWWWWWY", "YWkkWWWkkWY", "YWWWWWWWWWY", "Y.y.y.y.y.Y", "YYYYYYYYYYY",
+    ], {"Y": rgba(255, 210, 70), "y": rgba(200, 150, 40), "W": rgba(255, 246, 200), "k": rgba(200, 80, 60)}),
+    "lune": ([  # panneau SORTIE vert
+        "GGGGGGGGGG", "GWGWWGWWWG", "GWWGWWGWWG", "GWGWWGWWWG", "GGGGGGGGGG", "....kk....", "....kk....",
+    ], {"G": rgba(60, 190, 100), "W": rgba(230, 255, 230), "k": rgba(70, 70, 80)}),
+    "horloge": ([  # feu rouge
+        ".kkkk.", "kRRRRk", "kRRRRk", "kkkkkk", "kyyyyk", "kkkkkk", "kggggk", ".kkkk.", "..kk..", "..kk..",
+    ], {"k": rgba(40, 40, 46), "R": rgba(255, 70, 60), "y": rgba(110, 90, 40), "g": rgba(40, 80, 50)}),
+    "bulle": ([  # bulle de colere
+        "...CCCC...", "..CccccC..", ".CccrcrcC.", "CcccrrccC.", "CccrcrcccC", "CccccccccC", ".CccccccC.", "..CCCCCC..",
+    ], {"C": rgba(255, 120, 110), "c": (255, 120, 110, 70), "r": (200, 30, 40, 230)}),
+    "barriere": ([
+        ".k........k.", "kRRRRRRRRRRk", ".k........k.", ".k........k.", ".k........k.", "kkk......kkk",
+    ], {"k": rgba(70, 72, 80), "R": rgba(220, 60, 60)}),
+    "tampon": ([
+        "...HHH...", "...HHH...", "..HHHHH..", ".RRRRRRR.", ".RWRWRWR.", ".RRRRRRR.",
+    ], {"H": rgba(130, 90, 60), "R": rgba(200, 50, 50), "W": rgba(255, 220, 220)}),
+    "tickets": ([
+        "..WWWW....", ".WWkWWW...", "WWWWWWWWW.", ".WWWkWWWWW", "..WWWWWW..",
+    ], {"W": rgba(236, 220, 170), "k": rgba(200, 80, 60)}),
+}
+
+JEUDI_PROFOND = {
+    "bougie": ([  # tas de braises
+        "....Y.....", "...YOY..Y.", "..YOROY.YO", ".OORRROOOR", "kkRRkRRkkk", "kkkkkkkkkk",
+    ], {"Y": rgba(255, 220, 100), "O": rgba(255, 140, 40), "R": rgba(200, 50, 30), "k": rgba(50, 40, 40)}),
+    "champignon": ([  # cocotte qui siffle
+        "....C.....", "...CsC....", "..kkkkk...", ".kTTTTTk..", "kkkkkkkkkk", ".TTTTTTTT.", ".TTTTTTTT.", "..TTTTTT..",
+    ], {"C": rgba(200, 255, 250), "s": rgba(140, 240, 230), "k": rgba(40, 60, 64), "T": rgba(80, 190, 180)}),
+    "cristal": ([  # coffre-fort
+        "kkkkkkkkkk", "kSSSSSSSSk", "kSSWWWSSSk", "kSWSSSWSSk", "kSWSPSWSSk", "kSSWWWSSSk", "kSSSSSSSSk", "kkkkkkkkkk",
+    ], {"k": rgba(40, 40, 48), "S": rgba(110, 90, 130), "W": rgba(190, 170, 220), "P": rgba(230, 200, 255)}),
+    "tuyau": ([
+        "PPPPPPPPPP", "pPPPPPPPPp", "PPPPPPPPPP", "..PP..PP..", "..PP..PP..",
+    ], {"P": rgba(120, 104, 100), "p": rgba(160, 140, 130)}),
+    "chaudiere": ([
+        "..kk..", ".BBBB.", "BBBBBB", "BOOOOB", "BORROB", "BOOOOB", "BBBBBB", "kk..kk",
+    ], {"k": rgba(50, 40, 40), "B": rgba(90, 70, 66), "O": rgba(255, 140, 40), "R": rgba(255, 220, 120)}),
+}
+# Barriere des « Portes closes » (regle du jeudi), une par case bloquee.
+JEUDI_PORTE = ([
+    "kRRRRRRRRRRRRRRk", "kWWWWWWWWWWWWWWk", "kRRRRRRRRRRRRRRk", "k..k...k...k...k", "k..k...k...k...k",
+    "kRRRRRRRRRRRRRRk", "kWWWWWWWWWWWWWWk", "kRRRRRRRRRRRRRRk", "k..k...k...k...k", "kk.kk.kkk.kk.kkk",
+], {"k": rgba(60, 62, 70), "R": rgba(220, 60, 50), "W": rgba(250, 240, 230)})
+
+
+def jeudi():
+    rng = random.Random(404)
+    tiles("jeudi", "paradoxal", [queue_floor(v, rng) for v in range(4)], steel_wall_top(rng), counter_wall_face(rng))
+    tiles("jeudi", "profond", [furnace_floor(v, rng) for v in range(4)], ember_wall_top(rng), hot_brick_wall_face(rng))
+    decors("jeudi", "paradoxal", JEUDI_PARADOXAL)
+    decors("jeudi", "profond", JEUDI_PROFOND)
+    save(from_ascii(*JEUDI_PORTE), "decor", "jeudi", "porte_close.png")
+
+
+NIGHTS = {"lundi": lundi, "mardi": mardi, "mercredi": mercredi, "jeudi": jeudi}
 
 if __name__ == "__main__":
     for night in sys.argv[1:] or NIGHTS:

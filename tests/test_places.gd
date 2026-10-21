@@ -77,5 +77,19 @@ func _initialize() -> void:
 		await process_frame
 	assert(current_scene.rule.decoys.size() == 2)
 
+	# Jeudi : trois barrieres au dernier etage, dont une sur le chemin du portail ; un combat gagne
+	# sur l'etage les ouvre toutes.
+	map = await _open_map(gs, 3)
+	await process_frame
+	var rule = map.rule
+	assert(rule.barriers.size() >= 2)
+	var path: Array = rule._shortest_path(rule.floor_data.spawn_cell, rule.floor_data.exit_cell)
+	assert(rule.barriers.any(func(c): return c in path))
+	gs.current_floor()["wins"] = 1
+	change_scene_to_file("res://scenes/exploration/Map.tscn")
+	for i in 12:
+		await process_frame
+	assert(current_scene.rule.barriers.is_empty())
+
 	print("test_places OK")
 	quit()

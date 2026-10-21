@@ -7,7 +7,7 @@
 | Lundi | **Produit** (`tools/gen_places.py`, `scripts/visual/places.gd`, `scripts/exploration/rules/lundi.gd`, testé par `tests/test_places.gd`) |
 | Mardi | **Produit** (règle : `scripts/exploration/rules/mardi.gd`) |
 | Mercredi | **Produit** (règle : `scripts/exploration/rules/mercredi.gd`) |
-| Jeudi | Fiche |
+| Jeudi | **Produit** (règle : `scripts/exploration/rules/jeudi.gd`) |
 | Vendredi | Fiche |
 | Samedi | Fiche |
 | Dimanche | Fiche |
