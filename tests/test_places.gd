@@ -63,5 +63,19 @@ func _initialize() -> void:
 	map.rule._process(0.0)
 	assert(map.rule.pressure == 0.0 and is_equal_approx(map.encounter_chance, base))
 
+	# Mercredi : trois leurres au dernier etage ; en prendre un ramene au depart et il ne revient pas.
+	map = await _open_map(gs, 2)
+	await process_frame
+	assert(map.rule.decoys.size() == 3)
+	var decoy: Area2D = map.rule.decoys[0]
+	map.player.global_position = decoy.global_position + Vector2(200, 0)
+	map.rule._on_decoy_entered(map.player, decoy)
+	assert(map.player.global_position == map._cell_to_world(map.rule.floor_data.spawn_cell))
+	assert(map.rule.decoys.size() == 2 and gs.current_floor()["used_decoys"].size() == 1)
+	change_scene_to_file("res://scenes/exploration/Map.tscn")
+	for i in 12:
+		await process_frame
+	assert(current_scene.rule.decoys.size() == 2)
+
 	print("test_places OK")
 	quit()

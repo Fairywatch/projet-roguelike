@@ -522,7 +522,171 @@ def mardi():
     decors("mardi", "profond", MARDI_PROFOND)
 
 
-NIGHTS = {"lundi": lundi, "mardi": mardi}
+# --- Mercredi (Doute) -----------------------------------------------------------------------
+
+def mirror_floor(variant, rng):
+    """Carrelage-miroir : damier argent et nacre, reflets en diagonale."""
+    img = blank()
+    px = img.load()
+    a, b, joint = (178, 198, 224), (214, 198, 226), (120, 130, 168)
+    for y in range(TILE):
+        for x in range(TILE):
+            c = a if ((x // 25) + (y // 25)) % 2 == 0 else b
+            c = mix(c, (255, 255, 255), max(0.0, 0.5 - abs(((x + y) % 25) - 6) / 6) * 0.6)  # reflet
+            c = shade(c, 1.0 - 0.12 * ((y % 25) / 25))
+            if x % 25 == 0 or y % 25 == 0:
+                c = joint
+            px[x, y] = c + (255,)
+    if variant == 1:  # un reflet de silhouette, a peine visible
+        for y in range(8, 40):
+            for x in range(18, 32):
+                d = math.hypot((x - 25) / 6, (y - 14) / 5) if y < 20 else abs(x - 25) / 7 + (y - 20) / 60
+                if d < 1:
+                    px[x, y] = shade(px[x, y][:3], 0.9) + (255,)
+    elif variant == 2:  # eclats irises
+        for _ in range(4):
+            x, y = rng.randrange(3, 47), rng.randrange(3, 47)
+            px[x, y] = rng.choice([(255, 200, 240), (200, 240, 255), (255, 255, 210)]) + (255,)
+    elif variant == 3:  # fissure dans le miroir
+        x, y = rng.randrange(10, 40), 2
+        while y < 48:
+            px[x, y] = (250, 250, 255, 255)
+            x = max(1, min(48, x + rng.choice([-1, 0, 1])))
+            y += 1
+    return img
+
+
+def mirror_wall_top(rng):
+    img = Image.new("RGBA", (TILE, TILE), (30, 34, 62, 255))
+    px = img.load()
+    for i in range(0, TILE, 10):
+        for k in range(6):
+            x, y = (i + k) % TILE, (i * 3 + k) % TILE
+            px[x, y] = (54, 60, 100, 255)
+    return img
+
+
+def glass_wall_face(rng):
+    """Parois de verre : panneaux bleutes encadres, reflets verticaux."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        k = 1.0 - 0.3 * (y / TILE)
+        for x in range(TILE):
+            lx = x % 25
+            c = mix((150, 190, 226), (200, 222, 244), 0.5 + 0.5 * math.sin(lx / 3.5))
+            if lx in (0, 24) or y in (0, 1):
+                c = (196, 200, 220)
+            elif lx in (5, 6) and y > 4:
+                c = (236, 244, 255)
+            px[x, y] = shade(c, k) + (255,)
+    return img
+
+
+def cobble_floor(variant, rng):
+    """Vieux paves gris-vert, joints sombres ; mousse, flaque ou pave fendu."""
+    img = Image.new("RGBA", (TILE, TILE), (40, 48, 44, 255))
+    px = img.load()
+    stones = []
+    for row in range(5):
+        x = -(row % 2) * 5
+        while x < TILE:
+            w = rng.randrange(8, 13)
+            stones.append((x, row * 10, w, 10))
+            x += w
+    for sx, sy, w, h in stones:
+        tone = rng.random()
+        for y in range(sy + 1, sy + h - 1):
+            for x in range(sx + 1, sx + w - 1):
+                cx = x % TILE
+                edge = min(x - sx, sx + w - 1 - x, y - sy, sy + h - 1 - y)
+                c = mix((94, 106, 100), (120, 130, 120), tone)
+                c = shade(c, 0.85 if edge <= 1 and y > sy + h / 2 else (1.1 if edge <= 1 else 1.0))
+                px[cx, y] = c + (255,)
+    if variant == 1:  # mousse entre les paves
+        for _ in range(10):
+            x, y = rng.randrange(TILE), rng.choice([0, 10, 20, 30, 40]) + rng.choice([0, 9])
+            px[x, min(y, TILE - 1)] = (70, 110, 70, 255)
+    elif variant == 2:  # flaque
+        blobs(px, rng, 1, (7, 10), (130, 150, 160), 0.6)
+    return img
+
+
+def fog_wall_top(rng):
+    img = Image.new("RGBA", (TILE, TILE), (24, 32, 30, 255))
+    px = img.load()
+    blobs(px, rng, 3, (10, 18), (54, 64, 62), 0.6)
+    return img
+
+
+def hedge_wall_face(rng):
+    """Haies taillees : feuillage dense, plus clair en haut."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        k = 1.05 - 0.4 * (y / TILE)
+        for x in range(TILE):
+            c = mix((36, 70, 46), (58, 98, 62), rng.random())
+            if rng.random() < 0.08:
+                c = (78, 120, 76)
+            px[x, y] = shade(c, k) + (255,)
+    for x in range(TILE):
+        px[x, 0] = (96, 140, 90, 255)
+    return img
+
+
+MERCREDI_PARADOXAL = {
+    "etoile": ([  # reflet d'etoile : une etoile et son double
+        "....Y....y..", "...YWY..yWy.", "YYYWWWyyyWWy", ".YYWWWYyWWy.", "..YY.YYyy.y.", ".YY...YY..y.",
+    ], {"Y": rgba(255, 220, 110), "W": rgba(255, 250, 220), "y": rgba(200, 220, 255)}),
+    "lune": ([  # fil d'Ariane : pelote de fil rouge
+        "....RRRR..", "..RRrRRrR.", ".RrRRRrRRR", ".RRRrRRRrR", ".RrRRRRrRR", "..RRrRRRR.", "....RRR...", "RRRR......",
+    ], {"R": rgba(230, 70, 80), "r": rgba(160, 40, 60)}),
+    "horloge": ([  # piece figee en plein vol
+        ".w..GGGG..w", "...GYYYYG..", "w.GYYgYYYG.", "..GYgYgYYG.", "..GYYgYYYG.", "w..GYYYYG..", "....GGGG..w",
+    ], {"G": rgba(200, 150, 60), "Y": rgba(255, 220, 110), "g": rgba(214, 160, 70), "w": rgba(220, 230, 255)}),
+    "bulle": ([  # bulle-point d'interrogation
+        "...CCCC...", "..CccccC..", ".CcckkccC.", "CccccckccC", "CcccckcccC", "CccccccccC", ".CccckccC.", "..CCCCCC..",
+    ], {"C": rgba(200, 220, 255), "c": (200, 220, 255, 70), "k": (90, 100, 160, 220)}),
+    "cadre": ([
+        "GGGGGGGGGG", "GgggggggGG", "Gg......gG", "Gg......gG", "Gg......gG", "Gg......gG", "GgggggggGG", "GGGGGGGGGG",
+    ], {"G": rgba(220, 190, 110), "g": rgba(170, 130, 70)}),
+    "statue": ([
+        "...SSS...", "..SSSSS..", "..SSSSS..", "...SSS...", "..SSSSS..", ".SSSSSSS.", ".SsSSSsS.", "..SSSSS..", ".BBBBBBB.",
+    ], {"S": rgba(220, 222, 232), "s": rgba(170, 172, 190), "B": rgba(140, 140, 160)}),
+    "escalier": ([
+        "......WW", "....WWWW", "....wwWW", "..WWWWWW", "..wwwwWW", "WWWWWWWW", "wwwwwwWW",
+    ], {"W": rgba(230, 226, 244), "w": rgba(170, 166, 200)}),
+}
+
+MERCREDI_PROFOND = {
+    "bougie": ([  # lampadaire allume
+        "..YYY..", ".YWWWY.", ".YYYYY.", "...k...", "...k...", "...k...", "...k...", "...k...", "..kkk..",
+    ], {"Y": rgba(255, 200, 120), "W": rgba(255, 240, 200), "k": rgba(50, 56, 60)}),
+    "champignon": ([  # masque pose au sol
+        "..WWWWWW..", ".WWWWWWWW.", "WWkkWWkkWW", "WWWWWWWWWW", ".WWWkkWWW.", "..WWWWWW..",
+    ], {"W": rgba(230, 240, 238), "k": rgba(40, 60, 64)}),
+    "cristal": ([  # valise abandonnee
+        "...kkkk...", "...k..k...", "BBBBBBBBBB", "BbBBBBBBbB", "BBBBYYBBBB", "BbBBBBBBbB", "BBBBBBBBBB",
+    ], {"k": rgba(60, 40, 30), "B": rgba(130, 90, 140), "b": rgba(100, 66, 110), "Y": rgba(230, 200, 120)}),
+    "panneau": ([
+        "WWWWWW...", "WWWWWWW..", "WWWWWW...", "..k......", "...WWWWWW", "..WWWWWWW", "...WWWWWW", "....k....", "....k....",
+    ], {"W": rgba(200, 186, 150), "k": rgba(90, 70, 50)}),
+    "banc": ([
+        "BBBBBBBBBBBB", "bbbbbbbbbbbb", "BBBBBBBBBBBB", ".k........k.", ".k........k.",
+    ], {"B": rgba(120, 96, 70), "b": rgba(90, 70, 50), "k": rgba(50, 50, 56)}),
+}
+
+
+def mercredi():
+    rng = random.Random(303)
+    tiles("mercredi", "paradoxal", [mirror_floor(v, rng) for v in range(4)], mirror_wall_top(rng), glass_wall_face(rng))
+    tiles("mercredi", "profond", [cobble_floor(v, rng) for v in range(4)], fog_wall_top(rng), hedge_wall_face(rng))
+    decors("mercredi", "paradoxal", MERCREDI_PARADOXAL)
+    decors("mercredi", "profond", MERCREDI_PROFOND)
+
+
+NIGHTS = {"lundi": lundi, "mardi": mardi, "mercredi": mercredi}
 
 if __name__ == "__main__":
     for night in sys.argv[1:] or NIGHTS:
