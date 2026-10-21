@@ -7,6 +7,7 @@ const FRICTION := 2200.0
 @onready var sprite: AnimatedSprite2D = $Sprite
 
 var frozen := false
+var speed_factor := 1.0  # ralenti par certaines regles d'etage
 var bob_time := 0.0
 
 func _ready() -> void:
@@ -32,6 +33,6 @@ func _physics_process(delta: float) -> void:
 	var input_vector := Controls.move_vector()
 	if abs(input_vector.x) > 0.1:
 		sprite.flip_h = input_vector.x < 0
-	var target := input_vector * SPEED
+	var target := input_vector * SPEED * speed_factor
 	velocity = velocity.move_toward(target, (ACCELERATION if target != Vector2.ZERO else FRICTION) * delta)
 	move_and_slide()

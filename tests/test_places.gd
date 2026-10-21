@@ -2,6 +2,18 @@
 # Lieux des nuits (scripts/visual/places.gd, docs/nuits.md) : tuiles, decors, regles d'etage.
 extends SceneTree
 
+# Ouvre un etage de la nuit `tower` (famille et intensite imposees), au dernier etage par defaut.
+func _open_map(gs, tower: int, family: int = FloorGenerator.Family.PARADOXAL, floor_index: int = -1) -> Node:
+	gs.new_run(tower)
+	gs.floor_index = gs.floor_count() - 1 if floor_index < 0 else floor_index
+	var f = gs.get_or_create_floor_data(gs.floor_index)
+	f["family"] = family
+	f["intensity"] = FloorGenerator.Intensity.REVE
+	change_scene_to_file("res://scenes/exploration/Map.tscn")
+	for i in 10:
+		await process_frame
+	return current_scene
+
 func _initialize() -> void:
 	var gs = root.get_node("GameState")
 	await process_frame
@@ -23,17 +35,9 @@ func _initialize() -> void:
 	assert(DreamTheme.theme_name(FloorGenerator.Family.PARADOXAL, FloorGenerator.Intensity.REVE, "") == "reve_paradoxal")
 
 	# Lundi : la carte prend la regle, plus forte en fin de nuit ; les paupieres se ferment puis se rouvrent.
-	gs.new_run(0)
-	gs.floor_index = gs.floor_count() - 1
-	var f = gs.get_or_create_floor_data(gs.floor_index)
-	f["family"] = FloorGenerator.Family.PARADOXAL
-	f["intensity"] = FloorGenerator.Intensity.REVE
-	change_scene_to_file("res://scenes/exploration/Map.tscn")
-	for i in 10:
-		await process_frame
-	var map = current_scene
+	var map = await _open_map(gs, 0)
 	assert(map.rule != null and is_equal_approx(map.rule.strength, 1.0))
-	assert(f["rule_seen"])
+	assert(gs.current_floor()["rule_seen"])
 	map.rule.blink()
 	await create_timer(map.rule.CLOSE_TIME + 0.1).timeout
 	assert(map.rule.upper.position.y == 0.0)
@@ -49,5 +53,15 @@ func _initialize() -> void:
 	map.generated_root.add_child(star)
 	map._on_decor_touched(star)
 	assert(map.message_label.text.begins_with("Veilleuse étoile") and gs.hp_lost == 0)
+	# Mardi : la pression monte avec le temps passe sur l'etage et accelere les rencontres ; le
+	# sablier la fait retomber.
+	map = await _open_map(gs, 1)
+	var base: float = map.rule.base_chance  # taux sans pression (elle a deja un peu monte)
+	map.rule._process(15.0)
+	assert(map.rule.pressure > 0.4 and map.encounter_chance > base * 2.0)
+	map.rule.on_decor("horloge")
+	map.rule._process(0.0)
+	assert(map.rule.pressure == 0.0 and is_equal_approx(map.encounter_chance, base))
+
 	print("test_places OK")
 	quit()

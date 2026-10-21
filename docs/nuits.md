@@ -5,7 +5,7 @@
 | Nuit | État |
 |---|---|
 | Lundi | **Produit** (`tools/gen_places.py`, `scripts/visual/places.gd`, `scripts/exploration/rules/lundi.gd`, testé par `tests/test_places.gd`) |
-| Mardi | Fiche |
+| Mardi | **Produit** (règle : `scripts/exploration/rules/mardi.gd`) |
 | Mercredi | Fiche |
 | Jeudi | Fiche |
 | Vendredi | Fiche |

@@ -13,6 +13,7 @@ const LID_COLOR := Color(0.03, 0.02, 0.06)
 
 var strength := 0.0  # 0 au premier etage, 1 au dernier
 var map: Node
+var floor_data  # FloorGenerator : cases, depart, portail
 var upper := ColorRect.new()
 var lower := ColorRect.new()
 var timer := 0.0

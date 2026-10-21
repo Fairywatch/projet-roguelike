@@ -36,6 +36,9 @@ var guide_arrow := Polygon2D.new()
 var hearts := Hearts.new()
 var night := ""
 var rule: Node  # regle d'etage de la nuit (scripts/exploration/rules/), si elle en a une
+# Reglages qu'une regle peut changer avant le placement de l'etage.
+var decor_factor := 1.0
+var npc_factor := 1.0
 var family := 0
 
 func _ready() -> void:
@@ -49,6 +52,10 @@ func _ready() -> void:
 	var floor_data := FloorGenerator.generate(floor_meta["family"], floor_meta["intensity"], rng, size_ratio)
 	family = floor_meta["family"]
 
+	encounter_chance = ENCOUNTER_CHANCE_PROFOND if floor_meta["family"] == FloorGenerator.Family.PROFOND else ENCOUNTER_CHANCE_PARADOXAL
+	encounter_chance *= maxf(0.2, 1.0 + GameState.mod("encounter_rate"))
+	_start_rule(floor_meta, floor_data)
+
 	_build_walls(floor_data)
 	background.setup(floor_data.floor_cells, floor_data.size, floor_meta["family"], floor_meta["intensity"], floor_meta["seed"], night)
 	_spawn_floor_exit(floor_data)
@@ -57,13 +64,10 @@ func _ready() -> void:
 	_spawn_decor(floor_data, floor_meta["seed"])
 	_setup_ambience(floor_data)
 	floor_label.text = "%s  -  Étage %d / %d\n%s" % [GameState.tower()["name"], GameState.floor_index, GameState.floor_count() - 1, FAMILY_NAMES[floor_meta["family"]]]
-	encounter_chance = ENCOUNTER_CHANCE_PROFOND if floor_meta["family"] == FloorGenerator.Family.PROFOND else ENCOUNTER_CHANCE_PARADOXAL
-	encounter_chance *= maxf(0.2, 1.0 + GameState.mod("encounter_rate"))
 	hearts.position = Vector2(10, 8)
 	$UI.add_child(hearts)
 	$UI.add_child(InventoryPanel.new())
 	$UI.add_child(SpeedrunTimer.new())
-	_start_rule(floor_meta)
 
 	if GameState.return_position != Vector2.ZERO:
 		player.global_position = GameState.return_position
@@ -91,12 +95,16 @@ func _ready() -> void:
 		GameState.pending_message = ""
 
 # La regle monte au fil de la nuit : 0 au premier etage, 1 au dernier (et dans les profondeurs).
-func _start_rule(floor_meta: Dictionary) -> void:
+static func rule_strength() -> float:
+	return clampf(absf(GameState.floor_index) / maxf(1.0, GameState.floor_count() - 1.0), 0.0, 1.0)
+
+func _start_rule(floor_meta: Dictionary, floor_data) -> void:
 	rule = Places.rule(night)
 	if rule == null:
 		return
 	rule.map = self
-	rule.strength = clampf(absf(GameState.floor_index) / maxf(1.0, GameState.floor_count() - 1.0), 0.0, 1.0)
+	rule.floor_data = floor_data
+	rule.strength = rule_strength()
 	add_child(rule)
 	if not floor_meta.get("rule_seen", false) and GameState.pending_message == "":
 		floor_meta["rule_seen"] = true
@@ -179,7 +187,7 @@ func _spawn_npc(floor_data, floor_meta: Dictionary) -> void:
 	if not floor_meta.has("quest"):
 		var rng := RandomNumberGenerator.new()
 		rng.seed = floor_meta["seed"] + 2
-		floor_meta["quest"] = DreamNpc.make_quest(rng) if rng.randf() < NPC_CHANCE[floor_data.family] else {}
+		floor_meta["quest"] = DreamNpc.make_quest(rng) if rng.randf() < NPC_CHANCE[floor_data.family] * npc_factor else {}
 	var quest: Dictionary = floor_meta["quest"]
 	if quest.is_empty():
 		return
@@ -253,7 +261,7 @@ func _spawn_decor(floor_data, floor_seed: int) -> void:
 	cells.sort()
 	var decor_id := 0
 	for cell in cells:
-		if cell in reserved or rng.randf() >= DECOR_CHANCE:
+		if cell in reserved or rng.randf() >= DECOR_CHANCE * decor_factor:
 			continue
 		var decor_name: String = names[rng.randi() % names.size()]
 		var offset := Vector2(rng.randf_range(-DECOR_OFFSET, DECOR_OFFSET), rng.randf_range(-DECOR_OFFSET, DECOR_OFFSET)).round()
@@ -290,24 +298,32 @@ func _on_decor_touched(decor: DreamDecor) -> void:
 			if not decor.lit:
 				_mark_used(decor)
 				decor.light_up()
+				_notify_rule(decor)
 		"champignon":
-			_consume(decor, Color(0.4, 1, 0.85), "Des spores t'endorment plus profondément...")
+			_consume(decor, Color(0.4, 1, 0.85), Places.label(night, family, "champignon"))
 			_trigger_encounter()
 		"cristal":
-			var text := "Le cristal se brise."
+			var opening := Places.label(night, family, "cristal")  # "Le cristal se brise"...
+			var text := opening + "."
 			if randf() < CRYSTAL_ITEM_CHANCE:
 				var entry := {"id": GameState.roll_item_id(), "pos": decor.position}
 				GameState.current_floor()["ground_items"].append(entry)
 				_spawn_pickup(entry)
-				text = "Le cristal se brise et libère %s !" % Items.find(entry["id"])["name"]
+				text = "%s et libère %s !" % [opening, Items.find(entry["id"])["name"]]
 			_consume(decor, Color(0.75, 0.55, 1), text)
 
 func _consume(decor: DreamDecor, color: Color, text: String) -> void:
+	_notify_rule(decor)
 	Sound.play("pop" if decor.decor_name == "bulle" else "sparkle")
 	_mark_used(decor)
 	decor.vanish(color)
 	if text != "":
 		_show_message(text)
+
+# Certaines regles reagissent aux decors (le the soulage le fardeau, la lumiere repousse la nuit).
+func _notify_rule(decor: DreamDecor) -> void:
+	if rule and rule.has_method("on_decor"):
+		rule.on_decor(decor.decor_name)
 
 func _mark_used(decor: DreamDecor) -> void:
 	GameState.current_floor()["used_decor"].append(decor.decor_id)

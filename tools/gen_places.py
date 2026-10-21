@@ -327,7 +327,202 @@ def lundi():
     decors("lundi", "profond", LUNDI_PROFOND)
 
 
-NIGHTS = {"lundi": lundi}
+# --- Mardi (Stress) -------------------------------------------------------------------------
+
+def disc(px, cx, cy, r, color, w=TILE, h=TILE):
+    for y in range(max(0, int(cy - r)), min(h, int(cy + r) + 1)):
+        for x in range(max(0, int(cx - r)), min(w, int(cx + r) + 1)):
+            if math.hypot(x - cx, y - cy) <= r:
+                px[x, y] = color + (255,)
+
+
+def gear(px, cx, cy, r, teeth, color, dark, w=TILE, h=TILE):
+    """Rouage : disque denté avec un moyeu, ombré en bas."""
+    for y in range(h):
+        for x in range(w):
+            d = math.hypot(x - cx, y - cy)
+            a = (math.atan2(y - cy, x - cx) / (2 * math.pi)) * teeth % 1
+            if d <= r * 0.78 or (d <= r and a < 0.5):
+                c = dark if d <= r * 0.25 or y > cy + r * 0.5 else color
+                if r * 0.25 < d <= r * 0.32:
+                    c = shade(color, 1.2)
+                px[x, y] = c + (255,)
+
+
+def gears_floor(variant, rng):
+    """Plaque de laiton brossé ; cadran d'horloge ou rouages graves selon la variante."""
+    brass, brass2 = (190, 146, 80), (206, 162, 94)
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        for x in range(TILE):
+            c = mix(brass, brass2, (math.sin(y * 1.7 + x * 0.05) + 1) / 2 * 0.6 + rng.random() * 0.2)
+            if x in (0, TILE - 1) or y in (0, TILE - 1):
+                c = shade(brass, 0.7)
+            px[x, y] = c + (255,)
+    for cx, cy in ((3, 3), (46, 3), (3, 46), (46, 46)):  # rivets
+        px[cx, cy] = (240, 210, 140, 255)
+        px[cx + 1, cy + 1] = (120, 84, 40, 255)
+    if variant == 0:  # cadran
+        disc(px, 25, 25, 20, (120, 84, 40))
+        disc(px, 25, 25, 18, (238, 228, 204))
+        for i in range(12):
+            a = i * math.pi / 6
+            r0 = 14 if i % 3 else 12
+            for r in range(r0, 17):
+                px[int(25 + r * math.cos(a)), int(25 + r * math.sin(a))] = (90, 70, 60, 255)
+        for r in range(10):  # aiguilles
+            px[25, 25 - r] = (60, 40, 40, 255)
+        for r in range(7):
+            px[25 + r, 25] = (60, 40, 40, 255)
+    elif variant == 1:  # rouages graves
+        gear(px, 16, 20, 11, 8, (176, 132, 70), (140, 100, 50))
+        gear(px, 34, 34, 9, 7, (176, 132, 70), (140, 100, 50))
+    elif variant == 3:  # un petit rouage dans un coin
+        gear(px, 38, 12, 7, 7, (176, 132, 70), (140, 100, 50))
+    return img
+
+
+def gears_wall_top(rng):
+    img = Image.new("RGBA", (TILE, TILE), (38, 28, 20, 255))
+    px = img.load()
+    gear(px, rng.randrange(10, 40), rng.randrange(10, 40), 12, 9, (52, 40, 28), (44, 33, 24))
+    return img
+
+
+def gears_wall_face(rng):
+    """Rouages imbriqués sur fond de laiton sombre."""
+    img = Image.new("RGBA", (TILE, TILE), (92, 66, 36, 255))
+    px = img.load()
+    gear(px, 12, 16, 13, 10, (214, 168, 90), (150, 108, 52))
+    gear(px, 37, 30, 14, 11, (196, 150, 78), (138, 98, 46))
+    gear(px, 6, 44, 8, 7, (230, 190, 110), (160, 118, 60))
+    for y in range(TILE):
+        k = 1.0 - 0.3 * (y / TILE)
+        for x in range(TILE):
+            px[x, y] = shade(px[x, y][:3], k) + (255,)
+    for x in range(TILE):
+        px[x, 0] = px[x, 1] = (230, 196, 120, 255)
+    return img
+
+
+def parquet_floor(variant, rng):
+    """Parquet noir ciré : lames horizontales, veinage, reflets."""
+    img = blank()
+    px = img.load()
+    plank = 8
+    for y in range(TILE):
+        row = y // plank
+        off = (row * 19) % TILE
+        tone = (row * 0.37) % 1
+        for x in range(TILE):
+            seam = (x + off) % TILE == 0
+            c = mix((44, 30, 30), (60, 40, 36), (math.sin((x + row * 7) * 0.4) + 1) / 4 + tone * 0.5)
+            if y % plank == 0 or seam:
+                c = (26, 16, 16)
+            elif y % plank == 1:
+                c = shade(c, 1.25)
+            px[x, y] = c + (255,)
+    if variant == 1:  # noeuds du bois
+        for _ in range(2):
+            x, y = rng.randrange(5, 44), rng.randrange(3, 46)
+            px[x, y] = px[x + 1, y] = (30, 18, 18, 255)
+    elif variant == 2:  # papiers froisses
+        for _ in range(2):
+            x, y = rng.randrange(6, 40), rng.randrange(6, 40)
+            for dx, dy in ((0, 0), (1, 0), (2, 1), (0, 1), (1, 1), (1, 2)):
+                px[x + dx, y + dy] = (226, 218, 200, 255)
+    elif variant == 3:  # reflet de cire
+        for x in range(8, 40):
+            px[x, 24] = shade(px[x, 24][:3], 1.4) + (255,)
+    return img
+
+
+def dark_wall_top(rng):
+    img = Image.new("RGBA", (TILE, TILE), (20, 10, 12, 255))
+    px = img.load()
+    blobs(px, rng, 2, (10, 16), (40, 16, 20), 0.6)
+    return img
+
+
+def panel_wall_face(rng):
+    """Boiseries sombres : panneaux moulurés, liseré bordeaux."""
+    img = Image.new("RGBA", (TILE, TILE), (64, 40, 34, 255))
+    px = img.load()
+    for y in range(TILE):
+        k = 1.0 - 0.3 * (y / TILE)
+        for x in range(TILE):
+            lx = x % 25
+            c = (64, 40, 34)
+            if 4 <= lx <= 20 and 8 <= y <= 42:
+                c = (52, 32, 28)
+                if lx in (4, 20) or y in (8, 42):
+                    c = (90, 58, 46)
+            if y < 3:
+                c = (120, 30, 44)
+            px[x, y] = shade(c, k) + (255,)
+    return img
+
+
+MARDI_PARADOXAL = {
+    "etoile": ([  # etoile doree de bonne note
+        ".....Y.....", "....YWY....", "YYYYWWWYYYY", ".YYWYYYWYY.", "..YYYYYYY..", "..YYYyYYY..",
+        ".YYy...yYY.", "rr.......rr", ".r.......r.",
+    ], {"Y": rgba(255, 210, 70), "W": rgba(255, 250, 200), "y": rgba(200, 140, 40), "r": rgba(220, 70, 80)}),
+    "lune": ([  # boussole
+        "..GGGGG..", ".GWWRWWG.", "GWWWRWWWG", "GWWWkWWWG", "GWWWBWWWG", ".GWWBWWG.", "..GGGGG..",
+    ], {"G": rgba(200, 150, 70), "W": rgba(250, 244, 226), "R": rgba(220, 60, 60), "B": rgba(70, 90, 160), "k": rgba(40, 30, 30)}),
+    "horloge": ([  # sablier retourne
+        "GGGGGGGG", ".gssssg.", "..gssg..", "...gS...", "...SS...", "..gSSg..", ".gSSSSg.", "GGGGGGGG",
+    ], {"G": rgba(170, 110, 60), "g": rgba(200, 230, 255), "s": rgba(170, 210, 235), "S": rgba(240, 210, 120)}),
+    "bulle": ([  # bulle de stress
+        "...CCCC...", "..CWccccC.", ".CWcccccC.", "CccrcrcccC", "CcrcrcrccC", "CccccccccC", ".CccccccC.", "..CCCCCC..",
+    ], {"C": rgba(255, 160, 140), "W": rgba(255, 255, 255), "c": (255, 160, 140, 70), "r": (220, 60, 60, 200)}),
+    "aiguille": ([
+        "...k...", "..kkk..", ".kkkkk.", "...k...", "...k...", "...k...", "...k...", "..GGG..", ".GGGGG.",
+    ], {"k": rgba(60, 40, 40), "G": rgba(170, 130, 70)}),
+    "feuilles": ([
+        "WWWW......", "WkkW..WWW.", "WWWW..WkW.", "WkkW..WWW.", "WWWW......", "....WWWW..", "....WkkW..", "....WWWW..",
+    ], {"W": rgba(244, 240, 228), "k": rgba(140, 140, 160)}),
+    "rouage": ([
+        "..G.GG.G..", ".GGGGGGGG.", "GGGgggGGGG", ".GgG..gGG.", "GGg....gGG", "GGg....gGG", ".GgG..gGG.",
+        "GGGgggGGGG", ".GGGGGGGG.", "..G.GG.G..",
+    ], {"G": rgba(206, 160, 86), "g": rgba(150, 108, 52)}),
+}
+
+MARDI_PROFOND = {
+    "bougie": ([  # lampe de bureau
+        "...YYYY..", "..YYWWY..", ".YYWWWY..", "...kk....", "..k......", ".k.......", "kk.......", "BBBBB....",
+    ], {"Y": rgba(255, 200, 110), "W": rgba(255, 240, 200), "k": rgba(60, 60, 60), "B": rgba(80, 60, 50)}),
+    "champignon": ([  # reveil qui sonne
+        "y.TT...TT.y", ".TTTCCCTTT.", "..CWWWWWC..", ".CWWWkWWWC.", ".CWWWkWWWC.", ".CWWWkkWWC.",
+        "..CWWWWWC..", "y..CCCCC..y", "..C.....C..",
+    ], {"T": rgba(90, 220, 200), "C": rgba(60, 170, 160), "W": rgba(240, 250, 250), "k": rgba(30, 40, 40), "y": rgba(150, 255, 240)}),
+    "cristal": ([  # tiroir verrouille
+        "bbbbbbbbbbbb", "bDDDDDDDDDDb", "bDDDDLLDDDDb", "bDDDDLLDDDDb", "bDDDDDDDDDDb", "bbbbbbbbbbbb",
+    ], {"b": rgba(50, 30, 30), "D": rgba(110, 70, 120), "L": rgba(220, 190, 255)}),
+    "balancier": ([
+        "....k....", "....k....", "....k....", "....k....", "....k....", "...GGG...", "..GGWGG..", "..GGGGG..", "...GGG...",
+    ], {"k": rgba(120, 90, 50), "G": rgba(200, 160, 80), "W": rgba(255, 230, 160)}),
+    "papiers": ([
+        "..WW.....", ".WWWW.WW.", "WWkWWWWWW", ".WWWWkWW.", "..WWWWW..",
+    ], {"W": rgba(214, 206, 190), "k": rgba(140, 130, 120)}),
+    "comtoise": ([
+        "..BBBBB..", ".BWWWWWB.", ".BWWkWWB.", ".BWWkkWB.", ".BBBBBBB.", "..BdddB..", "..BdGdB..", "..BdGdB..",
+        "..BdddB..", ".BBBBBBB.",
+    ], {"B": rgba(70, 40, 30), "W": rgba(230, 220, 200), "k": rgba(30, 20, 20), "d": rgba(40, 24, 20), "G": rgba(200, 160, 80)}),
+}
+
+
+def mardi():
+    rng = random.Random(202)
+    tiles("mardi", "paradoxal", [gears_floor(v, rng) for v in range(4)], gears_wall_top(rng), gears_wall_face(rng))
+    tiles("mardi", "profond", [parquet_floor(v, rng) for v in range(4)], dark_wall_top(rng), panel_wall_face(rng))
+    decors("mardi", "paradoxal", MARDI_PARADOXAL)
+    decors("mardi", "profond", MARDI_PROFOND)
+
+
+NIGHTS = {"lundi": lundi, "mardi": mardi}
 
 if __name__ == "__main__":
     for night in sys.argv[1:] or NIGHTS:

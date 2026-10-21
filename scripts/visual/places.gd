@@ -14,7 +14,12 @@ const INTERACTIVE := {
 	"profond": ["bougie", "champignon", "cristal"],
 }
 # Noms affiches d'origine (nuits sans lieu propre).
-const DEFAULT_LABELS := {"etoile": "Étoile filante", "lune": "La lune", "horloge": "L'horloge"}
+const DEFAULT_LABELS := {
+	"etoile": "Étoile filante", "lune": "La lune", "horloge": "L'horloge",
+	"champignon": "Des spores t'endorment plus profondément...", "cristal": "Le cristal se brise",
+}
+# labels : nom du soin, du guide et de la pause ; phrase du decor qui lance un combat ; debut de
+# phrase du decor a objet ("... et libere <objet> !").
 
 # decor : nom -> options ("float" : flotte, "push" : se pousse).
 const LIST := {
@@ -31,7 +36,23 @@ const LIST := {
 			"ambient": Color(0.44, 0.48, 0.58),
 			"particles": [Color(0.7, 0.74, 0.82, 0.5)],
 			"decor": {"draps": ["float"], "fauteuil": []},
-			"labels": {},
+			"labels": {"champignon": "Le tas de draps se met à respirer... et à bouger !", "cristal": "Le coffre à jouets s'ouvre"},
+		},
+	},
+	"mardi": {
+		"paradoxal": {
+			"name": "les Engrenages",
+			"ambient": Color(1.0, 0.93, 0.8),
+			"particles": [Color(1, 0.85, 0.45), Color(1, 0.95, 0.75)],
+			"decor": {"aiguille": [], "feuilles": ["float"], "rouage": ["push"]},
+			"labels": {"etoile": "Étoile dorée", "lune": "La boussole", "horloge": "Le sablier retourné"},
+		},
+		"profond": {
+			"name": "la Salle des pendules",
+			"ambient": Color(0.5, 0.38, 0.38),
+			"particles": [Color(0.8, 0.5, 0.45, 0.5)],
+			"decor": {"balancier": ["float"], "papiers": [], "comtoise": []},
+			"labels": {"champignon": "Le réveil se met à sonner !", "cristal": "Le tiroir se déverrouille"},
 		},
 	},
 }
@@ -55,7 +76,13 @@ static func has_flag(night: String, family: int, decor_name: String, flag: Strin
 static func label(night: String, family: int, decor_name: String) -> String:
 	return place(night, family).get("labels", {}).get(decor_name, DEFAULT_LABELS.get(decor_name, ""))
 
-# Regle d'etage de la nuit (null si elle n'en a pas encore).
-static func rule(night: String) -> Node:
+# Regle d'etage de la nuit (null si elle n'en a pas encore). Interface : variables map,
+# floor_data, strength et INTRO ; au besoin on_decor(nom) sur la carte et, en statique,
+# apply_combat(arene, force) dans l'arene.
+static func rule_script(night: String) -> GDScript:
 	var path := "res://scripts/exploration/rules/%s.gd" % night
-	return load(path).new() if ResourceLoader.exists(path) else null
+	return load(path) if ResourceLoader.exists(path) else null
+
+static func rule(night: String) -> Node:
+	var script := rule_script(night)
+	return script.new() if script else null

@@ -20,6 +20,7 @@ var had_elite := false
 const ELITE_LOOT_BONUS := 0.2
 var combat_over := false
 var hearts := Hearts.new()
+var extra_mobs := 0  # ennemis en plus (regle du samedi)
 var message_serial := 0
 var waiting_to_leave := false
 var leaving := false
@@ -45,6 +46,10 @@ func _ready() -> void:
 	add_child(ambient)
 	player.add_child(DreamTheme.make_ambient_particles(floor_meta["family"], night))
 
+	var rule_script := Places.rule_script(night)
+	if rule_script and "apply_combat" in rule_script.get_script_method_list().map(func(m): return m["name"]):
+		rule_script.apply_combat(self, rule_strength())
+
 	GameState.start_combat()
 	var mobs := _pick_mobs()
 	is_boss_fight = GameState.guardian_fight or mobs.any(func(m): return m.is_boss)
@@ -65,9 +70,13 @@ func _pick_mobs() -> Array:
 	if GameState.floor_index < 0 and randf() < NEGATIVE_BOSS_CHANCE:
 		return [Bestiary.boss(night, nightmare_floor, GameState.boss_history)]
 	var mobs := []
-	for i in _encounter_size():
+	for i in _encounter_size() + extra_mobs:
 		mobs.append(Bestiary.creature(night, nightmare_floor))
 	return mobs
+
+# Meme progression que la regle sur la carte : 0 au premier etage, 1 au dernier.
+func rule_strength() -> float:
+	return clampf(absf(GameState.floor_index) / maxf(1.0, GameState.floor_count() - 1.0), 0.0, 1.0)
 
 func _encounter_size() -> int:
 	return mini(MAX_MOBS, 2 + abs(GameState.floor_index) / FLOORS_PER_EXTRA_MOB + randi() % 2)
