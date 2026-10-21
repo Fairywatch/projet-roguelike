@@ -10,7 +10,7 @@
 | Jeudi | **Produit** (règle : `scripts/exploration/rules/jeudi.gd`) |
 | Vendredi | **Produit** (règle : `scripts/exploration/rules/vendredi.gd`) |
 | Samedi | **Produit** (règle : `scripts/exploration/rules/samedi.gd`) |
-| Dimanche | Fiche |
+| Dimanche | **Produit** (règle : `scripts/exploration/rules/dimanche.gd`) |
 
 ## Règles retenues
 

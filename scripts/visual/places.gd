@@ -119,6 +119,22 @@ const LIST := {
 			"labels": {"champignon": "Le téléphone sonne... ce n'est pas pour toi.", "cristal": "La bouteille se brise"},
 		},
 	},
+	"dimanche": {
+		"paradoxal": {
+			"name": "le Crépuscule sans fin",
+			"ambient": Color(1.0, 0.82, 0.78),
+			"particles": [Color(1, 0.7, 0.4), Color(0.9, 0.6, 0.9)],
+			"decor": {"reverbere": [], "horloge_fondue": [], "ombre": []},
+			"labels": {"etoile": "Dernier rayon de soleil", "lune": "Le fil de lumière", "horloge": "Le soleil figé"},
+		},
+		"profond": {
+			"name": "le Cœur de la nuit",
+			"ambient": Color(0.4, 0.26, 0.3),
+			"particles": [Color(0.9, 0.3, 0.35, 0.5)],
+			"decor": {"veine": [], "yeux": []},
+			"labels": {"champignon": "L'œil s'ouvre... et te voit.", "cristal": "La boîte scellée s'ouvre"},
+		},
+	},
 }
 
 static func kind(family: int) -> String:

@@ -113,5 +113,17 @@ func _initialize() -> void:
 	map.rule._process(0.0)
 	assert(figure not in map.rule.silhouettes)
 
+	# Dimanche : l'obscurite se referme jusqu'a un cercle serre, une lumiere la repousse ; en combat,
+	# un voile assombrit les bords.
+	map = await _open_map(gs, 6)
+	map.rule._process(120.0)
+	assert(is_equal_approx(map.rule.radius, map.rule.MIN_RADIUS.y))
+	map.rule.on_decor("bougie")
+	assert(map.rule.radius > map.rule.MIN_RADIUS.y + 0.4)
+	change_scene_to_file("res://scenes/combat/CombatArena.tscn")
+	for i in 10:
+		await process_frame
+	assert(current_scene.get_node("UI").get_child(0) is ColorRect)
+
 	print("test_places OK")
 	quit()

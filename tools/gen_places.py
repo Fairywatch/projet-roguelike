@@ -1166,7 +1166,164 @@ def samedi():
     decors("samedi", "profond", SAMEDI_PROFOND)
 
 
-NIGHTS = {"lundi": lundi, "mardi": mardi, "mercredi": mercredi, "jeudi": jeudi, "vendredi": vendredi, "samedi": samedi}
+# --- Dimanche (Angoisse) --------------------------------------------------------------------
+
+def dusk_floor(variant, rng):
+    """Dalles de verre teinte du crepuscule (orange vers violet), longues ombres."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        for x in range(TILE):
+            t = (y % 25) / 25
+            c = mix((250, 170, 110), (200, 110, 170), t) if (x // 25 + y // 25) % 2 == 0 else mix((230, 140, 140), (150, 90, 170), t)
+            if x % 25 == 0 or y % 25 == 0:
+                c = (110, 60, 110)
+            elif (x + y) % 25 == 3:
+                c = mix(c, (255, 230, 200), 0.4)  # reflet
+            px[x, y] = c + (255,)
+    if variant == 1:  # longue ombre en travers
+        for i in range(TILE):
+            for w in range(4):
+                x, y = i, (i // 2 + 10 + w) % TILE
+                px[x, y] = shade(px[x, y][:3], 0.6) + (255,)
+    elif variant == 2:  # soleil couchant reflete
+        for y in range(TILE):
+            for x in range(TILE):
+                d = math.hypot(x - 25, y - 25) / 7
+                if d < 1:
+                    px[x, y] = mix(px[x, y][:3], (255, 220, 150), 0.35 * (1 - d)) + (255,)
+    return img
+
+
+def dusk_wall_top(rng):
+    img = Image.new("RGBA", (TILE, TILE), (44, 22, 54, 255))
+    px = img.load()
+    for _ in range(2):
+        px[rng.randrange(TILE), rng.randrange(TILE)] = (255, 220, 200, 255)
+    return img
+
+
+def tree_wall_face(rng):
+    """Ciel de coucher de soleil, silhouettes d'arbres noirs."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        for x in range(TILE):
+            px[x, y] = mix((120, 60, 140), (250, 150, 90), y / TILE) + (255,)
+    for tx in (8, 30, 44):  # troncs et branches
+        top = rng.randrange(4, 14)
+        for y in range(top, TILE):
+            for w in range(-1, 2):
+                if 0 <= tx + w < TILE:
+                    px[tx + w, y] = (24, 12, 26, 255)
+        for _ in range(5):
+            x, y = tx, rng.randrange(top, 30)
+            d = rng.choice([-1, 1])
+            for i in range(rng.randrange(4, 9)):
+                x += d
+                y -= i % 2
+                if 0 <= x < TILE and 0 <= y < TILE:
+                    px[x, y] = (24, 12, 26, 255)
+    return img
+
+
+def heart_floor(variant, rng):
+    """Chair sombre parcourue de veines rouges qui luisent."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        for x in range(TILE):
+            px[x, y] = mix((34, 10, 18), (48, 14, 24), rng.random() * 0.6) + (255,)
+    for _ in range(1 if variant == 0 else 2):  # veines longues, qui ondulent d'un bord a l'autre
+        x, y = rng.uniform(0, TILE), 0.0
+        angle = math.pi / 2 + rng.uniform(-0.6, 0.6)
+        for _ in range(70):
+            px[int(x) % TILE, int(y) % TILE] = (170, 30, 50, 255)
+            halo = (int(x) + 1) % TILE, int(y) % TILE
+            px[halo] = mix(px[halo][:3], (90, 16, 30), 0.6) + (255,)
+            angle += rng.uniform(-0.25, 0.25)
+            x += math.cos(angle)
+            y += math.sin(angle)
+    if variant == 2:  # tache qui pulse
+        blobs(px, rng, 1, (6, 9), (110, 20, 40), 0.7)
+    return img
+
+
+def black_wall_top(rng):
+    return Image.new("RGBA", (TILE, TILE), (8, 4, 8, 255))
+
+
+def vein_wall_face(rng):
+    """Parois sombres veinees de rouge lumineux."""
+    img = Image.new("RGBA", (TILE, TILE), (26, 8, 14, 255))
+    px = img.load()
+    for _ in range(3):
+        x, y = rng.randrange(TILE), 0
+        while y < TILE:
+            px[x % TILE, y] = (200, 40, 60, 255)
+            if x % TILE + 1 < TILE:
+                px[x % TILE + 1, y] = (110, 20, 34, 255)
+            x += rng.choice([-1, 0, 1])
+            y += 1
+    for y in range(TILE):
+        for x in range(TILE):
+            px[x, y] = shade(px[x, y][:3], 1.0 - 0.3 * (y / TILE)) + (255,)
+    return img
+
+
+DIMANCHE_PARADOXAL = {
+    "etoile": ([  # dernier rayon de soleil
+        "Y...Y...Y", ".Y..Y..Y.", "..YYYYY..", "YYYWWWYYY", "..YWWWY..", "..YYYYY..", ".Y..Y..Y.", "Y...Y...Y",
+    ], {"Y": rgba(255, 190, 90), "W": rgba(255, 245, 210)}),
+    "lune": ([  # fil de lumiere
+        "W.........", ".W.....WW.", "..W...W..W", "...W.W....", "....W.....", "...W.W....", "..W...W...",
+    ], {"W": rgba(255, 245, 220)}),
+    "horloge": ([  # soleil fige sur l'horizon
+        "...YYYYY...", ".YYWWkWWYY.", "YYWWWkWWWYY", "YWWWWkkWWWY", "ooooooooooo",
+    ], {"Y": rgba(255, 170, 80), "W": rgba(255, 230, 170), "k": rgba(120, 60, 60), "o": rgba(120, 60, 140)}),
+    "bulle": ([  # bulle de crepuscule
+        "...CCCC...", "..CWccccC.", ".CWcccccC.", "CcccccccC.", "CppppppppC", "CppppppppC", ".CppppppC.", "..CCCCCC..",
+    ], {"C": rgba(255, 180, 160), "W": rgba(255, 255, 255), "c": (255, 180, 140, 70), "p": (170, 110, 200, 90)}),
+    "reverbere": ([
+        "..YYY..", ".kYWYk.", ".kkkkk.", "...k...", "...k...", "...k...", "...k...", "..kkk..",
+    ], {"Y": rgba(255, 210, 130), "W": rgba(255, 245, 210), "k": rgba(40, 24, 46)}),
+    "horloge_fondue": ([
+        "GGGGGGGGG..", "GWWWkWWWWG.", "GWWWkkWWWWG", ".GWWWWWWWWG", "..GGWWWWWG.", "....GWWG...", ".....GG....",
+    ], {"G": rgba(220, 170, 80), "W": rgba(250, 240, 220), "k": rgba(60, 40, 50)}),
+    "ombre": ([
+        "..kk.........", ".kkkk........", "..kkkkkkk....", "...kkkkkkkkk.", "......kkkkkkk",
+    ], {"k": (30, 10, 40, 150)}),
+}
+
+DIMANCHE_PROFOND = {
+    "bougie": ([  # luciole
+        "..W.W..", "...k...", ".YYYYY.", "YYYWYYY", ".YYYYY.", "..YYY..",
+    ], {"W": rgba(220, 230, 255), "k": rgba(40, 40, 40), "Y": rgba(255, 230, 120)}),
+    "champignon": ([  # oeil ferme
+        "..kkkkkk..", ".kTTTTTTk.", "kTTTTTTTTk", "kkkkkkkkkk", ".k.k..k.k.",
+    ], {"k": rgba(30, 60, 60), "T": rgba(90, 200, 190)}),
+    "cristal": ([  # boite scellee
+        "bbbbbbbbbb", "bBBBRRBBBb", "bBBRRRRBBb", "bbbbRRbbbb", "bBBBRRBBBb", "bBBBBBBBBb", "bbbbbbbbbb",
+    ], {"b": rgba(40, 20, 50), "B": rgba(110, 70, 140), "R": rgba(220, 180, 255)}),
+    "veine": ([
+        "R....R..", ".R..R...", "..RRR...", "..RRRRRR", ".RR..R..", "R....R..",
+    ], {"R": rgba(200, 40, 60)}),
+    "yeux": ([
+        ".WWW...WWW.", "WWkWW.WWkWW", ".WWW...WWW.",
+    ], {"W": rgba(240, 220, 160), "k": rgba(20, 10, 10)}),
+}
+
+
+def dimanche():
+    rng = random.Random(707)
+    tiles("dimanche", "paradoxal", [dusk_floor(v, rng) for v in range(4)], dusk_wall_top(rng), tree_wall_face(rng))
+    tiles("dimanche", "profond", [heart_floor(v, rng) for v in range(4)], black_wall_top(rng), vein_wall_face(rng))
+    decors("dimanche", "paradoxal", DIMANCHE_PARADOXAL)
+    decors("dimanche", "profond", DIMANCHE_PROFOND)
+
+
+NIGHTS = {"lundi": lundi, "mardi": mardi, "mercredi": mercredi, "jeudi": jeudi, "vendredi": vendredi, "samedi": samedi,
+          "dimanche": dimanche}
 
 if __name__ == "__main__":
     for night in sys.argv[1:] or NIGHTS:
