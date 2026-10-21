@@ -1009,7 +1009,164 @@ def vendredi():
     decors("vendredi", "profond", VENDREDI_PROFOND)
 
 
-NIGHTS = {"lundi": lundi, "mardi": mardi, "mercredi": mercredi, "jeudi": jeudi, "vendredi": vendredi}
+# --- Samedi (Solitude) ----------------------------------------------------------------------
+
+def marble_floor(variant, rng):
+    """Marbre en damier, veines fines ; incrustation doree au centre."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        for x in range(TILE):
+            light = ((x // 25) + (y // 25)) % 2 == 0
+            c = (226, 224, 234) if light else (150, 156, 184)
+            px[x, y] = shade(c, 0.97 + rng.random() * 0.05) + (255,)
+    for _ in range(2 if variant == 1 else 1):  # veines
+        x, y = rng.randrange(TILE), 0
+        while y < TILE:
+            px[x % TILE, y] = shade(px[x % TILE, y][:3], 0.82) + (255,)
+            x += rng.choice([-1, 0, 1, 1])
+            y += 1
+    if variant == 2:  # etoile doree incrustee
+        for i in range(-4, 5):
+            px[25 + i, 25] = px[25, 25 + i] = (220, 190, 110, 255)
+        for i in range(-2, 3):
+            px[25 + i, 25 + i] = px[25 + i, 25 - i] = (240, 214, 140, 255)
+    return img
+
+
+def night_wall_top(rng):
+    img = Image.new("RGBA", (TILE, TILE), (20, 24, 50, 255))
+    px = img.load()
+    for _ in range(3):
+        px[rng.randrange(TILE), rng.randrange(TILE)] = (200, 210, 255, 255)
+    return img
+
+
+def window_wall_face(rng):
+    """Colonnes d'ivoire et hautes fenetres eclairees par la lune."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        k = 1.0 - 0.25 * (y / TILE)
+        for x in range(TILE):
+            lx = x % 25
+            if lx < 6:
+                c = mix((206, 200, 186), (240, 236, 226), 1 - abs(lx - 2.5) / 3)
+            elif 8 <= lx <= 22 and 6 <= y <= 46:
+                c = (60, 80, 140) if lx != 15 and y != 26 else (40, 44, 70)
+                if (lx - 8) < 4 and y < 30:
+                    c = (110, 140, 210)  # clair de lune
+            else:
+                c = (90, 86, 110)
+            px[x, y] = shade(c, k) + (255,)
+    return img
+
+
+def dock_floor(variant, rng):
+    """Planches de ponton gris-bleu ; entre elles, l'eau noire."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        for x in range(TILE):
+            lx = x % 10
+            tone = ((x // 10) * 0.37) % 1
+            c = mix((92, 96, 110), (112, 116, 128), tone * 0.7 + rng.random() * 0.15)
+            if lx == 9:
+                c = (10, 14, 24)  # l'eau entre les planches
+            elif lx == 0:
+                c = shade(c, 1.15)
+            px[x, y] = c + (255,)
+    if variant == 1:  # clous
+        for x in range(4, TILE, 10):
+            px[x, 6] = px[x, 43] = (60, 62, 70, 255)
+    elif variant == 2:  # planche usee, plus claire
+        x0 = rng.randrange(5) * 10
+        for y in range(TILE):
+            for x in range(x0 + 1, x0 + 9):
+                px[x, y] = shade(px[x, y][:3], 1.18) + (255,)
+    return img
+
+
+def water_wall_top(rng):
+    img = Image.new("RGBA", (TILE, TILE), (10, 14, 24, 255))
+    px = img.load()
+    for _ in range(4):
+        x, y = rng.randrange(2, 44), rng.randrange(TILE)
+        for i in range(5):
+            px[x + i, y] = (34, 44, 62, 255)
+    return img
+
+
+def pier_wall_face(rng):
+    """Bord du quai : eau noire sous la brume, pilotis."""
+    img = blank()
+    px = img.load()
+    for y in range(TILE):
+        for x in range(TILE):
+            c = mix((70, 78, 96), (12, 16, 26), min(1.0, y / 30))  # brume en haut, eau noire en bas
+            if x % 25 in (10, 11, 12) and y > 4:
+                c = shade((70, 60, 54), 1.0 - 0.4 * (y / TILE))  # pilotis
+            elif y > 30 and (x + y * 3) % 17 == 0:
+                c = (40, 52, 74)  # remous
+            px[x, y] = c + (255,)
+    return img
+
+
+SAMEDI_PARADOXAL = {
+    "etoile": ([  # lettre recue
+        "WWWWWWWWWWW", "WwWWWWWWWwW", "WWwWWWWWwWW", "WWWwWRWwWWW", "WWWWRRRWWWW", "WWWWWRWWWWW", "WWWWWWWWWWW",
+    ], {"W": rgba(250, 244, 226), "w": rgba(200, 186, 160), "R": rgba(220, 60, 80)}),
+    "lune": ([  # phare lointain
+        "..YYY..", ".kWWWk.", "..RRR..", "..WWW..", "..RRR..", "..WWW..", ".RRRRR.", "BBBBBBB",
+    ], {"Y": rgba(255, 240, 170), "W": rgba(240, 240, 248), "R": rgba(210, 70, 70), "k": rgba(60, 60, 70), "B": rgba(70, 80, 110)}),
+    "horloge": ([  # boite a musique
+        "..k......", "..kk.....", ".BBBBBBB.", "BGGGGGGGB", "BBBBBBBBB", "BbGbGbGbB", "BBBBBBBBB",
+    ], {"k": rgba(200, 180, 120), "B": rgba(150, 100, 70), "G": rgba(230, 190, 110), "b": rgba(110, 70, 50)}),
+    "bulle": ([  # bulle-souvenir (une petite maison dedans)
+        "...CCCC...", "..CccccC..", ".CcccRcccC", "CcccRRRccC", "CccRRRRRcC", "CcccWkWccC", ".CccWWWcC.", "..CCCCCC..",
+    ], {"C": rgba(220, 210, 255), "c": (220, 210, 255, 70), "R": (200, 90, 90, 220), "W": (250, 240, 220, 230), "k": (90, 70, 60, 230)}),
+    "chaise": ([
+        ".BB......", ".BB......", ".BB......", ".BBBBBBB.", ".bbbbbbb.", ".B.....B.", ".B.....B.",
+    ], {"B": rgba(196, 160, 110), "b": rgba(150, 116, 76)}),
+    "guirlande": ([
+        "k.........k", ".kk.....kk.", "..YkkRkkB..", "...........",
+    ], {"k": rgba(80, 80, 96), "Y": rgba(160, 150, 100), "R": rgba(150, 90, 90), "B": rgba(90, 110, 150)}),
+    "verre": ([
+        "WWWWW", "W...W", ".W.W.", "..W..", "..W..", ".WWW.",
+    ], {"W": rgba(210, 226, 250)}),
+}
+
+SAMEDI_PROFOND = {
+    "bougie": ([  # lanterne flottante
+        "...kk...", "..kkkk..", ".kYYYYk.", ".kYWWYk.", ".kYYYYk.", "..kkkk..", "~~~~~~~~",
+    ], {"k": rgba(70, 60, 50), "Y": rgba(255, 200, 110), "W": rgba(255, 240, 200), "~": rgba(40, 60, 90)}),
+    "champignon": ([  # telephone qui sonne
+        "..TTTTTT..", ".TT....TT.", "TT.kkkk.TT", "...TTTT...", "..TWTWTT..", "..TTWTWT..", "..TTTTTT..",
+    ], {"T": rgba(80, 190, 180), "k": rgba(40, 60, 60), "W": rgba(220, 250, 248)}),
+    "cristal": ([  # bouteille a la mer
+        ".......kk", "......GG.", ".GGGGGGG.", "GGWWWWGG.", "GGWkkWGG.", "GGWWWWGG.", ".GGGGGG..",
+    ], {"k": rgba(120, 90, 60), "G": rgba(150, 120, 200), "W": rgba(240, 230, 210)}),
+    "bouee": ([
+        "..RWWR..", ".RW..WR.", "RW....WR", "W......W", "RW....WR", ".RW..WR.", "..RWWR..",
+    ], {"R": rgba(210, 70, 70), "W": rgba(240, 240, 240)}),
+    "banc_vide": ([
+        "BBBBBBBBBBBB", "bbbbbbbbbbbb", "BBBBBBBBBBBB", ".k........k.", ".k........k.",
+    ], {"B": rgba(110, 104, 110), "b": rgba(80, 76, 84), "k": rgba(40, 40, 50)}),
+    "lampadaire_eteint": ([
+        "..GGG..", ".GgggG.", ".GGGGG.", "...k...", "...k...", "...k...", "...k...", "..kkk..",
+    ], {"G": rgba(80, 86, 100), "g": rgba(50, 54, 64), "k": rgba(50, 54, 64)}),
+}
+
+
+def samedi():
+    rng = random.Random(606)
+    tiles("samedi", "paradoxal", [marble_floor(v, rng) for v in range(4)], night_wall_top(rng), window_wall_face(rng))
+    tiles("samedi", "profond", [dock_floor(v, rng) for v in range(4)], water_wall_top(rng), pier_wall_face(rng))
+    decors("samedi", "paradoxal", SAMEDI_PARADOXAL)
+    decors("samedi", "profond", SAMEDI_PROFOND)
+
+
+NIGHTS = {"lundi": lundi, "mardi": mardi, "mercredi": mercredi, "jeudi": jeudi, "vendredi": vendredi, "samedi": samedi}
 
 if __name__ == "__main__":
     for night in sys.argv[1:] or NIGHTS:

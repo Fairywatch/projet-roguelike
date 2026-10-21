@@ -103,5 +103,15 @@ func _initialize() -> void:
 		await process_frame
 	assert(is_equal_approx(current_scene.player.dash_cooldown_effective, current_scene.player.DASH_COOLDOWN_BASE * 1.25))
 
+	# Samedi : dernier etage sans PNJ, moins de rencontres ; les silhouettes s'effacent de pres.
+	map = await _open_map(gs, 5, FloorGenerator.Family.PARADOXAL)
+	await process_frame
+	assert(map.npc_factor == 0.0 and gs.current_floor()["quest"].is_empty())
+	assert(map.rule.silhouettes.size() == 5)
+	var figure: Sprite2D = map.rule.silhouettes[0]
+	map.player.global_position = figure.global_position + Vector2(40, 0)
+	map.rule._process(0.0)
+	assert(figure not in map.rule.silhouettes)
+
 	print("test_places OK")
 	quit()
