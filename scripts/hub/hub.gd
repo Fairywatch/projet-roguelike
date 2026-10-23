@@ -79,9 +79,9 @@ func _build_tower(i: int) -> void:
 	var x := TOWER_X0 + i * TOWER_STEP
 	var sprite := Sprite2D.new()
 	sprite.texture = load("res://assets/sprites/hub/tower_%s.png" % tower["id"])
-	sprite.scale = Vector2(2, 2)
+	# Tours en haute definition (tools/gen_cinematics.py) : taille reelle, pied au sol.
 	sprite.centered = false
-	sprite.position = Vector2(x - sprite.texture.get_width(), TOWER_Y - sprite.texture.get_height() * 2)
+	sprite.position = Vector2(x - sprite.texture.get_width() / 2.0, TOWER_Y - sprite.texture.get_height())
 	add_child(sprite)
 	_add_solid(Rect2(x - 22, TOWER_Y - 40, 44, 34))  # le corps de la tour bloque le passage
 	var state := tower_state(i)
