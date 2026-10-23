@@ -1,8 +1,6 @@
 # Lancer : godot --headless --path . --script res://tests/test_story.gd
 extends SceneTree
 
-const VIGNETTES := ["bed", "thoughts", "towers", "dive", "tower", "dawn"]
-
 func _press(keycode: Key) -> void:
 	var ev := InputEventKey.new()
 	ev.physical_keycode = keycode
@@ -20,12 +18,19 @@ func _initialize() -> void:
 	gs.new_run(0)
 
 	# Le recit couvre les 7 nuits : une fin et une replique par habitant du reve, pour chacune.
-	for panel in Story.INTRO:
-		assert(panel["vignette"] in VIGNETTES and panel["text"] != "")
+	# Chaque phrase a son plan dans la cinematique, et chaque plan se joue sans erreur.
+	var intro_lines := []
+	for shot in Intro.shots():
+		for line in shot.lines:
+			intro_lines.append(line[2])
+		for i in 40:
+			shot.update(shot.duration * i / 39.0)
+	assert(intro_lines == Story.INTRO)
 	for tower in Towers.LIST:
-		assert(Story.ENDINGS.has(tower["id"]) and not Story.ENDINGS[tower["id"]].is_empty())
-		for panel in Story.ENDINGS[tower["id"]]:
-			assert(panel["vignette"] in VIGNETTES and panel["text"] != "")
+		var shot: Shot = Endings.shots(tower["id"])[0]
+		assert(shot.lines.size() == Story.ENDINGS[tower["id"]].size())
+		for i in 40:
+			shot.update(shot.duration * i / 39.0)
 		assert(Story.NPC_LINES[tower["id"]].size() == 3)
 
 	# Finir une nuit : sa fin est racontee avant le retour au menu.
@@ -35,14 +40,16 @@ func _initialize() -> void:
 	assert(gs.cutscene_id == "ending_mercredi" and gs.cutscene_tower == 2)
 	assert(gs.after_combat_scene() == gs.CUTSCENE_PATH)
 
-	# La scene deroule tous les tableaux (E) puis enchaine sur la scene suivante.
+	# La scene deroule toutes les phrases (E) puis enchaine sur la scene suivante.
 	change_scene_to_file(gs.CUTSCENE_PATH)
 	for i in 10:
 		await process_frame
 	var cutscene = current_scene
-	assert(cutscene.panels.size() == Story.ENDINGS["mercredi"].size())
-	for i in cutscene.panels.size() * 2:  # 1er appui : texte complet, 2e : tableau suivant
+	assert(cutscene.lines.size() == Story.ENDINGS["mercredi"].size())
+	for i in cutscene.lines.size() * 2:  # 1er appui : phrase complete, 2e : phrase suivante
 		await _press(KEY_E)
+	assert(not cutscene.finishing and cutscene.text_label.visible_characters >= cutscene.lines.back()[2].length())
+	await _press(KEY_E)
 	assert(cutscene.finishing and gs.cutscene_id == "")
 	await create_timer(1.0).timeout
 	assert(current_scene.scene_file_path == gs.MENU_PATH)
