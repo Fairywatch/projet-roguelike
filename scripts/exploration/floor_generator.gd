@@ -74,25 +74,10 @@ static func generate(family: int, intensity: int, rng: RandomNumberGenerator, si
 
 	if rooms.size() > 0:
 		data.spawn_cell = rooms[0].position + rooms[0].size / 2
-		data.exit_cell = data.spawn_cell
-		var farthest_dist := -1.0
-		for room in rooms:
-			var center: Vector2i = room.position + room.size / 2
-			var dist: float = Vector2(center - data.spawn_cell).length_squared()
-			if dist > farthest_dist:
-				farthest_dist = dist
-				data.exit_cell = center
-
-		data.secondary_cell = data.exit_cell
-		var farthest_dist2 := -1.0
-		for room in rooms:
-			var center: Vector2i = room.position + room.size / 2
-			if center == data.exit_cell or center == data.spawn_cell:
-				continue
-			var dist2: float = Vector2(center - data.exit_cell).length_squared()
-			if dist2 > farthest_dist2:
-				farthest_dist2 = dist2
-				data.secondary_cell = center
+		# Portails : au fond de l'etage (le plus loin du depart en marchant), et jamais sur un
+		# passage (on doit pouvoir tout visiter sans les toucher, sinon cles et couloirs bloques).
+		data.exit_cell = _portal_cell(data, rooms, data.spawn_cell, [], [data.spawn_cell])
+		data.secondary_cell = _portal_cell(data, rooms, data.exit_cell, [data.exit_cell], [data.spawn_cell, data.exit_cell])
 
 		var candidates: Array = []
 		for room in rooms:
@@ -106,6 +91,39 @@ static func generate(family: int, intensity: int, rng: RandomNumberGenerator, si
 			data.quest_cell = _farthest_free_cell(data)
 
 	return data
+
+# Case d'un portail : la plus loin de `from` a pied qui ne coupe pas l'etage quand on la bloque
+# (en plus de `blocked`), ramenee au milieu de sa salle si ca ne coupe rien non plus.
+static func _portal_cell(data: FloorData, rooms: Array, from: Vector2i, blocked: Array, avoid: Array) -> Vector2i:
+	var dist := _walk_distances(data, from, [])
+	var cells: Array = data.floor_cells.keys()
+	cells.sort()  # meme etage pour une meme graine
+	cells.sort_custom(func(a, b): return dist.get(a, -1) > dist.get(b, -1))
+	for cell in cells:
+		if cell in avoid or not _keeps_connected(data, blocked + [cell]):
+			continue
+		for room in rooms:
+			var center: Vector2i = room.position + room.size / 2
+			if room.has_point(cell) and center not in avoid and _keeps_connected(data, blocked + [center]):
+				return center
+		return cell
+	return from
+
+static func _keeps_connected(data: FloorData, cut: Array) -> bool:
+	return _walk_distances(data, data.spawn_cell, cut).size() == data.floor_cells.size() - cut.size()
+
+# Distance a pied (en cases) depuis `from` vers chaque case accessible sans passer par `blocked`.
+static func _walk_distances(data: FloorData, from: Vector2i, blocked: Array) -> Dictionary:
+	var dist := {from: 0}
+	var queue: Array[Vector2i] = [from]
+	while not queue.is_empty():
+		var cell: Vector2i = queue.pop_front()
+		for dir in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var next: Vector2i = cell + dir
+			if data.floor_cells.has(next) and not dist.has(next) and next not in blocked:
+				dist[next] = dist[cell] + 1
+				queue.append(next)
+	return dist
 
 static func _farthest_free_cell(data: FloorData) -> Vector2i:
 	var reserved := [data.spawn_cell, data.exit_cell, data.secondary_cell, data.npc_cell] + data.chest_cells
