@@ -213,7 +213,7 @@ func _initialize() -> void:
 	gs.start_combat()
 	gs.new_run(0)
 	gs.load_run()
-	assert(gs.floor_index == 2 and gs.passive_count() == 0 and not gs.in_combat)
+	assert(gs.floor_index == 5 and gs.passive_count() == 0 and not gs.in_combat)
 	assert(gs.menu_message.begins_with("Tu as fui un combat"))
 	# Un actif repose au sol garde ses charges : pas de recharge gratuite en le reprenant.
 	gs.take_item("oreiller_volant")
@@ -240,6 +240,20 @@ func _initialize() -> void:
 	Settings.load_settings()
 	assert(Settings.volume("sfx_volume") == 0.0)
 	Settings.set_option("sfx_volume", saved_sfx)
+
+	# Mode Normal : un ennemi de moins par combat, 3 au plus ; Cauchemar : la difficulte d'origine.
+	var arena = load("res://scripts/combat/combat_arena.gd").new()
+	var expected := {[false, 0]: [1, 2], [true, 0]: [2, 3], [false, 11]: [3, 3], [true, 11]: [4, 4]}
+	for key in expected:
+		gs.nightmare_mode = key[0]
+		gs.floor_index = key[1]
+		var sizes := []
+		for i in 40:
+			sizes.append(arena._encounter_size())
+		assert(sizes.min() == expected[key][0] and sizes.max() == expected[key][1])
+	arena.free()
+	gs.nightmare_mode = false
+	gs.floor_index = 0
 
 	print("test_difficulty OK")
 	quit()

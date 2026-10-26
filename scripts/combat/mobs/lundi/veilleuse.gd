@@ -3,6 +3,8 @@ extends BaseMob
 # Veilleuse fatiguee (lundi, Fatigue) : garde ses distances et lance des orbes lents ; de temps
 # en temps elle s'eteint et se rallume ailleurs, pres du joueur.
 # Variante : orbes en spirale. Cauchemar : un orbe de plus.
+# Mode Normal : tire moins souvent, previent plus longtemps, et ne tire jamais juste apres s'etre
+# rallumee pres du joueur (il a le temps de la frapper puis de s'ecarter).
 
 const ORB_SPEED := 115.0
 const ORB_COLOR := Color(1, 0.88, 0.55, 0.95)
@@ -22,6 +24,9 @@ func _on_ready() -> void:
 	telegraph_duration = 0.6
 	attack_duration = 0.2
 	cooldown_duration = 1.4
+	if not GameState.nightmare_mode:
+		telegraph_duration = 0.9
+		cooldown_duration = 2.6
 	add_child(DreamTheme.make_light(Color(1, 0.85, 0.5), 50.0, 0.8))
 
 func _process(delta: float) -> void:
@@ -41,6 +46,8 @@ func _teleport() -> void:
 	if p and state != State.DEAD:
 		var distance := randf_range(TELEPORT_DISTANCE.x, TELEPORT_DISTANCE.y)
 		global_position = Hazards.clamp_to_arena(p.global_position + Vector2.from_angle(randf() * TAU) * distance)
+		if not GameState.nightmare_mode:
+			_start_cooldown()
 
 func _on_attack_begin() -> void:
 	var direction := player.global_position - global_position

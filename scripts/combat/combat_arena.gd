@@ -3,6 +3,7 @@ extends Node2D
 const DROP_CHANCE := 0.45
 const MAX_MOBS := 4
 const FLOORS_PER_EXTRA_MOB := 4
+const NORMAL_MAX_MOBS := 3  # mode Normal : un ennemi de moins, jamais plus de 3
 const NEGATIVE_BOSS_CHANCE := 1.0 / 7.0
 const ARENA_SIZE := Vector2(900, 540)
 const SPAWN_MARGIN := 60.0
@@ -79,7 +80,8 @@ func rule_strength() -> float:
 	return clampf(absf(GameState.floor_index) / maxf(1.0, GameState.floor_count() - 1.0), 0.0, 1.0)
 
 func _encounter_size() -> int:
-	return mini(MAX_MOBS, 2 + abs(GameState.floor_index) / FLOORS_PER_EXTRA_MOB + randi() % 2)
+	var size := mini(MAX_MOBS, 2 + abs(GameState.floor_index) / FLOORS_PER_EXTRA_MOB + randi() % 2)
+	return size if GameState.nightmare_mode else clampi(size - 1, 1, NORMAL_MAX_MOBS)
 
 func _spawn_mob(mob: BaseMob) -> void:
 	mob.position = Vector2(450, 140) if mob.is_boss else _random_spawn_position()

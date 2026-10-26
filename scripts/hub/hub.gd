@@ -203,8 +203,22 @@ func _enter_tower(i: int) -> void:
 		confirm_abandon = i
 		_refresh_ui()
 		return
-	GameState.new_run(i, speedrun_choice)
-	_go()
+	_choose_mode(i)
+
+# Avant d'entrer : Normal ou Cauchemar (scripts/hub/mode_panel.gd).
+func _choose_mode(i: int) -> void:
+	panel_open = true
+	player.frozen = true
+	var panel := ModePanel.new()
+	panel.tower_index = i
+	panel.chosen.connect(func(nightmare: bool):
+		GameState.new_run(i, speedrun_choice, nightmare)
+		_go())
+	panel.closed.connect(func():
+		panel_open = false
+		player.frozen = false
+		_refresh_ui())
+	$UI.add_child(panel)
 
 func _go() -> void:
 	player.frozen = true

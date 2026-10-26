@@ -28,7 +28,7 @@ func _initialize() -> void:
 	gs.meta_path = "user://test_meta.save"
 	gs.new_run()
 	gs.floor_index = 0
-	gs.new_run()
+	gs.new_run(0, false, true)  # Cauchemar : toujours au moins 2 ennemis
 
 	# Plusieurs ennemis, et le combat ne se termine pas tout seul.
 	gs.take_item("mouchoir_usage")
@@ -97,7 +97,7 @@ func _initialize() -> void:
 	await create_timer(1.2).timeout
 	assert(gs.floor_index == 3 and not gs.guardian_fight)
 
-	# Mort : retour au menu, la partie continue 5 etages plus bas.
+	# Mort : retour au menu, la partie continue 2 etages plus bas.
 	await create_timer(0.5).timeout
 	gs.floor_index = 7
 	change_scene_to_file("res://scenes/combat/CombatArena.tscn")
@@ -107,7 +107,7 @@ func _initialize() -> void:
 	current_scene.player.take_damage()
 	await create_timer(1.8).timeout
 	assert(current_scene.name == "MainMenu")
-	assert(gs.run_started and gs.floor_index == 2 and gs.passive_count() == 0)
+	assert(gs.run_started and gs.floor_index == 5 and gs.passive_count() == 0)
 
 	print("test_arena OK")
 	quit()

@@ -1,6 +1,12 @@
 # Lancer : godot --headless --path . --script res://tests/test_hub.gd
 extends SceneTree
 
+func _mode_panel(hub: Node) -> ModePanel:
+	for child in hub.get_node("UI").get_children():
+		if child is ModePanel:
+			return child
+	return null
+
 func _initialize() -> void:
 	var gs = root.get_node("GameState")
 	await process_frame  # laisse GameState._ready (chargement de la sauvegarde) passer avant la mise en place
@@ -29,7 +35,9 @@ func _initialize() -> void:
 	assert(hub.speedrun_choice)
 	hub._set_near("tower_1")
 	hub.interact()
-	assert(gs.run_started and gs.tower_index == 1 and gs.speedrun)
+	assert(not gs.run_started and hub.panel_open)  # d'abord le choix du mode
+	_mode_panel(hub).chosen.emit(true)
+	assert(gs.run_started and gs.tower_index == 1 and gs.speedrun and gs.nightmare_mode)
 	hub.speedrun_choice = false
 
 	# Partie en cours sur Mardi : entrer dans Lundi demande une confirmation.
@@ -42,7 +50,8 @@ func _initialize() -> void:
 	hub.interact()
 	assert(gs.tower_index == 1 and hub.prompt_label.text.contains("abandonner"))
 	hub.interact()
-	assert(gs.tower_index == 0 and gs.floor_index == 0)
+	_mode_panel(hub).chosen.emit(false)
+	assert(gs.tower_index == 0 and gs.floor_index == 0 and not gs.nightmare_mode)
 
 	print("test_hub OK")
 	quit()

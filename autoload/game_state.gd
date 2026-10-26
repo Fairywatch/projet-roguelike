@@ -1,7 +1,7 @@
 extends Node
 
 const BASE_MAX_HP := 3
-const DEATH_SETBACK_FLOORS := 5
+const DEATH_SETBACK_FLOORS := 2  # les nuits font 6 a 12 etages
 const MIN_FLOOR_INDEX := -10
 const ACTIVE_MAX_CHARGES := 3
 const ACTIVE_DROP_WEIGHT := 0.25
@@ -31,7 +31,7 @@ const SAVED_FIELDS := [
 	"floor_index", "floor_data_by_index", "negative_dive_available", "return_position",
 	"run_started", "passive_items", "active_item_id", "active_charges", "hp_lost",
 	"pending_ground_item", "tower_index", "speedrun", "time_left", "run_time", "in_combat",
-	"boss_history",
+	"boss_history", "nightmare_mode",
 ]
 const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag", "shop_offers", "best_times", "intro_seen"]
 
@@ -66,6 +66,9 @@ var active_charges: int = 0
 # PV perdus pendant la nuit (facon Isaac) : ils restent perdus d'un combat a l'autre. On garde
 # les PV perdus plutot que les PV restants pour qu'un +PV max donne un coeur plein.
 var hp_lost: int = 0
+# Mode de la nuit, choisi a l'entree de la tour : Normal (moins d'ennemis par combat, certains
+# ennemis plus lents a tirer) ou Cauchemar (la difficulte d'origine).
+var nightmare_mode := false
 # Objet a deposer au sol a l'arrivee sur la carte (butin des profondeurs).
 var pending_ground_item: String = ""
 
@@ -205,9 +208,10 @@ func tick_speedrun(delta: float) -> bool:
 	menu_message = "Le réveil sonne ! Le rêveur s'est réveillé avant la fin de %s." % tower()["name"]
 	return true
 
-func new_run(index: int = tower_index, speedrun_mode: bool = false) -> void:
+func new_run(index: int = tower_index, speedrun_mode: bool = false, nightmare: bool = false) -> void:
 	tower_index = index
 	speedrun = speedrun_mode
+	nightmare_mode = nightmare
 	time_left = floor_count() * SPEEDRUN_SECONDS_PER_FLOOR
 	run_time = 0.0
 	floor_data_by_index.clear()
