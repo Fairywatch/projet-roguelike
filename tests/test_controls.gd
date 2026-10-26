@@ -17,6 +17,12 @@ func _pad(button: JoyButton, pressed: bool = true) -> InputEventJoypadButton:
 	ev.pressed = pressed
 	return ev
 
+# Le panneau tient dans l'ecran, a la taille de son contenu (sans vide sous Retour).
+func _assert_fits(panel: Control) -> void:
+	var screen := panel.get_viewport_rect().size
+	assert(panel.position.y >= 0 and panel.position.y + panel.size.y <= screen.y)
+	assert(panel.size.y <= panel.get_combined_minimum_size().y + 1)
+
 func _initialize() -> void:
 	await process_frame
 	Controls.path = "user://test_controls.cfg"  # ne touche pas aux touches du joueur
@@ -41,12 +47,25 @@ func _initialize() -> void:
 	# Changer une touche dans le menu : clic sur le bouton, puis la nouvelle touche.
 	var panel := ControlsPanel.new()
 	root.add_child(panel)
-	await process_frame
+	for i in 4:
+		await process_frame
+	_assert_fits(panel)
 	panel.waiting_action = "attack"
 	panel.waiting_gamepad = false
 	await _send(_key(KEY_U))
 	await _send(_key(KEY_U, false))
 	assert(Controls.keys["attack"] == KEY_U and panel.waiting_action == "")
+	for i in 4:
+		await process_frame
+	_assert_fits(panel)  # apres reconstruction aussi
+	# Le contenu change de hauteur apres coup (texte a la ligne mesure d'abord sans sa largeur) :
+	# le panneau se recentre, sinon il deborde de l'ecran (vu chez un testeur).
+	var note: Label = panel.box.get_children().filter(func(c): return c is Label and c.autowrap_mode != TextServer.AUTOWRAP_OFF)[0]
+	for extra in [60, 0]:
+		note.custom_minimum_size.y = extra
+		for i in 3:
+			await process_frame
+		_assert_fits(panel)
 	await _send(_key(KEY_U))
 	assert(Input.is_action_pressed("attack"))
 	await _send(_key(KEY_U, false))

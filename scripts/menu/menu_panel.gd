@@ -12,17 +12,21 @@ var box := VBoxContainer.new()
 func _ready() -> void:
 	box.add_theme_constant_override("separation", 5)
 	add_child(box)
+	# Un texte a la ligne se mesure d'abord sans sa largeur, puis rapetisse : on suit le contenu.
+	box.minimum_size_changed.connect(_fit, CONNECT_DEFERRED)
 	rebuild()
 
 func rebuild() -> void:
+	# Retires tout de suite : sinon, reconstruit depuis _input (touche changee), l'ancien contenu est
+	# encore mesure avec le nouveau et le panneau, deux fois trop haut, deborde de l'ecran.
 	for child in box.get_children():
+		box.remove_child(child)
 		child.queue_free()
 	build()
 	var back := add_button("Retour", close)
 	back.custom_minimum_size.y = 22
 	await get_tree().process_frame
-	reset_size()
-	position = (get_viewport_rect().size - size) / 2.0
+	_fit()
 	for child in box.find_children("*", "BaseButton", true, false):  # aussi dans les grilles
 		if not child.disabled and not child.is_queued_for_deletion():
 			child.grab_focus()
@@ -30,6 +34,11 @@ func rebuild() -> void:
 
 func build() -> void:
 	pass
+
+# Taille du contenu, centre a l'ecran.
+func _fit() -> void:
+	reset_size()
+	position = ((get_viewport_rect().size - size) / 2.0).max(Vector2.ZERO)
 
 func add_title(text: String) -> void:
 	var title := Label.new()
