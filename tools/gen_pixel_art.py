@@ -1712,6 +1712,216 @@ def dimanche_sprites():
     }
 
 
+# --- Projectiles des mobs ---------------------------------------------------------
+# Un par mob qui tire (assets/sprites/projectiles/<nuit>/<mob>.png, retrouve par Hazards.shoot
+# d'apres le script du mob). Dessines pointe a droite : le jeu les oriente selon leur trajectoire,
+# ou les fait tourner (voir Hazards.LOOKS). Les mots et lettres restent du texte.
+
+WARM = rgba(255, 214, 110)
+PROJECTILES = {
+    ("lundi", "veilleuse"): ([  # orbe de lumiere
+        "..YYYY..",
+        ".YWWWWY.",
+        "YWWHHWWY",
+        "YWWHWWWY",
+        "YWWWWWWY",
+        "YWWWWWOY",
+        ".YWWWOY.",
+        "..YYYY..",
+    ], {"Y": WARM, "W": rgba(255, 246, 214), "H": rgba(255, 255, 255), "O": rgba(240, 170, 80)}),
+    ("lundi", "reveil_grincheux"): ([  # petite cloche du reveil : anse, dome arrondi, bord evase, battant
+        "....KKK....",
+        "....K.K....",
+        "...GHGGG...",
+        "..GHGGGGB..",
+        "..GHGGGGB..",
+        "..GHGGGGB..",
+        ".GGHGGGGGB.",
+        "GGGGGGGGGGB",
+        "BBBBBBBBBBB",
+        ".....K.....",
+        "....KKK....",
+    ], {"G": rgba(232, 184, 76), "B": rgba(176, 116, 44), "H": rgba(255, 236, 168), "K": rgba(120, 70, 40)}),
+    ("mardi", "pile_devoirs"): ([  # copie qui vole
+        "PPPPPPP.",
+        "PLLLLPPP",
+        "PPPPPPPP",
+        "PLLLLLPP",
+        "PPPPPPPP",
+        "PLLLPPPP",
+        "PPPPPRPP",
+        "PPPPPPPP",
+    ], {"P": rgba(245, 242, 226), "L": rgba(150, 170, 220), "R": rgba(220, 60, 60)}),
+    ("mardi", "tableau_noir"): ([  # baton de craie
+        ".CCCCCCCC.",
+        "CCCCCCCCCC",
+        "CcCCCCCCCc",
+        ".cccccccc.",
+    ], {"C": rgba(240, 242, 236), "c": rgba(186, 192, 186)}),
+    ("mercredi", "carrefour"): ([  # fleche de panneau
+        ".......T...",
+        ".......TT..",
+        "PPPPPPPPTT.",
+        "PDDDDDDDDTT",
+        "PPPPPPPPTT.",
+        ".......TT..",
+        ".......T...",
+    ], {"P": rgba(214, 170, 110), "T": rgba(214, 170, 110), "D": rgba(160, 114, 70)}),
+    ("mercredi", "deux_voies"): ([  # point d'interrogation
+        ".VVVV.",
+        "VVHHVV",
+        "VV..VV",
+        "...VV.",
+        "..VV..",
+        "..VV..",
+        "......",
+        "..VV..",
+    ], {"V": rgba(196, 160, 255), "H": rgba(236, 222, 255)}),
+    ("mercredi", "labyrinthe"): ([  # eclat de pierre moussue
+        "..SSSS..",
+        ".SSMSSS.",
+        "SSHSSMSS",
+        "SMSSSSSS",
+        "SSSSSSs.",
+        ".SSsMs..",
+        "..sss...",
+    ], {"S": rgba(140, 160, 148), "s": rgba(100, 116, 106), "H": rgba(190, 206, 194), "M": rgba(110, 170, 110)}),
+    ("mercredi", "masque"): ([  # larme
+        "......TTT..",
+        "...TTTTTTT.",
+        "TTTTTTTHHTT",
+        "TTTTTTTHTTT",
+        "...TTTTTTT.",
+        "......TTT..",
+    ], {"T": rgba(140, 185, 255), "H": rgba(255, 255, 255)}),
+    ("mercredi", "miroir_brise"): ([  # eclat de miroir
+        "GG........",
+        "GHGGG.....",
+        ".GGHGGGG..",
+        "..GGGGHGGG",
+        "..GGGGG...",
+        "...GG.....",
+    ], {"G": rgba(190, 220, 255), "H": rgba(255, 255, 255)}),
+    ("mercredi", "pile_ou_face"): ([  # piece
+        "..YYYY..",
+        ".YHHYYY.",
+        "YHYYYYOY",
+        "YHYYYYOY",
+        "YYYYYYOY",
+        "YYYYYOOY",
+        ".YYOOOY.",
+        "..YYYY..",
+    ], {"Y": rgba(240, 200, 80), "H": rgba(255, 240, 170), "O": rgba(190, 140, 50)}),
+    ("jeudi", "colere"): ([  # eclair
+        "YYY.......",
+        ".YYY......",
+        "..YYYYYYY.",
+        "...YWWWY..",
+        "......YYY.",
+        ".......YYY",
+        "........YY",
+    ], {"Y": rgba(255, 222, 90), "W": rgba(255, 252, 220)}),
+    ("jeudi", "mur"): ([  # brique
+        "RRRRRRRRRR",
+        "RHHHRRRRRR",
+        "RRRRRRRRRR",
+        "RRRRRRRRrr",
+        "rrrrrrrrrr",
+    ], {"R": rgba(190, 95, 70), "H": rgba(226, 142, 110), "r": rgba(140, 60, 45)}),
+    ("jeudi", "tapis_roulant"): ([  # ecrou
+        "..GGGG..",
+        ".GHHGGG.",
+        "GHG..GGD",
+        "GG....GD",
+        "GG....GD",
+        "GGG..GDD",
+        ".GGGGDD.",
+        "..DDDD..",
+    ], {"G": rgba(200, 200, 215), "H": rgba(250, 250, 255), "D": rgba(130, 130, 150)}),
+    ("vendredi", "bougie_fondue"): ([  # flamme
+        "YY.........",
+        ".YOO.......",
+        "..OOOOOO...",
+        ".OOYYYYOOO.",
+        "OOYWWWWYYOO",
+        ".OOYYYYOOO.",
+        "..OOOOOO...",
+        ".YOO.......",
+        "YY.........",
+    ], {"O": rgba(250, 140, 50), "Y": rgba(255, 210, 90), "W": rgba(255, 250, 220)}),
+    ("vendredi", "nid"): ([  # plume
+        ".........F.",
+        ".....FFFFF.",
+        "..FFFFFFFF.",
+        "QQQQQQQQQQQ",
+        "..FFFFFFF..",
+        "....FFFF...",
+    ], {"F": rgba(180, 160, 230), "Q": rgba(240, 232, 250)}),
+    ("samedi", "absence"): ([  # coeur pale
+        ".PP.PP.",
+        "PHPPPPP",
+        "PPPPPPP",
+        "PPPPPPP",
+        ".PPPPP.",
+        "..PPP..",
+        "...P...",
+    ], {"P": rgba(255, 200, 190), "H": rgba(255, 255, 255)}),
+    ("samedi", "foule_lointaine"): ([  # photo souvenir
+        "WWWWWWWW",
+        "WBBBBBBW",
+        "WBSSBBBW",
+        "WBSSBSBW",
+        "WBBBBBBW",
+        "WWWWWWWW",
+        "WWWWWWWW",
+    ], {"W": rgba(240, 240, 250), "B": rgba(150, 160, 220), "S": rgba(250, 230, 160)}),
+    ("samedi", "lettre"): ([  # avion en papier
+        "WW.........",
+        ".WWWW......",
+        "..WWWWWWW..",
+        ".GGGGGGGGWW",
+        "..WWWWWWW..",
+        ".WWWW......",
+        "WW.........",
+    ], {"W": rgba(245, 245, 236), "G": rgba(196, 196, 186)}),
+    ("samedi", "maison_vide"): ([  # papillon de nuit attire par la lumiere, de face, ailes ouvertes
+        "...A.....A...",
+        "....A...A....",
+        ".WWW.BBB.WWW.",
+        "WWWWWBBBWWWWW",
+        "WSSWWBBBWWSSW",
+        "WWWWWBBBWWWWW",
+        ".WWWWBBBWWWW.",
+        "..wwwBBBwww..",
+        ".wwwwBBBwwww.",
+        ".www..B..www.",
+    ], {"W": rgba(240, 225, 180), "w": rgba(214, 194, 148), "S": rgba(160, 128, 90), "B": rgba(120, 92, 70), "A": rgba(120, 92, 70)}),
+    ("samedi", "silhouette"): ([  # eclat de souvenir
+        "....S....",
+        "....S....",
+        "...SWS...",
+        "SSSWWWSSS",
+        "...SWS...",
+        "....S....",
+        "....S....",
+    ], {"S": rgba(200, 205, 255), "W": rgba(255, 255, 255)}),
+    ("dimanche", "derniere_nuit"): ([  # croissant de lune
+        "...MMM..",
+        ".MMMH...",
+        "MMMH....",
+        "MMM.....",
+        "MMM.....",
+        ".MMM....",
+        "...MMM..",
+    ], {"M": rgba(255, 225, 200), "H": rgba(255, 250, 240)}),
+}
+
+
+def projectiles():
+    for (night, name), (rows, pal) in PROJECTILES.items():
+        save(from_ascii(rows, pal), "projectiles", night, f"{name}.png")
+
+
 def save(img, *parts):
     path = os.path.join(ROOT, *parts)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1759,7 +1969,9 @@ def main():
     frames = player_frames()
     save(frames[0], "player", "idle.png")
     save(sheet(frames), "player", "sheet.png")
+    projectiles()
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    projectiles() if sys.argv[1:] == ["projectiles"] else main()

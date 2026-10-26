@@ -14,6 +14,16 @@ const Shrink := preload("res://scripts/combat/hazards/shrink.gd")
 const Boulder := preload("res://scripts/combat/hazards/boulder.gd")
 # Surface jouable de l'arene (900 x 540 moins une marge).
 const ARENA := Rect2(50, 50, 800, 440)
+# Projectiles dessines (tools/gen_pixel_art.py) : par defaut ils pointent dans leur direction ;
+# ceux-ci tournent sur eux-memes, ou restent droits.
+const LOOKS := {
+	"pile_devoirs": "spin", "labyrinthe": "spin", "pile_ou_face": "spin", "mur": "spin",
+	"tapis_roulant": "spin", "foule_lointaine": "spin", "silhouette": "spin", "derniere_nuit": "spin",
+	"veilleuse": "still", "reveil_grincheux": "still", "deux_voies": "still", "absence": "still",
+	"maison_vide": "still",
+}
+
+static var _textures := {}
 
 static func _scene() -> Node:
 	return (Engine.get_main_loop() as SceneTree).current_scene
@@ -36,6 +46,18 @@ static func shoot(source: Node2D, direction: Vector2, speed: float = 170.0, colo
 	projectile.global_position = source.global_position + projectile.direction * 22.0
 	var visual: Polygon2D = projectile.get_node("Visual")
 	visual.color = color
+	var texture := projectile_texture(source)
+	if texture and text == "":
+		visual.visible = false
+		var sprite := Sprite2D.new()
+		sprite.texture = texture
+		sprite.scale = Vector2(2, 2)
+		sprite.modulate.a = color.a  # les leurres restent translucides
+		projectile.add_child(sprite)
+		projectile.sprite = sprite
+		projectile.look = LOOKS.get(texture.resource_path.get_file().get_basename(), "aim")
+		if projectile.look == "aim":
+			sprite.rotation = projectile.direction.angle()
 	if text != "":
 		visual.visible = false
 		var label := Label.new()
@@ -47,6 +69,18 @@ static func shoot(source: Node2D, direction: Vector2, speed: float = 170.0, colo
 		label.position = Vector2(-label.get_minimum_size().x / 2.0, -8)
 		projectile.add_child(label)
 	return projectile
+
+# Projectile dessine du mob : res://assets/sprites/projectiles/<nuit>/<mob>.png, d'apres le
+# chemin de son script (scripts/combat/mobs/<nuit>/<mob>.gd). null : losange colore par defaut.
+static func projectile_texture(source: Node) -> Texture2D:
+	var script: Script = source.get_script() if source else null
+	if script == null:
+		return null
+	var path := script.resource_path
+	if not _textures.has(path):
+		var png := path.replace("res://scripts/combat/mobs/", "res://assets/sprites/projectiles/").replace(".gd", ".png")
+		_textures[path] = load(png) if path.begins_with("res://scripts/combat/mobs/") and ResourceLoader.exists(png) else null
+	return _textures[path]
 
 # Salve en eventail centree sur direction.
 static func fan(source: Node2D, direction: Vector2, count: int, spread_degrees: float, speed: float, color: Color, texts: Array = []) -> void:

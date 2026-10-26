@@ -39,6 +39,19 @@ func _initialize() -> void:
 	var mobs := get_nodes_in_group("mobs")
 	assert(mobs.size() >= 2)  # plus que MAX_MOBS possible : certains invoquent des allies
 	assert(not arena.combat_over)
+	# Chaque projectile dessine correspond a un mob ; un tir du mob prend son dessin, un mot reste du texte.
+	for night in DirAccess.get_directories_at("res://assets/sprites/projectiles"):
+		for file in DirAccess.get_files_at("res://assets/sprites/projectiles/" + night):
+			if file.ends_with(".png"):
+				assert(ResourceLoader.exists("res://scripts/combat/mobs/%s/%s" % [night, file.replace(".png", ".gd")]))
+	var lamp: Node2D = load("res://scripts/combat/mobs/lundi/veilleuse.gd").new()
+	var orb = Hazards.shoot(lamp, Vector2.RIGHT)
+	assert(orb.sprite and orb.sprite.texture.resource_path.ends_with("projectiles/lundi/veilleuse.png") and orb.look == "still")
+	var word = Hazards.shoot(lamp, Vector2.RIGHT, 170.0, Color.WHITE, "CHUT")
+	assert(word.sprite == null)
+	orb.free()
+	word.free()
+	lamp.free()
 	# La musique de combat tourne (lecteur ajoute a la racine, en boucle).
 	var music_players := root.get_children().filter(func(n): return n is AudioStreamPlayer and n.get_meta("track", "") == "combat")
 	assert(music_players.size() == 1 and music_players[0].playing)

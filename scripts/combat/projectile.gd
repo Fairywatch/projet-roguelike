@@ -7,6 +7,8 @@ var source: Node = null
 var curve := 0.0      # rotation de la trajectoire (radians/s) : projectiles qui tournent
 var homing := 0.0     # force de guidage vers le joueur (radians/s) : avions de papier...
 var harmless := false # faux projectile (leurre) : ne blesse pas
+var sprite: Sprite2D = null  # dessin du mob (voir Hazards.shoot)
+var look := "aim"    # aim : suit sa trajectoire ; spin : tourne ; still : reste droit
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -21,6 +23,10 @@ func _physics_process(delta: float) -> void:
 			var wanted := (target.global_position - global_position).angle()
 			direction = Vector2.from_angle(rotate_toward(direction.angle(), wanted, homing * delta))
 	position += direction * speed * delta
+	if sprite and look == "aim":
+		sprite.rotation = direction.angle()
+	elif sprite and look == "spin":
+		sprite.rotation += 7.0 * delta
 
 func _on_body_entered(body: Node2D) -> void:
 	if body == source:
