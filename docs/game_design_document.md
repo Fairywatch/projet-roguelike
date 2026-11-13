@@ -81,15 +81,17 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 | Nuit | Émotion | Étages | Difficulté | Cauchemars | Récompense |
 |---|---|---|---|---|---|
 | Lundi | Fatigue | 6 | +0 % | 10 % | 15 |
-| Mardi | Stress | 7 | +15 % | 20 % | 25 |
-| Mercredi | Doute | 8 | +30 % | 35 % | 35 |
-| Jeudi | Frustration | 9 | +45 % | 50 % | 50 |
-| Vendredi | Épuisement | 10 | +60 % | 65 % | 65 |
-| Samedi | Solitude | 11 | +75 % | 80 % | 80 |
-| Dimanche | Angoisse | 12 | +90 % | 95 % | 120 |
+| Mardi | Stress | 7 | +10 % | 20 % | 25 |
+| Mercredi | Doute | 8 | +20 % | 35 % | 35 |
+| Jeudi | Frustration | 9 | +30 % | 50 % | 50 |
+| Vendredi | Épuisement | 10 | +40 % | 65 % | 65 |
+| Samedi | Solitude | 11 | +50 % | 80 % | 80 |
+| Dimanche | Angoisse | 12 | +60 % | 95 % | 120 |
+
+*Équilibrage* : le bonus de chaque nuit reste modéré parce qu'il s'ajoute à des nuits plus longues (+8 % par étage), à plus d'étages cauchemar et à un bestiaire plus riche, alors que le joueur repart sans objet à chaque nuit. Les **boss** ne prennent que la moitié de ce palier en PV (leur rythme, lui, le suit en entier). Banc d'essai : `tools/balance/` (un bot joue les vrais combats de chaque nuit et mesure les PV perdus).
 
 - Chaque nuit a son **bestiaire** (`docs/bestiaire.md`) et ses **deux lieux** (un pour le sommeil paradoxal, un pour le profond), avec tuiles, décors, lumière et une **règle d'étage** qui monte au fil de la nuit (`docs/nuits.md`, produits nuit par nuit).
-- **Normal ou Cauchemar** : en entrant dans une tour, le joueur choisit son mode (`scripts/hub/mode_panel.gd`, gardé dans la sauvegarde). **Normal** : un ennemi de moins par combat (jamais plus de 3) et certains ennemis plus lents à tirer (la Veilleuse fatiguée prévient plus longtemps et ne tire pas juste après s'être rallumée près du joueur). **Cauchemar** : la difficulté d'origine. À ne pas confondre avec les **étages** cauchemar, tirés selon la nuit, qui donnent la variante cauchemar des ennemis.
+- **Normal ou Cauchemar** : en entrant dans une tour, le joueur choisit son mode (`scripts/hub/mode_panel.gd`, gardé dans la sauvegarde). **Normal** : un ennemi de moins par combat (jamais plus de 3), des boss à 80 % de leurs PV qui attaquent 15 % moins souvent, et certains ennemis plus lents à tirer (la Veilleuse fatiguée prévient plus longtemps et ne tire pas juste après s'être rallumée près du joueur). **Cauchemar** : la difficulté d'origine. À ne pas confondre avec les **étages** cauchemar, tirés selon la nuit, qui donnent la variante cauchemar des ennemis.
 - **Mode Speedrun** : un **chrono unique pour toute la nuit** (75 s par étage), qui ne tourne qu'en jeu. À zéro, **le réveil sonne** : la nuit s'arrête, sans récompense. La mort garde sa règle habituelle, et le chrono continue de tourner. Meilleur temps enregistré par nuit.
 
 ---
@@ -106,7 +108,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 ## 8. Système de loot
 
 - **Reset complet du stuff de run à chaque mort** (roguelite pur) — justifié narrativement par le réveil/redémarrage du rêve.
-- **Objets passifs** : cumulables sans limite (y compris plusieurs exemplaires du même). Chacun est décrit par des effets chiffrés (PV, dégâts, vitesse, critiques, esquive, vol de vie, bouclier, ennemis affaiblis...) : ajouter un passif ne demande pas de code.
+- **Objets passifs** : cumulables sans limite (y compris plusieurs exemplaires du même), mais certains effets sont plafonnés pour qu'un empilement ne rende pas intouchable : esquive 50 %, soin en frappant 30 %, soin en tuant 50 %, 3 coups bloqués et 2 survies par combat, ennemis affaiblis de moitié au plus. Chacun est décrit par des effets chiffrés (PV, dégâts, vitesse, critiques, esquive, vol de vie, bouclier, ennemis affaiblis...) : ajouter un passif ne demande pas de code.
 - **Objet actif** : un seul à la fois, utilisé avec L (Y à la manette) en combat, 3 charges. Un combat gagné rend une charge. Prendre un nouvel actif laisse l'ancien au sol, avec ses charges restantes.
 - Le butin tombe **au sol** : le joueur choisit de le prendre (E) ou non. Les objets au sol restent sur l'étage.
 - **Chaque objet a son icône et un tier** (S, A, B, C : sa puissance ; la rareté, elle, dit s'il est fréquent). Le ramasser affiche une **bannière façon Isaac** (icône, tier, nom, effet). L'**inventaire** (Tab / Select) met le jeu en pause et liste l'objet actif et les passifs avec leur fiche.

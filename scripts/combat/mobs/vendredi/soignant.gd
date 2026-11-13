@@ -29,7 +29,7 @@ func _physics_process(delta: float) -> void:
 	if state != State.CHASE or player == null:
 		return
 	var away := global_position - player.global_position
-	velocity = away.normalized() * FLEE_SPEED if away.length() < KEEP_AWAY else Vector2.ZERO
+	velocity = flee_direction(player.global_position) * FLEE_SPEED if away.length() < KEEP_AWAY else Vector2.ZERO
 	move_and_slide()
 	global_position = Hazards.clamp_to_arena(global_position)
 	if alt:

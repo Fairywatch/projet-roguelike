@@ -61,7 +61,7 @@ const ACTIVES := [
 	{"id": "sept_ans_de_malheur", "name": "Sept Ans de Malheur", "desc": "Invincibilité brève + leurre", "rarity": RARE, "tier": "B"},
 	{"id": "mouchoir_usage", "name": "Mouchoir usagé", "desc": "Soigne 1 PV", "rarity": COMMUN, "tier": "B"},
 	{"id": "reveil_strident", "name": "Réveil strident", "desc": "Étourdit les ennemis proches", "rarity": COMMUN, "tier": "B"},
-	{"id": "oreiller_volant", "name": "Oreiller volant", "desc": "2 dégâts à tous les ennemis proches", "rarity": RARE, "tier": "A"},
+	{"id": "oreiller_volant", "name": "Oreiller volant", "desc": "Double coup à tous les ennemis proches", "rarity": RARE, "tier": "A"},
 	{"id": "tasse_de_cafe", "name": "Tasse de café", "desc": "Dash recharge et +50 % de vitesse 4 s", "rarity": COMMUN, "tier": "C"},
 ]
 

@@ -5,7 +5,7 @@ extends BaseMob
 # Cauchemar : le trou est plus etroit.
 
 const RING_COLOR := Color(1, 0.4, 0.5)
-const MIN_COOLDOWN := 0.55
+const MIN_COOLDOWN := 0.8
 const SPEED_UP := 0.85
 
 var twin := false
@@ -28,5 +28,5 @@ func _on_attack_begin() -> void:
 	var pulse := create_tween()
 	pulse.tween_property(sprite, "scale", sprite.scale * 1.25, 0.06)
 	pulse.tween_property(sprite, "scale", sprite.scale, 0.15)
-	Hazards.ring(global_position, 170.0, [[randf() * TAU, 0.4 if nightmare else 0.55]], RING_COLOR)
+	Hazards.ring(global_position, 170.0, [[randf() * TAU, 0.5 if nightmare else 0.7]], RING_COLOR)
 	cooldown_duration = maxf(MIN_COOLDOWN, cooldown_duration * SPEED_UP)

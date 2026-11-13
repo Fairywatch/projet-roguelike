@@ -20,6 +20,10 @@ const HURT_INVINCIBILITY := 0.8
 const MIN_COOLDOWN_MULT := 0.3
 const MIN_SPEED_MULT := 0.5
 const MAX_EVASION := 0.5
+const MAX_HEAL_ON_HIT := 0.3
+const MAX_HEAL_ON_KILL := 0.5
+const MAX_SHIELD := 3
+const MAX_EXTRA_LIVES := 2
 const REVEIL_RADIUS := 220.0
 const OREILLER_RADIUS := 150.0
 const OREILLER_DAMAGE := 2
@@ -100,14 +104,14 @@ func apply_items() -> void:
 	hurt_invincibility = HURT_INVINCIBILITY + GameState.mod("iframes")
 	has_dash_trail = GameState.mod("dash_trail") > 0
 	has_slow_on_hit = GameState.mod("slow_on_hit") > 0
-	heal_on_hit_chance = GameState.mod("heal_on_hit")
-	heal_on_kill_chance = GameState.mod("heal_on_kill")
+	heal_on_hit_chance = minf(MAX_HEAL_ON_HIT, GameState.mod("heal_on_hit"))
+	heal_on_kill_chance = minf(MAX_HEAL_ON_KILL, GameState.mod("heal_on_kill"))
 	crit_chance = GameState.mod("crit")
 	evasion = minf(MAX_EVASION, GameState.mod("evasion"))
 	knockback = GameState.mod("knockback")
 	thorns = int(GameState.mod("thorns"))
-	extra_lives = int(GameState.mod("extra_lives"))
-	shield = int(GameState.mod("shield"))
+	extra_lives = mini(MAX_EXTRA_LIVES, int(GameState.mod("extra_lives")))
+	shield = mini(MAX_SHIELD, int(GameState.mod("shield")))
 	hp = clampi(max_hp - lost, 1, max_hp)  # un +PV max arrive plein
 
 func _process(delta: float) -> void:
@@ -273,7 +277,7 @@ func _use_reveil_strident() -> void:
 func _use_oreiller_volant() -> void:
 	_ring(Color(1, 1, 1), OREILLER_RADIUS)
 	for mob in _mobs_within(OREILLER_RADIUS):
-		mob.take_hit(OREILLER_DAMAGE)
+		mob.take_hit(OREILLER_DAMAGE * attack_damage)
 
 func _ring(color: Color, radius: float) -> void:
 	ring_color = color

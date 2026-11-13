@@ -24,8 +24,9 @@ func _on_ready() -> void:
 
 func _on_attack_begin() -> void:
 	cycle += 1
-	if cycle % 3 == 1 and alive_count("Œuf") < MAX_EGGS:
-		var hatch := "vendredi/sangsue" if alt else "vendredi/soignant"
+	var hatch := "vendredi/sangsue" if alt else "vendredi/soignant"
+	var brood := alive_count("Œuf") + alive_count("Sangsue de sommeil" if alt else "Soignant")
+	if cycle % 3 == 1 and brood < MAX_EGGS:
 		for i in 3 if nightmare else 2:
 			var spot := position + Vector2.from_angle(TAU * i / 3.0 + randf()) * 110.0
 			spawn_ally("vendredi/oeuf", spot, {"hatch": hatch})

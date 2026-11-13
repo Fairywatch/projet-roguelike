@@ -5,10 +5,10 @@ extends BaseMob
 # Cauchemar : accelere plus fort.
 
 const START_SPEED := 170.0
-const SPEED_GAIN := 25.0
-const MAX_SPEED := 420.0
+const SPEED_GAIN := 18.0
+const MAX_SPEED := 320.0
 const HIT_RANGE := 26.0
-const MAX_SPLITS := 3
+const MAX_SPLITS := 2
 
 var move_dir := Vector2.from_angle(randf() * TAU)
 var speed := START_SPEED

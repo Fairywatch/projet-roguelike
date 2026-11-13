@@ -193,7 +193,7 @@
 **Boss de fin : La Dernière Nuit** *(la peur de la fin, le dernier boss du jeu)*
 1. Elle reprend les **attaques des boss de fin** de toute la semaine, en accéléré.
 2. L'arène se **resserre dans le noir**.
-3. **Survivre jusqu'à l'aube** : impossible à vaincre, il faut tenir jusqu'à ce que le jour se lève ; à l'aube, elle se dissout (en écho à la fin du récit : « il a cessé de lutter contre l'aube »).
+3. **Survivre jusqu'à l'aube** : impossible à vaincre, il faut tenir 20 s, le temps que le noir recule et que le jour se lève ; à l'aube, elle se dissout (en écho à la fin du récit : « il a cessé de lutter contre l'aube »).
 
 ---
 

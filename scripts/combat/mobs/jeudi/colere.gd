@@ -10,10 +10,10 @@ extends BaseMob
 const LIGHTNING := Color(1, 0.95, 0.5)
 const FIRE := Color(1, 0.4, 0.2)
 const PHASE_THRESHOLDS := [0.66, 0.33]
-const CALM_TIME := 2.2
+const CALM_TIME := 3.0
 const GUST_TIME := 2.0
-const GUST_HEAL := 2
-const COOLDOWNS := [1.2, 0.72, 1.5]  # par phase : normal, rage (plus vite), orage qui passe (plus lent)
+const GUST_HEAL := 1
+const COOLDOWNS := [1.2, 0.9, 1.5]  # par phase : normal, rage (plus vite), orage qui passe (plus lent)
 
 var phase := 1
 var cycle := 0

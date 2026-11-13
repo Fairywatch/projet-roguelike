@@ -14,6 +14,8 @@ const NIGHTMARE_HP := 1.3
 const NIGHTMARE_TINT := Color(0.62, 0.5, 0.74)
 const ELITE_HP := 1.6
 const ELITE_SCALE := 1.35
+# Part du palier de difficulte appliquee aux PV des boss (le rythme, lui, suit tout le palier).
+const BOSS_HP_SCALING := 0.5
 
 var chase_speed := 70.0
 var attack_range := 55.0
@@ -89,6 +91,19 @@ func set_display_scale(factor: float) -> void:
 	$CollisionShape2D.shape = shape
 	$Hurtbox/CollisionShape2D.shape = shape
 
+# Direction de fuite face au joueur. Pres d'un bord, elle tourne vers le centre : l'ennemi longe
+# le mur au lieu de se coller dans un coin (ou il devenait intouchable, cache derriere un boss).
+const FLEE_EDGE := 90.0
+
+func flee_direction(threat: Vector2) -> Vector2:
+	var away := (global_position - threat).normalized()
+	var arena := Rect2(50, 50, 800, 440)  # Hazards.ARENA
+	var edge := minf(minf(global_position.x - arena.position.x, arena.end.x - global_position.x), minf(global_position.y - arena.position.y, arena.end.y - global_position.y))
+	if edge < FLEE_EDGE:
+		var to_center := (arena.get_center() - global_position).normalized()
+		away = (away + to_center * (1.0 - edge / FLEE_EDGE) * 1.6).normalized()
+	return away
+
 # Nombre d'ennemis vivants portant ce nom (pour limiter les invocations).
 func alive_count(mob_name: String) -> int:
 	return get_tree().get_nodes_in_group("mobs").filter(func(m): return m.display_name == mob_name and m.state != State.DEAD).size()
@@ -121,7 +136,7 @@ func apply_variant() -> void:
 
 # Les telegraphes ne sont pas touches : la lisibilite reste la meme a tous les paliers.
 func apply_difficulty(mult: float) -> void:
-	hp = ceili(hp * mult)
+	hp = ceili(hp * (1.0 + (mult - 1.0) * BOSS_HP_SCALING if is_boss else mult))
 	max_hp = hp
 	var tempo := sqrt(mult)
 	chase_speed *= tempo

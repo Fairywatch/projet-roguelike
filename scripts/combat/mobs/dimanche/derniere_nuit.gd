@@ -7,7 +7,7 @@ extends BaseMob
 #             dissout (en echo a la fin du recit : "il a cesse de lutter contre l'aube").
 
 const PHASE_THRESHOLDS := [0.66, 0.33]
-const DAWN_TIME := 30.0
+const DAWN_TIME := 20.0
 const WORDS := ["CHUT", "TAIS-TOI", "PLUS TARD"]
 const LETTERS := ["A", "B", "C", "?"]
 const NIGHT := Color(0.6, 0.5, 0.9)
@@ -45,9 +45,11 @@ func take_hit(damage: int = 1) -> void:
 		Fx.flash(sprite, Color(0.8, 0.7, 1), 0.4)
 		if phase == 2:
 			dark = Hazards.shrink(14.0, 1.2)
-		else:  # plus rien a frapper : seulement tenir
+		else:  # plus rien a frapper : seulement tenir ; le noir recule, l'aube approche
 			invulnerable = true
-			cooldown_duration = 0.8
+			cooldown_duration = 1.0
+			if is_instance_valid(dark):
+				dark.stop()
 
 func _process(delta: float) -> void:
 	super(delta)
@@ -83,6 +85,6 @@ func _on_attack_begin() -> void:
 		4:
 			for i in 6:
 				Hazards.shoot(self, aim.rotated(randf_range(-0.6, 0.6)), 100.0, SOFT)
-	if phase == 3:  # l'aube approche : la nuit s'acharne
+	if phase == 3 and cycle % 2 == 0:  # l'aube approche : la nuit s'acharne
 		var gap := randf() * TAU
 		Hazards.ring(global_position, 150.0, [[gap, 0.6], [gap + PI, 0.6]], NIGHT)

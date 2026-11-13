@@ -54,6 +54,14 @@ func _initialize() -> void:
 	mob.apply_difficulty(2.0)
 	assert(mob.hp == ceili(base_hp * 2.0))
 	assert(mob.telegraph_duration == telegraph)
+	# Un boss ne prend que la moitie du palier en PV, mais tout le palier en rythme.
+	var boss := Bestiary.make("lundi/porte_des_voix")
+	root.add_child(boss)
+	var boss_hp: int = boss.hp
+	var boss_cooldown: float = boss.cooldown_duration
+	boss.apply_difficulty(2.0)
+	assert(boss.hp == ceili(boss_hp * 1.5) and is_equal_approx(boss.cooldown_duration, boss_cooldown / sqrt(2.0)))
+	boss.free()
 
 	gs.floor_index = gs.floor_count() - 1
 	assert(gs.is_last_floor())

@@ -44,7 +44,7 @@ func _on_attack_begin() -> void:
 	else:
 		for i in 4 if nightmare else 3:
 			var pos := Hazards.clamp_to_arena(target + Vector2.from_angle(randf() * TAU) * randf_range(0, 90))
-			Hazards.zone(pos, 60.0, "damage", 1.0, 2.5, ZONE_COLOR)
+			Hazards.zone(pos, 60.0, "damage", 1.0, 1.5, ZONE_COLOR)
 
 func _minion_count() -> int:
 	return get_tree().get_nodes_in_group("mobs").filter(func(m): return m.display_name == "Bâilleur" and m.state != State.DEAD).size()

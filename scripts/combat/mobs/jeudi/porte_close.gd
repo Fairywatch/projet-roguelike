@@ -6,7 +6,7 @@ extends BaseMob
 
 const TURN_SPEED := 1.1   # radians/s
 const SPIN_SPEED := 1.8
-const FRONT_ARC := 0.45   # cos de l'angle : en dessous, le coup passe (dos ou cote)
+const FRONT_ARC := 0.6    # cos de l'angle : en dessous, le coup passe (dos ou cote)
 const SLAM := Color(1, 0.55, 0.3)
 
 var facing := Vector2.LEFT

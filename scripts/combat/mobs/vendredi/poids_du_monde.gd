@@ -8,8 +8,8 @@ extends BaseMob
 
 const SLAM := Color(0.6, 0.55, 0.75)
 const PHASE_THRESHOLDS := [0.66, 0.33]
-const GUARDS := 3
-const BURDEN := ["vendredi/fardeau", "vendredi/sangsue", "vendredi/passager", "vendredi/passager", "vendredi/bougie_fondue"]
+const GUARDS := 2
+const BURDEN := ["vendredi/fardeau", "vendredi/sangsue", "vendredi/passager"]
 
 var phase := 1
 
@@ -19,7 +19,7 @@ func _texture_path() -> String:
 func _on_ready() -> void:
 	display_name = "Le Poids du Monde"
 	is_boss = true
-	hp = 50
+	hp = 44
 	chase_speed = 25.0
 	attack_range = 2000.0
 	telegraph_duration = 0.8

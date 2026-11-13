@@ -29,7 +29,7 @@ func _on_attack_begin() -> void:
 			spawn_ally("mardi/trotteuse", position + Vector2(side * 90, 60))
 		return
 	var gap := randf() * TAU
-	for i in 4 if nightmare else 3:
+	for i in 3 if nightmare else 2:
 		if i > 0:
 			if not await pause(0.35):
 				return

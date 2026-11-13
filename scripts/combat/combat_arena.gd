@@ -4,6 +4,9 @@ const DROP_CHANCE := 0.45
 const MAX_MOBS := 4
 const FLOORS_PER_EXTRA_MOB := 4
 const NORMAL_MAX_MOBS := 3  # mode Normal : un ennemi de moins, jamais plus de 3
+const NORMAL_BOSS_HP := 0.8  # mode Normal : boss moins resistants...
+const NORMAL_BOSS_COOLDOWN := 1.15  # ... et qui attaquent un peu moins souvent
+const MIN_ENEMY_HP_MULT := 0.5  # les passifs n'enlevent jamais plus de la moitie des PV ennemis
 const NEGATIVE_BOSS_CHANCE := 1.0 / 7.0
 const ARENA_SIZE := Vector2(900, 540)
 const SPAWN_MARGIN := 60.0
@@ -91,7 +94,10 @@ func _spawn_mob(mob: BaseMob) -> void:
 	mob.apply_variant()
 	had_elite = had_elite or mob.elite
 	# Passifs qui affaiblissent les ennemis (Marchand de sable, Montre a gousset...).
-	mob.hp = maxi(1, ceili(mob.hp * (1.0 + GameState.mod("enemy_hp"))))
+	if mob.is_boss and not GameState.nightmare_mode:
+		mob.hp = ceili(mob.hp * NORMAL_BOSS_HP)
+		mob.cooldown_duration *= NORMAL_BOSS_COOLDOWN
+	mob.hp = maxi(1, ceili(mob.hp * maxf(MIN_ENEMY_HP_MULT, 1.0 + GameState.mod("enemy_hp"))))
 	mob.max_hp = mob.hp
 	mob.chase_speed *= maxf(0.3, 1.0 + GameState.mod("enemy_speed"))
 	mob.cooldown_duration *= maxf(0.3, 1.0 + GameState.mod("enemy_cooldown"))

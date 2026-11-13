@@ -33,6 +33,8 @@ func take_hit(damage: int = 1) -> void:
 	super(damage)
 	if state == State.DEAD:
 		return
+	if rage >= RAGE_LIMIT:  # deja allumee : la meche court, elle ne grossit plus
+		return
 	rage += 2 if nightmare else 1
 	sprite.scale *= 1.12
 	chase_speed *= 1.25
