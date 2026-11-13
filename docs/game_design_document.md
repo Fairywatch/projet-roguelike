@@ -37,11 +37,11 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 2. Il explore la carte d'un étage (déplacement libre, décors interactifs, coffres, PNJ).
 3. Une **rencontre aléatoire** se déclenche (façon herbes hautes de Pokémon).
 4. Transition stylisée selon le type d'étage → le joueur est **enfermé dans une arène de combat séparée**.
-5. Combat en **temps réel** contre 2 à 4 ennemis (dash, esquive avec i-frames, attaques, patterns lisibles — inspiration Hadès).
+5. Combat en **temps réel** contre 1 à 4 ennemis selon le mode (dash, esquive avec i-frames, attaques, patterns lisibles — inspiration Hadès).
 6. Victoire → butin éventuel posé au sol (à prendre ou non), pièces, retour sur la carte.
 7. Pour changer d'étage, le joueur prend le **portail**, toujours **gardé par un boss** : l'étage ne change qu'après la victoire.
 8. Fin de la tour (le rêveur se réveille) ou mort → retour au menu.
-9. Mort → reset du stuff de run, le joueur redescend de 5 étages, nouveau tirage aléatoire au-dessus (voir Structure & Difficulté).
+9. Mort → reset du stuff de run, le joueur redescend de 2 étages, nouveau tirage aléatoire au-dessus (voir Structure & Difficulté).
 
 ---
 
@@ -49,7 +49,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 
 - **Temps réel**, inspiration directe *Hadès* : dash avec i-frames, attaque en arc, objet actif. Touches : ZQSD (ou flèches) pour se déplacer, J attaque, K dash, L objet actif, E interagir, Tab passifs. **Manette** : stick gauche ou croix, X attaque, B dash, Y objet actif, A interagir, Select passifs, Start menu. Toutes les touches se changent dans Paramètres > Touches.
 - Arène séparée de la map d'exploration, habillée avec les tuiles du type d'étage.
-- **Rencontres** : 2 à 4 ennemis (un de plus tous les 4 étages). Les **boss combattent seuls**.
+- **Rencontres** : 2 à 4 ennemis en mode Cauchemar (un de plus tous les 4 étages), un de moins en mode Normal (1 à 3). Les **boss combattent seuls**.
 - Les mobs ont des patterns d'attaque **télégraphiés** clairement (lisibilité avant tout) : la difficulté augmente leurs PV, leur vitesse et leur cadence, **jamais la durée des télégraphes**.
 - Brève invincibilité après un coup encaissé (plusieurs ennemis peuvent frapper en même temps).
 - **PV façon Isaac** : les PV perdus le restent d'un combat à l'autre pendant toute la nuit. On les récupère avec les étoiles de la carte (+1 PV, pas au-delà du max), le Mouchoir usagé et les passifs de soin. Un +PV max arrive plein. PV affichés sur la carte.
@@ -65,7 +65,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - **Ordre des étages aléatoire** à chaque run, alternant sommeil paradoxal / sommeil profond.
 - **Taille des étages** : petits au début (16×10 cases), de plus en plus grands jusqu'au dernier étage (34×20).
 - **Courbe de difficulté** : +8 % par étage atteint, +15 % en sommeil profond (modificateur de type), plus le bonus propre à la nuit.
-- **À la mort** : le joueur redescend de 5 étages en dessous de sa position actuelle, avec un **nouveau tirage aléatoire des étages au-dessus** de ce point. Une run n'est donc jamais totalement perdue, mais recule concrètement.
+- **À la mort** : le joueur redescend de 2 étages en dessous de sa position actuelle (les nuits ne font que 6 à 12 étages), avec un **nouveau tirage aléatoire des étages au-dessus** de ce point. Une run n'est donc jamais totalement perdue, mais recule concrètement.
 - **Quitter le jeu en plein combat compte comme une mort** (pas de fuite par la fermeture du jeu).
 - **Plongée négative** : à l'étage 0, un second portail (rouge) mène aux profondeurs (étages -1 à -10), plus dangereuses (les boss de la nuit y rôdent). Les remonter rapporte un butin ; y mourir referme le passage pour la partie.
 
@@ -89,7 +89,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 | Dimanche | Angoisse | 12 | +90 % | 95 % | 120 |
 
 - Chaque nuit a son **bestiaire** (`docs/bestiaire.md`) et ses **deux lieux** (un pour le sommeil paradoxal, un pour le profond), avec tuiles, décors, lumière et une **règle d'étage** qui monte au fil de la nuit (`docs/nuits.md`, produits nuit par nuit).
-- **Mode Normal** : la boucle telle que décrite dans ce document.
+- **Normal ou Cauchemar** : en entrant dans une tour, le joueur choisit son mode (`scripts/hub/mode_panel.gd`, gardé dans la sauvegarde). **Normal** : un ennemi de moins par combat (jamais plus de 3) et certains ennemis plus lents à tirer (la Veilleuse fatiguée prévient plus longtemps et ne tire pas juste après s'être rallumée près du joueur). **Cauchemar** : la difficulté d'origine. À ne pas confondre avec les **étages** cauchemar, tirés selon la nuit, qui donnent la variante cauchemar des ennemis.
 - **Mode Speedrun** : un **chrono unique pour toute la nuit** (75 s par étage), qui ne tourne qu'en jeu. À zéro, **le réveil sonne** : la nuit s'arrête, sans récompense. La mort garde sa règle habituelle, et le chrono continue de tourner. Meilleur temps enregistré par nuit.
 
 ---
@@ -107,7 +107,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 
 - **Reset complet du stuff de run à chaque mort** (roguelite pur) — justifié narrativement par le réveil/redémarrage du rêve.
 - **Objets passifs** : cumulables sans limite (y compris plusieurs exemplaires du même). Chacun est décrit par des effets chiffrés (PV, dégâts, vitesse, critiques, esquive, vol de vie, bouclier, ennemis affaiblis...) : ajouter un passif ne demande pas de code.
-- **Objet actif** : un seul à la fois, utilisé avec E en combat, 3 charges. Un combat gagné rend une charge. Prendre un nouvel actif laisse l'ancien au sol, avec ses charges restantes.
+- **Objet actif** : un seul à la fois, utilisé avec L (Y à la manette) en combat, 3 charges. Un combat gagné rend une charge. Prendre un nouvel actif laisse l'ancien au sol, avec ses charges restantes.
 - Le butin tombe **au sol** : le joueur choisit de le prendre (E) ou non. Les objets au sol restent sur l'étage.
 - **Chaque objet a son icône et un tier** (S, A, B, C : sa puissance ; la rareté, elle, dit s'il est fréquent). Le ramasser affiche une **bannière façon Isaac** (icône, tier, nom, effet). L'**inventaire** (Tab / Select) met le jeu en pause et liste l'objet actif et les passifs avec leur fiche.
 - Sources de loot :
@@ -141,16 +141,14 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 ## 11. Questions ouvertes à trancher
 
 - **Texte définitif du récit** : le premier jet de `scripts/story.gd` est à relire et réécrire.
-- **Contenu propre à chaque nuit** : histoire, bestiaire, biomes et boss spécifiques (les 7 nuits ne diffèrent encore que par leurs paramètres).
 - **Fin du jeu global** : que se passe-t-il quand le dimanche est terminé (fin de la semaine, nouvelle semaine plus dure) ?
 - **Méta-progression au-delà des passifs** : capacités permanentes, cosmétiques ?
 
-*Tranché depuis la première version : 7 nuits (une semaine), hub marchable pour les choisir, mode Speedrun (chrono global, fin = réveil), déblocage (terminer la nuit de la veille), taux de rencontre (4 % / 7 %), nature des achats (objets passifs).*
+*Tranché depuis la première version : 7 nuits (une semaine), hub marchable pour les choisir, mode Speedrun (chrono global, fin = réveil), déblocage (terminer la nuit de la veille), taux de rencontre (4 % / 7 %), nature des achats (objets passifs), contenu propre à chaque nuit (bestiaire, lieux, règles d'étage, cinématique de fin), modes Normal / Cauchemar, recul de 2 étages à la mort.*
 
 ---
 
 ## 12. Prochaines étapes
 
-- Donner à chaque nuit de la semaine son contenu : ambiance liée à son émotion, mobs et boss propres, particularité d'étage, fragment de récit.
-- Trancher le fil rouge narratif et sa mise en scène.
+- Réécrire le texte définitif du récit (`scripts/story.gd`).
 - Équilibrage en jeu (nombre d'ennemis, prix de la boutique, chrono du speedrun, taux de rencontre).

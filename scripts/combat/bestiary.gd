@@ -3,7 +3,6 @@ extends RefCounted
 
 # Bestiaire par nuit (docs/bestiaire.md). Chaque creature est un script de
 # scripts/combat/mobs/<nuit>/ qui etend BaseMob et construit son propre sprite.
-# Une nuit absente de NIGHTS utilise encore les anciens monstres (en attendant sa production).
 
 const MOBS_DIR := "res://scripts/combat/mobs/"
 const NIGHTS := {
@@ -47,9 +46,6 @@ const ELITE_CHANCE := 0.1
 const ALT_CHANCE := 0.5
 # Versions d'un boss tire au hasard : 3 boss x 4 versions = 12 combinaisons par nuit.
 const BOSS_VERSIONS := ["normal", "cauchemar", "elite", "comportement"]
-
-static func has_night(night_id: String) -> bool:
-	return NIGHTS.has(night_id)
 
 static func make(path: String) -> BaseMob:
 	return load(MOBS_DIR + path + ".gd").new()

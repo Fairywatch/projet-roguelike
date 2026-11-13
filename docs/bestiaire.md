@@ -1,4 +1,4 @@
-# Bestiaire de Dream Dive — fiches à valider
+# Bestiaire de Dream Dive
 
 *Fiches validées. Avancement de la production :*
 
@@ -14,7 +14,7 @@
 
 ## Règles retenues
 
-- **Tout le bestiaire est nouveau** : les 6 ennemis actuels et la Terreur nocturne sont remplacés.
+- **Tout le bestiaire est nouveau** : il a remplacé les 6 ennemis d'origine et la Terreur nocturne.
 - **Chaque créature incarne l'émotion de sa nuit**, dans son apparence *et* son comportement.
 - **Le ton s'assombrit au fil de la semaine** : décalé et presque attendrissant le lundi, oppressant le dimanche. Inspirations : *The Binding of Isaac* (créatures étranges, humour noir), *Hollow Knight* (silhouettes lisibles, boss marquants), *Undertale* (des ennemis qui ont une personnalité, des attaques qui racontent quelque chose).
 - **Difficulté lisible** : les télégraphes restent clairs à toutes les nuits ; la difficulté vient de patterns plus riches et de combats plus denses.
