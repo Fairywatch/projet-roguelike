@@ -22,6 +22,7 @@ config/features=PackedStringArray("4.7")
 
 GameState="*res://autoload/game_state.gd"
 SceneTransition="*res://scenes/transitions/SceneTransition.tscn"
+MCPRuntime="*uid://sqnp6go752x2"
 
 [display]
 
@@ -30,6 +31,14 @@ window/size/viewport_height=360
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+
+[filesystem]
+
+import/blender/enabled=false
 
 [gui]
 
