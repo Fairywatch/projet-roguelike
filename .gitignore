@@ -6,3 +6,9 @@
 .DS_Store
 Thumbs.db
 __pycache__/
+
+# Graphe de connaissance local (graphify)
+graphify-out/
+
+# Sauvegardes automatiques de Blender
+*.blend1
