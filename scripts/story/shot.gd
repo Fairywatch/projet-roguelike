@@ -8,6 +8,7 @@ extends Node2D
 const DIR := "res://assets/cinematics/"
 const SIZE := Vector2(1280, 720)
 const NIGHT := Color(0.016, 0.012, 0.035)
+const VIDEO_DRIFT := 0.3  # ecart tolere (secondes) entre une video et le temps du plan
 
 var duration := 10.0
 var lines: Array = []  # [debut, fin, texte, caracteres par seconde]
@@ -54,6 +55,29 @@ func layer(parent: Node, path: String) -> Sprite2D:
 	sprite.scale = Vector2(2, 2)
 	parent.add_child(sprite)
 	return sprite
+
+# Video plein cadre d'un plan rendu dans Blender (tools/blender/intro_cinematic.py). Elle se met
+# en pause quand le plan n'est plus a l'ecran.
+func video(parent: Node, path: String) -> VideoStreamPlayer:
+	var player := VideoStreamPlayer.new()
+	player.stream = load(DIR + path + ".ogv")
+	player.expand = true
+	player.size = SIZE
+	player.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(player)
+	visibility_changed.connect(func() -> void: player.paused = not is_visible_in_tree())
+	return player
+
+# Cale la video sur le temps du plan. Elle avance seule : on ne la replace que si elle s'ecarte
+# du temps demande (saut a la phrase suivante). Hors de l'arbre de scene (tests), rien a jouer.
+static func sync_video(player: VideoStreamPlayer, t: float, length: float) -> void:
+	if not player.is_inside_tree() or t >= length - 0.1:
+		return
+	if not player.is_playing():
+		player.play()
+		player.stream_position = t
+	elif absf(player.stream_position - t) > VIDEO_DRIFT:
+		player.stream_position = t
 
 # Image posee a une taille d'affichage donnee (coin haut gauche).
 func image(parent: Node, path: String, pos: Vector2, size := Vector2.ZERO) -> Sprite2D:
