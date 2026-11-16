@@ -277,19 +277,29 @@ func _load_fields(path: String, fields: Array) -> void:
 		if data.has(field):
 			set(field, data[field])
 
+# Ce qu'un etage retient en plus de sa generation (graine, famille, intensite).
+const FLOOR_COUNTERS := {
+	"wins": 0,
+	"combat_items": 0,  # objets deja gagnes en combats ordinaires sur cet etage
+	"opened_chests": [],
+	"ground_items": [],
+	"used_decor": [],
+}
+
 func get_or_create_floor_data(index: int) -> Dictionary:
 	if not floor_data_by_index.has(index):
 		floor_data_by_index[index] = {
 			"seed": randi(),
 			"family": randi() % 2,
 			"intensity": FloorGenerator.Intensity.CAUCHEMAR if randf() < tower()["nightmare_chance"] else FloorGenerator.Intensity.REVE,
-			"wins": 0,
-			"combat_items": 0,  # objets deja gagnes en combats ordinaires sur cet etage
-			"opened_chests": [],
-			"ground_items": [],
-			"used_decor": [],
 		}
-	return floor_data_by_index[index]
+	var data: Dictionary = floor_data_by_index[index]
+	# Les compteurs sont completes a chaque lecture : un etage enregistre avant l'ajout d'une cle
+	# (partie commencee avec une version plus ancienne du jeu) la recoit ici au lieu de planter.
+	for key in FLOOR_COUNTERS:
+		if not data.has(key):
+			data[key] = _copy(FLOOR_COUNTERS[key])
+	return data
 
 func current_floor() -> Dictionary:
 	return get_or_create_floor_data(floor_index)

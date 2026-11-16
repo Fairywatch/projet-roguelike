@@ -127,5 +127,25 @@ func _initialize() -> void:
 	assert(mirror.hp == before - 1)
 	mirror.free()
 
+	# Partie commencee avec une version plus ancienne : un etage enregistre sans "combat_items"
+	# recoit la cle a la lecture, et une victoire avec butin ne plante pas.
+	gs.new_run(0)
+	gs.floor_index = 1
+	gs.floor_data_by_index[1] = {"seed": 5, "family": 0, "intensity": 0, "wins": 2, "opened_chests": ["a"], "ground_items": [], "used_decor": []}
+	assert(gs.current_floor()["combat_items"] == 0 and gs.current_floor()["wins"] == 2 and gs.current_floor()["opened_chests"] == ["a"])
+	gs.floor_data_by_index[1].erase("combat_items")
+	change_scene_to_file("res://scenes/combat/CombatArena.tscn")
+	for i in 10:
+		await process_frame
+	var arena = current_scene
+	arena.had_elite = true  # butin garanti
+	for mob in arena._alive_mobs():
+		mob.take_hit(99)
+	await create_timer(0.5).timeout
+	assert(arena.combat_over and gs.current_floor()["wins"] == 3 and gs.current_floor()["combat_items"] == 1)
+	# Les listes d'un etage ne sont pas partagees avec le suivant.
+	gs.current_floor()["opened_chests"].append("b")
+	assert(gs.get_or_create_floor_data(2)["opened_chests"].is_empty())
+
 	print("test_item_rules OK")
 	quit()
