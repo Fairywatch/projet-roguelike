@@ -1,4 +1,9 @@
-"""Decors des cinematiques (pixel art haute definition, plus fin et plus doux que le jeu).
+"""Tours du hub, et anciens decors 2D des cinematiques (pixel art haute definition).
+
+Le jeu n'utilise plus que les tours du hub (assets/sprites/hub/) : l'intro et les fins de nuit
+sont maintenant des scenes 3D rendues dans Blender (tools/blender/). Les calques 2D ne sont plus
+dans le depot ; on peut encore les regenerer en nommant leur scene (chambre, soucis, horizon,
+plongee, fins).
 
 Lancer depuis la racine du projet : python tools/gen_cinematics.py [scene...]
 Chaque scene est une pile de calques 640x360 (1 pixel = 1 unite de l'ecran du jeu, deux fois plus
@@ -1167,9 +1172,10 @@ def preview(scene, names, out):
     base.resize((W * 2, H * 2), Image.NEAREST).save(out)
 
 
-SCENES = {"chambre": chambre, "soucis": soucis, "horizon": horizon, "plongee": plongee, "fins": fins}
+SCENES = {"hub": hub_towers, "chambre": chambre, "soucis": soucis, "horizon": horizon, "plongee": plongee, "fins": fins}
 
 if __name__ == "__main__":
-    for scene in sys.argv[1:] or SCENES:
+    # Sans argument : seulement ce que le jeu utilise encore, les tours du hub.
+    for scene in sys.argv[1:] or ["hub"]:
         SCENES[scene]()
         print("cinematique :", scene)
