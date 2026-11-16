@@ -1,6 +1,15 @@
 extends Node
 
 const BASE_MAX_HP := 3
+const MAX_HP_CAP := 8  # PV max plafonnes, quels que soient les objets
+# Contre le farm : au plus 3 objets gagnes en combats ordinaires par etage (au-dela, seulement
+# des pieces). Gardiens, coffres, quetes et cristaux n'entrent pas dans ce compte.
+const COMBAT_ITEMS_PER_FLOOR := 3
+# Butin mystere : une part des objets tombe cache (icone "?"). Dedans, une fois sur deux une
+# malediction, sinon un objet un peu meilleur que la normale (le pari vaut le coup).
+const MYSTERY_CHANCE := 0.2
+const MYSTERY_CURSE_CHANCE := 0.5
+const MYSTERY_QUALITY_BONUS := 0.3
 const DEATH_SETBACK_FLOORS := 2  # les nuits font 6 a 12 etages
 const MIN_FLOOR_INDEX := -10
 const ACTIVE_MAX_CHARGES := 3
@@ -31,7 +40,7 @@ const SAVED_FIELDS := [
 	"floor_index", "floor_data_by_index", "negative_dive_available", "return_position",
 	"run_started", "passive_items", "active_item_id", "active_charges", "hp_lost",
 	"pending_ground_item", "tower_index", "speedrun", "time_left", "run_time", "in_combat",
-	"boss_history", "nightmare_mode",
+	"boss_history", "nightmare_mode", "curses", "legendaries_seen",
 ]
 const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag", "shop_offers", "best_times", "intro_seen"]
 
@@ -66,6 +75,10 @@ var active_charges: int = 0
 # PV perdus pendant la nuit (facon Isaac) : ils restent perdus d'un combat a l'autre. On garde
 # les PV perdus plutot que les PV restants pour qu'un +PV max donne un coeur plein.
 var hp_lost: int = 0
+# Maledictions en cours : [{"id", "floors"}], "floors" = etages restants (celui-ci compris).
+var curses: Array = []
+# Legendaires deja tires cette nuit : chacun ne tombe qu'une fois par nuit.
+var legendaries_seen: Array = []
 # Mode de la nuit, choisi a l'entree de la tour : Normal (moins d'ennemis par combat, certains
 # ennemis plus lents a tirer) ou Cauchemar (la difficulte d'origine).
 var nightmare_mode := false
@@ -167,6 +180,7 @@ func get_or_create_floor_data(index: int) -> Dictionary:
 			"family": randi() % 2,
 			"intensity": FloorGenerator.Intensity.CAUCHEMAR if randf() < tower()["nightmare_chance"] else FloorGenerator.Intensity.REVE,
 			"wins": 0,
+			"combat_items": 0,  # objets deja gagnes en combats ordinaires sur cet etage
 			"opened_chests": [],
 			"ground_items": [],
 			"used_decor": [],
@@ -223,8 +237,10 @@ func new_run(index: int = tower_index, speedrun_mode: bool = false, nightmare: b
 	pending_ground_item = ""
 	reset_run_items()
 	boss_history.clear()
+	legendaries_seen.clear()
 	for id in start_bag:
 		add_passive_item(id)
+		_note_legendary(id)
 	start_bag.clear()
 	run_started = true
 
@@ -293,10 +309,19 @@ func take_guardian_exit() -> void:
 func advance_floor() -> void:
 	floor_index += 1
 	return_position = Vector2.ZERO
+	_tick_curses()
 
 func descend_floor() -> void:
 	floor_index = max(MIN_FLOOR_INDEX, floor_index - 1)
 	return_position = Vector2.ZERO
+	_tick_curses()
+
+# Un etage de passe : chaque malediction perd un etage, et s'efface a zero.
+func _tick_curses() -> void:
+	for curse in curses:
+		curse["floors"] -= 1
+	curses = curses.filter(func(curse): return curse["floors"] > 0)
+	_recompute_mods()
 
 func apply_death_setback() -> void:
 	var new_index: int = max(0, floor_index - DEATH_SETBACK_FLOORS)
@@ -306,6 +331,7 @@ func apply_death_setback() -> void:
 	floor_index = new_index
 	return_position = Vector2.ZERO
 	reset_run_items()
+	_recount_legendaries()
 	menu_message = "Tu te réveilles en sursaut... Tu reprendras à l'étage %d, les mains vides." % floor_index
 	shop_offers.clear()
 
@@ -318,6 +344,7 @@ func apply_negative_death() -> void:
 	return_position = Vector2.ZERO
 	menu_message = "Tu t'es perdu dans les profondeurs... le passage s'est referme pour de bon."
 	reset_run_items()
+	_recount_legendaries()
 
 func complete_negative_run() -> void:
 	for key in floor_data_by_index.keys():
@@ -325,7 +352,8 @@ func complete_negative_run() -> void:
 			floor_data_by_index.erase(key)
 	floor_index = 0
 	return_position = Vector2.ZERO
-	pending_ground_item = Items.PASSIVES.pick_random()["id"]
+	pending_ground_item = Items.PASSIVES.filter(func(item): return item["id"] not in legendaries_seen).pick_random()["id"]
+	_note_legendary(pending_ground_item)
 	var bonus_name: String = Items.find_passive(pending_ground_item)["name"]
 	pending_message = "Tu remontes des profondeurs avec un lourd butin : %s !" % bonus_name
 
@@ -350,9 +378,36 @@ func roll_item_id(quality_bonus: float = 0.0) -> String:
 	var pool: Array = Items.PASSIVES
 	if randf() < ACTIVE_DROP_WEIGHT:
 		pool = Items.ACTIVES.filter(func(item): return item["id"] != active_item_id)
+	pool = pool.filter(func(item): return item["id"] not in legendaries_seen)
 	var rarity := roll_rarity(loot_quality(quality_bonus))
-	var candidates := pool.filter(func(item): return item["rarity"] == rarity)
-	return (candidates if not candidates.is_empty() else pool).pick_random()["id"]
+	var candidates: Array = []
+	while candidates.is_empty() and rarity >= Items.COMMUN:  # legendaires epuises : un cran en dessous
+		candidates = pool.filter(func(item): return item["rarity"] == rarity)
+		rarity -= 1
+	var id: String = (candidates if not candidates.is_empty() else pool).pick_random()["id"]
+	_note_legendary(id)
+	return id
+
+# Butin a poser au sol : {"id", "hidden"} (objet mystere ou non), ou {} sous "Poches trouees".
+func roll_drop(quality_bonus: float = 0.0) -> Dictionary:
+	if mod("no_loot") > 0.0:
+		return {}
+	if randf() >= MYSTERY_CHANCE:
+		return {"id": roll_item_id(quality_bonus), "hidden": false}
+	if randf() < MYSTERY_CURSE_CHANCE:
+		return {"id": Items.CURSES.pick_random()["id"], "hidden": true}
+	return {"id": roll_item_id(quality_bonus + MYSTERY_QUALITY_BONUS), "hidden": true}
+
+func _note_legendary(id: String) -> void:
+	if Items.find(id).get("rarity", Items.COMMUN) == Items.LEGENDAIRE and id not in legendaries_seen:
+		legendaries_seen.append(id)
+
+# Apres une mort : les legendaires perdus peuvent retomber, sauf ceux encore poses au sol.
+func _recount_legendaries() -> void:
+	legendaries_seen.clear()
+	for data in floor_data_by_index.values():
+		for entry in data.get("ground_items", []):
+			_note_legendary(entry["id"])
 
 # Somme d'un effet ("speed", "crit"...) sur tous les passifs possedes (voir Items.PASSIVES).
 func mod(stat: String) -> float:
@@ -368,6 +423,10 @@ func _recompute_mods() -> void:
 		var item_mods: Dictionary = Items.find_passive(id)["mods"]
 		for stat in item_mods:
 			mods[stat] = mods.get(stat, 0.0) + item_mods[stat] * passive_items[id]
+	for curse in curses:
+		var curse_mods: Dictionary = Items.find_curse(curse["id"])["mods"]
+		for stat in curse_mods:
+			mods[stat] = mods.get(stat, 0.0) + curse_mods[stat]
 
 func has_active_item() -> bool:
 	return active_item_id != ""
@@ -377,6 +436,10 @@ func has_active_item() -> bool:
 # charges : celles de l'actif ramasse (-1 = objet neuf, charges pleines).
 func take_item(id: String, charges: int = -1) -> String:
 	ItemBanner.show_item(id)  # banniere facon Isaac : nom, tier et effet de l'objet
+	if Items.is_curse(id):  # objet maudit : la malediction dure quelques etages
+		curses.append({"id": id, "floors": Items.CURSE_FLOORS})
+		_recompute_mods()
+		return ""
 	if not Items.is_active(id):
 		add_passive_item(id)
 		return ""
@@ -392,13 +455,14 @@ func recharge_active() -> void:
 
 func reset_run_items() -> void:
 	passive_items.clear()
+	curses.clear()
 	mods.clear()
 	active_item_id = ""
 	active_charges = 0
 	hp_lost = 0
 
 func max_hp() -> int:
-	return maxi(1, BASE_MAX_HP + int(mod("max_hp")))
+	return clampi(BASE_MAX_HP + int(mod("max_hp")), 1, MAX_HP_CAP)
 
 func current_hp() -> int:
 	return clampi(max_hp() - hp_lost, 1, max_hp())
@@ -421,6 +485,10 @@ func passive_count() -> int:
 	for id in passive_items:
 		total += passive_items[id]
 	return total
+
+# Objets gagnes en combats ordinaires sur cet etage : au plus COMBAT_ITEMS_PER_FLOOR.
+func combat_items_left() -> int:
+	return maxi(0, COMBAT_ITEMS_PER_FLOOR - int(current_floor().get("combat_items", 0)))
 
 func passives_detail() -> String:
 	if passive_items.is_empty():

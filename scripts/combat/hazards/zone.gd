@@ -13,6 +13,7 @@ var arm_delay := 0.8
 var active_time := 0.2
 var color := Color(1, 0.4, 0.4)
 var push := Vector2.ZERO
+var damage := 1
 var t := 0.0
 
 func _physics_process(delta: float) -> void:
@@ -24,7 +25,7 @@ func _physics_process(delta: float) -> void:
 	if p and t >= arm_delay and p.global_position.distance_to(global_position) <= radius + 8.0:
 		match kind:
 			"damage":
-				p.take_damage()
+				p.take_damage(damage)
 			"slow":
 				p.apply_slow(0.2, 0.45)
 			"push":

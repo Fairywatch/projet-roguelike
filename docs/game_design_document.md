@@ -52,7 +52,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - **Rencontres** : 2 à 4 ennemis en mode Cauchemar (un de plus tous les 4 étages), un de moins en mode Normal (1 à 3). Les **boss combattent seuls**.
 - Les mobs ont des patterns d'attaque **télégraphiés** clairement (lisibilité avant tout) : la difficulté augmente leurs PV, leur vitesse et leur cadence, **jamais la durée des télégraphes**.
 - Brève invincibilité après un coup encaissé (plusieurs ennemis peuvent frapper en même temps).
-- **PV façon Isaac** : les PV perdus le restent d'un combat à l'autre pendant toute la nuit. On les récupère avec les étoiles de la carte (+1 PV, pas au-delà du max), le Mouchoir usagé et les passifs de soin. Un +PV max arrive plein. PV affichés sur la carte.
+- **PV façon Isaac** : les PV perdus le restent d'un combat à l'autre pendant toute la nuit. On les récupère avec les étoiles de la carte (+1 PV, pas au-delà du max), le Mouchoir usagé et les passifs de soin. Un +PV max arrive plein. **8 PV au plus**, quels que soient les objets. PV affichés sur la carte.
 - **Gardiens de portail** : un boss tiré au hasard dans le pool de la nuit (3 boss × 4 versions, jamais deux fois le même dans une nuit) ; le dernier portail de la nuit est gardé par le **boss final** de la nuit, multi-phases.
 - **Transition selon le type d'étage** : douce et ondulante (paradoxal), brutale et saccadée (profond ; fondu simple si les flashs sont désactivés).
 - Bestiaire : un par nuit (4 créatures, 3 boss, 1 boss final), détaillé dans [docs/bestiaire.md](bestiaire.md).
@@ -111,13 +111,14 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - **Objets passifs** : cumulables sans limite (y compris plusieurs exemplaires du même), mais certains effets sont plafonnés pour qu'un empilement ne rende pas intouchable : esquive 50 %, soin en frappant 30 %, soin en tuant 50 %, 3 coups bloqués et 2 survies par combat, ennemis affaiblis de moitié au plus. Chacun est décrit par des effets chiffrés (PV, dégâts, vitesse, critiques, esquive, vol de vie, bouclier, ennemis affaiblis...) : ajouter un passif ne demande pas de code.
 - **Objet actif** : un seul à la fois, utilisé avec L (Y à la manette) en combat, 3 charges. Un combat gagné rend une charge. Prendre un nouvel actif laisse l'ancien au sol, avec ses charges restantes.
 - Le butin tombe **au sol** : le joueur choisit de le prendre (E) ou non. Les objets au sol restent sur l'étage.
-- **Chaque objet a son icône et un tier** (S, A, B, C : sa puissance ; la rareté, elle, dit s'il est fréquent). Le ramasser affiche une **bannière façon Isaac** (icône, tier, nom, effet). L'**inventaire** (Tab / Select) met le jeu en pause et liste l'objet actif et les passifs avec leur fiche.
+- **Chaque objet a son icône et un tier** (S, A, B, C : sa puissance ; la rareté, elle, dit s'il est fréquent). Le ramasser affiche une **bannière façon Isaac** (icône, tier, nom, effet). L'**inventaire** (Tab / Select) met le jeu en pause : à gauche l'objet actif, les malédictions en cours et les passifs avec leur fiche (la liste défile au clavier, à la manette et à la molette) ; à droite la **fiche de stats** du joueur (PV, dégâts, attaques par seconde, portée, vitesse, dash, et chaque effet d'objet porté), calculée par `scripts/combat/player_stats.gd`, la même source que le combat.
 - Sources de loot :
-  - Combats aléatoires (45 % de chance) et boss (garanti).
+  - Combats aléatoires (45 % de chance) et boss (garanti). **Contre le farm** : au plus **3 objets gagnés en combats ordinaires par étage** ; au-delà, seulement des pièces (gardiens, coffres, quêtes et cristaux comptent à part). La fiche de stats montre ce qu'il en reste sur l'étage.
   - Coffres : deux par étage, dont un **scellé** qui s'ouvre après 2 combats gagnés sur l'étage.
   - PNJ à quêtes (récompense de quête).
   - Cristaux du sommeil profond (30 % de chance de contenir un objet).
-- **Rareté** : commun, rare, légendaire. **Hiérarchie à deux axes** : la qualité du butin monte avec l'**étage atteint dans la tour** et avec les **combats gagnés sur l'étage**, plus un bonus selon la source (boss, coffre scellé, quête). Ce n'est jamais garanti : les poids passent d'environ 82/16/2 % à 42/42/16 %.
+- **Rareté** : commun, rare, légendaire. **Hiérarchie à deux axes** : la qualité du butin monte avec l'**étage atteint dans la tour** et avec les **combats gagnés sur l'étage**, plus un bonus selon la source (boss, coffre scellé, quête). Ce n'est jamais garanti : les poids passent d'environ 82/16/2 % à 42/42/16 %. **Chaque légendaire ne tombe qu'une fois par nuit** (après une mort, ceux qu'on a perdus peuvent retomber).
+- **Objets mystère et malédictions** : 20 % du butin tombe caché (icône « ? », « Objet mystère ») ; on ne découvre ce que c'est qu'en le prenant. Une fois sur deux, c'est un objet un peu meilleur que la normale ; sinon une **malédiction** qui dure 2 étages (celui-ci compris) : *Ombre jumelle* (un ennemi de plus par combat), *Cœur fêlé* (les coups ennemis font 2 dégâts), *Cauchemar tenace* (ennemis deux fois plus résistants), *Poches trouées* (plus aucun objet à trouver), *Pieds de plomb* (plus lent, dash plus lent). La mort efface les malédictions.
 
 ---
 

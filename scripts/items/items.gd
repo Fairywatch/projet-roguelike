@@ -10,11 +10,16 @@ extends RefCounted
 #   slow_on_hit, dash_trail (drapeaux) ; enemy_hp, enemy_speed, enemy_cooldown, telegraph,
 #   drop_chance, encounter_rate (fractions).
 # Chaque objet a aussi un tier (S, A, B, C : sa puissance) et une icone (tools/gen_items.py).
-enum { COMMUN, RARE, LEGENDAIRE }
-const RARITY_NAMES := ["Commun", "Rare", "Légendaire"]
-const RARITY_COLORS := [Color(0.85, 0.88, 1.0), Color(0.45, 0.75, 1.0), Color(1.0, 0.8, 0.3)]
+enum { COMMUN, RARE, LEGENDAIRE, MAUDIT }
+const RARITY_NAMES := ["Commun", "Rare", "Légendaire", "Maudit"]
+const RARITY_COLORS := [Color(0.85, 0.88, 1.0), Color(0.45, 0.75, 1.0), Color(1.0, 0.8, 0.3), Color(0.85, 0.3, 0.4)]
 # Tier = puissance de l'objet (la rarete, elle, dit s'il est frequent). Couleurs facon "tier list".
-const TIER_COLORS := {"S": Color(1.0, 0.36, 0.4), "A": Color(1.0, 0.64, 0.26), "B": Color(1.0, 0.9, 0.36), "C": Color(0.55, 0.86, 0.52)}
+# "!" : malediction.
+const TIER_COLORS := {"S": Color(1.0, 0.36, 0.4), "A": Color(1.0, 0.64, 0.26), "B": Color(1.0, 0.9, 0.36), "C": Color(0.55, 0.86, 0.52), "!": Color(0.85, 0.3, 0.4)}
+# Objet mystere : butin cache (icone "?") jusqu'a ce qu'on le prenne ; objet normal ou malediction.
+const MYSTERY := {"id": "mystere", "name": "Objet mystère", "desc": "Qui sait ce qu'il cache ?", "rarity": RARE, "tier": "?"}
+# Duree d'une malediction, en etages (celui ou on la prend compris).
+const CURSE_FLOORS := 2
 const ICON_DIR := "res://assets/sprites/items/"
 
 const PASSIVES := [
@@ -56,7 +61,7 @@ const PASSIVES := [
 	{"id": "montre_a_gousset", "name": "Montre à gousset", "desc": "Ennemis attaquent 15 % moins souvent", "mods": {"enemy_cooldown": 0.15}, "rarity": RARE, "tier": "B"},
 ]
 
-# Objets actifs : un seul a la fois, utilise avec E en combat.
+# Objets actifs : un seul a la fois, utilise en combat (touche de l'objet actif).
 const ACTIVES := [
 	{"id": "sept_ans_de_malheur", "name": "Sept Ans de Malheur", "desc": "Invincibilité brève + leurre", "rarity": RARE, "tier": "B"},
 	{"id": "mouchoir_usage", "name": "Mouchoir usagé", "desc": "Soigne 1 PV", "rarity": COMMUN, "tier": "B"},
@@ -64,6 +69,27 @@ const ACTIVES := [
 	{"id": "oreiller_volant", "name": "Oreiller volant", "desc": "Double coup à tous les ennemis proches", "rarity": RARE, "tier": "A"},
 	{"id": "tasse_de_cafe", "name": "Tasse de café", "desc": "Dash recharge et +50 % de vitesse 4 s", "rarity": COMMUN, "tier": "C"},
 ]
+
+# Maledictions : objets maudits, deguises en objets mysteres parmi le butin. Elles ne durent que
+# CURSE_FLOORS etages, mais leurs effets se cumulent avec ceux des passifs (voir GameState.mod()) :
+#   enemy_count (ennemis en plus par combat), enemy_damage (degats en plus par coup recu),
+#   no_loot (plus aucun objet), et les effets des passifs, ici en negatif.
+const CURSES := [
+	{"id": "ombre_jumelle", "name": "Ombre jumelle", "desc": "Un ennemi de plus à chaque combat", "mods": {"enemy_count": 1}, "rarity": MAUDIT, "tier": "!"},
+	{"id": "coeur_fele", "name": "Cœur fêlé", "desc": "Les coups ennemis font 2 dégâts", "mods": {"enemy_damage": 1}, "rarity": MAUDIT, "tier": "!"},
+	{"id": "cauchemar_tenace", "name": "Cauchemar tenace", "desc": "Ennemis deux fois plus résistants", "mods": {"enemy_hp": 1.0}, "rarity": MAUDIT, "tier": "!"},
+	{"id": "poches_trouees", "name": "Poches trouées", "desc": "Plus aucun objet à trouver", "mods": {"no_loot": 1}, "rarity": MAUDIT, "tier": "!"},
+	{"id": "pieds_de_plomb", "name": "Pieds de plomb", "desc": "-20 % de vitesse, dash 40 % plus lent", "mods": {"speed": -0.2, "dash_cooldown": 0.4}, "rarity": MAUDIT, "tier": "!"},
+]
+
+static func find_curse(id: String) -> Dictionary:
+	for item in CURSES:
+		if item["id"] == id:
+			return item
+	return {}
+
+static func is_curse(id: String) -> bool:
+	return not find_curse(id).is_empty()
 
 static func rarity(id: String) -> int:
 	return find(id).get("rarity", COMMUN)
@@ -75,7 +101,7 @@ static func tier(id: String) -> String:
 	return find(id).get("tier", "C")
 
 static func tier_color(id: String) -> Color:
-	return TIER_COLORS[tier(id)]
+	return TIER_COLORS.get(tier(id), Color(0.75, 0.6, 1.0))
 
 # Icone propre a l'objet (tools/gen_items.py).
 static func icon(id: String) -> Texture2D:
@@ -100,4 +126,9 @@ static func find(id: String) -> Dictionary:
 	var passive := find_passive(id)
 	if not passive.is_empty():
 		return passive
+	var curse := find_curse(id)
+	if not curse.is_empty():
+		return curse
+	if id == MYSTERY["id"]:
+		return MYSTERY
 	return find_active(id)

@@ -140,6 +140,26 @@ ICONS = {
     "tasse_de_cafe": ([
         "..s.s...", "...s.s..", ".MMMMMM.", ".MCCCCMMM", ".MCCCCM.M", ".MMMMMMMM", "..MMMM...",
     ], {"M": rgba(220, 120, 90), "C": rgba(110, 66, 40), "s": GREY}),
+    # Objet mystere : butin cache (objet normal ou malediction) jusqu'a ce qu'on le prenne.
+    "mystere": ([
+        "..PPPPP..", ".PPWWWPP.", ".PW...WP.", "......WP.", ".....WP..", "....WP...", "....WP...", ".........", "....WP...",
+    ], {"P": PURPLE, "W": LILAC}),
+    # Maledictions (objets maudits deguises) : teintes sombres, une touche de rouge.
+    "ombre_jumelle": ([
+        ".KK...KK.", "KKKK.KKKK", "KRKK.KRKK", "KKKK.KKKK", ".KK...KK.", "KKKK.KKKK", "KKKK.KKKK", "K..K.K..K",
+    ], {"K": rgba(56, 44, 72), "R": RED}),
+    "coeur_fele": ([
+        ".RR...RR.", "RRRR.RRRR", "RRRkRRRRR", "RRRRkRRRR", ".RRRkRRR.", "..RRkRR..", "...RRR...", "....R....",
+    ], {"R": rgba(150, 40, 60), "k": DARK}),
+    "cauchemar_tenace": ([
+        "...KKKK...", ".KKKKKKKK.", "KKRKKKKRKK", "KKKKKKKKKK", "KKkkkkkkKK", "KKKKKKKKKK", ".KK.KK.KK.", "K..K..K..K",
+    ], {"K": rgba(70, 40, 90), "R": RED, "k": WHITE}),
+    "poches_trouees": ([
+        "..BBBBBB..", ".B......B.", "BBBBBBBBBB", "BbbbbbbbbB", "Bbbbbbbbbb", "Bbbbbb..bB", "Bbbbb...bB", ".BBBB..BB.",
+    ], {"B": rgba(110, 76, 50), "b": rgba(150, 108, 72)}),
+    "pieds_de_plomb": ([
+        "...gg...", "..g..g..", ".GGGGGG.", "GGGGGGGG", "GGgggGGG", "GGGGGGGG", "GGGGGGGG", ".gggggg.",
+    ], {"G": GREY_D, "g": DARK}),
 }
 
 if __name__ == "__main__":

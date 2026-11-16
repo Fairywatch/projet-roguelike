@@ -74,7 +74,7 @@ func _pick_mobs() -> Array:
 	if GameState.floor_index < 0 and randf() < NEGATIVE_BOSS_CHANCE:
 		return [Bestiary.boss(night, nightmare_floor, GameState.boss_history)]
 	var mobs := []
-	for i in _encounter_size() + extra_mobs:
+	for i in _encounter_size() + extra_mobs + int(GameState.mod("enemy_count")):
 		mobs.append(Bestiary.creature(night, nightmare_floor))
 	return mobs
 
@@ -167,23 +167,39 @@ func _on_victory() -> void:
 	GameState.coins += GameState.COINS_PER_GUARDIAN if GameState.guardian_fight else GameState.COINS_PER_WIN
 	GameState.recharge_active()
 	mob_label.text = "Gardien vaincu !" if GameState.guardian_fight else "Victoire !"
-	if is_boss_fight or had_elite or randf() < DROP_CHANCE + GameState.mod("drop_chance"):
-		_drop_item()
+	# Gardiens et boss : butin garanti. Combats ordinaires : au plus quelques objets par etage.
+	var dropped := false
+	if is_boss_fight:
+		dropped = _drop_item()
+	elif GameState.combat_items_left() <= 0:
+		mob_label.text += "  (plus de butin sur cet étage)"
+	elif had_elite or randf() < DROP_CHANCE + GameState.mod("drop_chance"):
+		dropped = _drop_item()
+		if dropped:
+			GameState.current_floor()["combat_items"] += 1
+	if dropped:
 		return
 	await get_tree().create_timer(1.4, false).timeout
 	_leave()
 
 # Le butin tombe au sol : on choisit de le prendre (interagir) ou de garder son objet (continuer).
-func _drop_item() -> void:
-	var pickup := ItemPickup.new()
+# Faux si rien ne tombe (malediction "Poches trouees").
+func _drop_item() -> bool:
 	var bonus := GameState.BOSS_LOOT_BONUS if is_boss_fight else (ELITE_LOOT_BONUS if had_elite else 0.0)
-	pickup.item_id = GameState.roll_item_id(bonus)
+	var drop := GameState.roll_drop(bonus)
+	if drop.is_empty():
+		_on_item_message("Poches trouées : rien à ramasser...")
+		return false
+	var pickup := ItemPickup.new()
+	pickup.item_id = drop["id"]
+	pickup.mystery = drop["hidden"]
 	pickup.position = player.position + Vector2(0, -80 if player.position.y > 150 else 80)
 	add_child(pickup)
 	pickup.taken.connect(_on_pickup_taken)
 	waiting_to_leave = true
 	var go_on := "Start" if Controls.using_gamepad else "Entrée"
 	_on_item_message("%s : prendre l'objet   |   %s : continuer" % [Controls.name_of("interact"), go_on], 0.0)
+	return true
 
 func _on_pickup_taken(_pickup: ItemPickup, taken_id: String, old_id: String) -> void:
 	Sound.play("pickup")

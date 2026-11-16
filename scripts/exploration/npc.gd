@@ -103,10 +103,15 @@ func talk() -> void:
 				quest["state"] = "done"
 				GameState.coins += GameState.COINS_PER_QUEST
 				Sound.play("victory")
-				var entry := {"id": GameState.roll_item_id(GameState.QUEST_LOOT_BONUS), "pos": position + REWARD_OFFSET}
+				var entry := GameState.roll_drop(GameState.QUEST_LOOT_BONUS)
+				if entry.is_empty():
+					_say("Merci, voyageur ! Je n'ai rien d'autre que ces pièces... (+%d pièces)" % GameState.COINS_PER_QUEST)
+					return
+				entry["pos"] = position + REWARD_OFFSET
 				GameState.current_floor()["ground_items"].append(entry)
 				rewarded.emit(entry)
-				_say("Merci, voyageur ! Prends ceci : %s. (+%d pièces)" % [Items.find(entry["id"])["name"], GameState.COINS_PER_QUEST])
+				var shown: String = Items.MYSTERY["id"] if entry["hidden"] else entry["id"]
+				_say("Merci, voyageur ! Prends ceci : %s. (+%d pièces)" % [Items.find(shown)["name"], GameState.COINS_PER_QUEST])
 			elif quest["kind"] == "chasse":
 				var left: int = quest["target"] - (GameState.current_floor()["wins"] - quest["start_wins"])
 				_say("Encore %d combat(s) à gagner." % left)

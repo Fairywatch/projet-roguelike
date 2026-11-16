@@ -44,10 +44,15 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	Sound.play("chest")
 	var bonus := GameState.SEALED_CHEST_LOOT_BONUS if sealed else 0.0
-	var entry := {"id": GameState.roll_item_id(bonus), "pos": position + DROP_OFFSET}
+	var entry := GameState.roll_drop(bonus)
 	GameState.current_floor()["opened_chests"].append(chest_id)
-	GameState.current_floor()["ground_items"].append(entry)
 	_refresh_visual()
 	Fx.puff(get_parent(), global_position, Color(1, 0.85, 0.4), 16)
+	if entry.is_empty():
+		message.emit("Le coffre est vide... (Poches trouées)")
+		return
+	entry["pos"] = position + DROP_OFFSET
+	GameState.current_floor()["ground_items"].append(entry)
 	item_dropped.emit(entry)
-	message.emit("Coffre ouvert : %s ! (E pour le prendre)" % Items.find(entry["id"])["name"])
+	var shown: String = Items.MYSTERY["id"] if entry["hidden"] else entry["id"]
+	message.emit("Coffre ouvert : %s ! (%s pour le prendre)" % [Items.find(shown)["name"], Controls.name_of("interact")])

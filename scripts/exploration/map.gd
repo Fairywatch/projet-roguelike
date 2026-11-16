@@ -234,6 +234,7 @@ func _spawn_pickup(entry: Dictionary) -> void:
 	var pickup := ItemPickup.new()
 	pickup.item_id = entry["id"]
 	pickup.charges = entry.get("charges", -1)
+	pickup.mystery = entry.get("hidden", false)
 	pickup.position = entry["pos"]
 	pickup.taken.connect(func(p, taken_id, old_id): _on_ground_item_taken(entry, taken_id, old_id, p.charges))
 	generated_root.add_child(pickup)
@@ -247,6 +248,7 @@ func _on_ground_item_taken(entry: Dictionary, taken_id: String, old_id: String, 
 	else:
 		entry["id"] = old_id
 		entry["charges"] = old_charges
+		entry["hidden"] = false
 		text += " et laisses %s au sol" % Items.find(old_id)["name"]
 	_show_message(text + ".")
 
@@ -305,11 +307,12 @@ func _on_decor_touched(decor: DreamDecor) -> void:
 		"cristal":
 			var opening := Places.label(night, family, "cristal")  # "Le cristal se brise"...
 			var text := opening + "."
-			if randf() < CRYSTAL_ITEM_CHANCE:
-				var entry := {"id": GameState.roll_item_id(), "pos": decor.position}
+			var entry := GameState.roll_drop() if randf() < CRYSTAL_ITEM_CHANCE else {}
+			if not entry.is_empty():
+				entry["pos"] = decor.position
 				GameState.current_floor()["ground_items"].append(entry)
 				_spawn_pickup(entry)
-				text = "%s et libère %s !" % [opening, Items.find(entry["id"])["name"]]
+				text = "%s et libère %s !" % [opening, Items.find(Items.MYSTERY["id"] if entry["hidden"] else entry["id"])["name"]]
 			_consume(decor, Color(0.75, 0.55, 1), text)
 
 func _consume(decor: DreamDecor, color: Color, text: String) -> void:

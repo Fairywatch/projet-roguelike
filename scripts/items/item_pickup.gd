@@ -10,6 +10,7 @@ const RADIUS := 36.0
 
 var item_id := ""
 var charges := -1  # actif deja entame (repose au sol) ; -1 = neuf
+var mystery := false  # objet mystere : on ne sait ce que c'est (objet ou malediction) qu'en le prenant
 var player_near := false
 var icon := Sprite2D.new()
 var label := Label.new()
@@ -45,14 +46,17 @@ func _set_near(body: Node2D, near: bool) -> void:
 		_refresh()
 
 func _refresh() -> void:
-	var item := Items.find(item_id)
-	icon.texture = Items.icon(item_id)
+	var shown: String = Items.MYSTERY["id"] if mystery else item_id
+	var item := Items.find(shown)
+	icon.texture = Items.icon(shown)
 	# Couleur du nom et de la lueur selon la rarete (commun, rare, legendaire).
-	label.add_theme_color_override("font_color", Items.rarity_color(item_id))
-	glow.color = Items.rarity_color(item_id)
-	var rarity_name: String = Items.RARITY_NAMES[item["rarity"]]
-	if player_near:
-		label.text = "%s : prendre %s  [%s]  (%s)\n%s" % [Controls.name_of("interact"), item["name"], Items.tier(item_id), rarity_name, item["desc"]]
+	label.add_theme_color_override("font_color", Items.rarity_color(shown))
+	glow.color = Items.rarity_color(shown)
+	if player_near and mystery:
+		label.text = "%s : prendre %s\n%s" % [Controls.name_of("interact"), item["name"], item["desc"]]
+	elif player_near:
+		var rarity_name: String = Items.RARITY_NAMES[item["rarity"]]
+		label.text = "%s : prendre %s  [%s]  (%s)\n%s" % [Controls.name_of("interact"), item["name"], Items.tier(shown), rarity_name, item["desc"]]
 	else:
 		label.text = item["name"]
 
@@ -70,4 +74,5 @@ func _unhandled_input(event: InputEvent) -> void:
 		queue_free()
 	else:
 		item_id = old
+		mystery = false  # l ancien actif, lui, on le connait
 		_refresh()

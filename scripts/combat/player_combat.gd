@@ -6,24 +6,18 @@ signal item_message(text: String)
 # Chaque attaque du joueur, avec la position de son coup (l'Echo la repete, l'Autre Soi l'observe).
 signal attacked(at: Vector2)
 
-const SPEED := 200.0
-const DASH_SPEED := 600.0
+# Valeurs de base et plafonds des statistiques : voir PlayerStats.
+const SPEED := PlayerStats.SPEED
+const DASH_SPEED := PlayerStats.DASH_SPEED
 # Prise de vitesse et freinage tres courts (~0,08 s et ~0,1 s) : du liant sans perdre en reactivite.
 const ACCELERATION := 2600.0
 const FRICTION := 2000.0
-const DASH_DURATION := 0.18
-const DASH_COOLDOWN_BASE := 0.6
+const DASH_DURATION := PlayerStats.DASH_DURATION
+const DASH_COOLDOWN_BASE := PlayerStats.DASH_COOLDOWN
 const ATTACK_DURATION := 0.15
-const ATTACK_COOLDOWN := 0.35
-const ATTACK_REACH := 30.0
-const HURT_INVINCIBILITY := 0.8
-const MIN_COOLDOWN_MULT := 0.3
-const MIN_SPEED_MULT := 0.5
-const MAX_EVASION := 0.5
-const MAX_HEAL_ON_HIT := 0.3
-const MAX_HEAL_ON_KILL := 0.5
-const MAX_SHIELD := 3
-const MAX_EXTRA_LIVES := 2
+const ATTACK_COOLDOWN := PlayerStats.ATTACK_COOLDOWN
+const ATTACK_REACH := PlayerStats.ATTACK_REACH
+const HURT_INVINCIBILITY := PlayerStats.HURT_INVINCIBILITY
 const REVEIL_RADIUS := 220.0
 const OREILLER_RADIUS := 150.0
 const OREILLER_DAMAGE := 2
@@ -95,23 +89,23 @@ func _ready() -> void:
 func apply_items() -> void:
 	var lost := max_hp - hp
 	max_hp = GameState.max_hp()
-	attack_damage = 1 + int(GameState.mod("damage"))
-	move_speed = SPEED * maxf(MIN_SPEED_MULT, 1.0 + GameState.mod("speed"))
-	dash_cooldown_effective = DASH_COOLDOWN_BASE * maxf(MIN_COOLDOWN_MULT, 1.0 + GameState.mod("dash_cooldown"))
-	attack_cooldown_effective = ATTACK_COOLDOWN * maxf(MIN_COOLDOWN_MULT, 1.0 + GameState.mod("attack_cooldown"))
-	dash_duration = DASH_DURATION * (1.0 + GameState.mod("dash_length"))
-	reach = ATTACK_REACH + GameState.mod("reach")
-	hurt_invincibility = HURT_INVINCIBILITY + GameState.mod("iframes")
+	attack_damage = PlayerStats.damage()
+	move_speed = PlayerStats.move_speed()
+	dash_cooldown_effective = PlayerStats.dash_cooldown()
+	attack_cooldown_effective = PlayerStats.attack_cooldown()
+	dash_duration = PlayerStats.dash_duration()
+	reach = PlayerStats.reach()
+	hurt_invincibility = PlayerStats.iframes()
 	has_dash_trail = GameState.mod("dash_trail") > 0
 	has_slow_on_hit = GameState.mod("slow_on_hit") > 0
-	heal_on_hit_chance = minf(MAX_HEAL_ON_HIT, GameState.mod("heal_on_hit"))
-	heal_on_kill_chance = minf(MAX_HEAL_ON_KILL, GameState.mod("heal_on_kill"))
-	crit_chance = GameState.mod("crit")
-	evasion = minf(MAX_EVASION, GameState.mod("evasion"))
-	knockback = GameState.mod("knockback")
-	thorns = int(GameState.mod("thorns"))
-	extra_lives = mini(MAX_EXTRA_LIVES, int(GameState.mod("extra_lives")))
-	shield = mini(MAX_SHIELD, int(GameState.mod("shield")))
+	heal_on_hit_chance = PlayerStats.heal_on_hit()
+	heal_on_kill_chance = PlayerStats.heal_on_kill()
+	crit_chance = PlayerStats.crit()
+	evasion = PlayerStats.evasion()
+	knockback = PlayerStats.knockback()
+	thorns = PlayerStats.thorns()
+	extra_lives = PlayerStats.extra_lives()
+	shield = PlayerStats.shield()
 	hp = clampi(max_hp - lost, 1, max_hp)  # un +PV max arrive plein
 
 func _process(delta: float) -> void:
@@ -314,9 +308,11 @@ func _on_attack_area_entered(area: Area2D) -> void:
 	if heal_on_hit_chance > 0.0 and hp < max_hp and randf() < heal_on_hit_chance:
 		_heal(1)
 
-func take_damage() -> void:
+# amount : degats du coup (1 en general) ; la malediction "Coeur fele" en ajoute.
+func take_damage(amount: int = 1) -> void:
 	if invincible or dead:
 		return
+	amount += int(GameState.mod("enemy_damage"))
 	if randf() < evasion:
 		Sound.play("dodge")
 		Fx.flash(sprite, Color(0.6, 0.9, 1), 0.2)
@@ -335,12 +331,14 @@ func take_damage() -> void:
 	if thorns > 0:
 		for mob in _mobs_within(THORNS_RADIUS):
 			mob.take_hit(thorns)
-	if hp <= 1 and extra_lives > 0:
+	if hp <= amount and extra_lives > 0:
 		extra_lives -= 1
+		hp = maxi(1, hp - amount + 1)  # survit avec 1 PV
+		hp_changed.emit(hp)
 		_start_hurt_invincibility()
 		item_message.emit("Croque-mort au chômage : tu survis !")
 		return
-	hp -= 1
+	hp -= amount
 	hp_changed.emit(hp)
 	if hp <= 0:
 		_die()
