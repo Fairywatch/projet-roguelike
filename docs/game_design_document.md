@@ -41,13 +41,16 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 6. Victoire → butin éventuel posé au sol (à prendre ou non), pièces, retour sur la carte.
 7. Pour changer d'étage, le joueur prend le **portail**, toujours **gardé par un boss** : l'étage ne change qu'après la victoire.
 8. Fin de la tour (le rêveur se réveille) ou mort → retour au menu.
-9. Mort → reset du stuff de run, le joueur redescend de 2 étages, nouveau tirage aléatoire au-dessus (voir Structure & Difficulté).
+9. Mort → le joueur perd son objet actif et ses passifs, sauf 2 gardés au hasard ; il redescend de 2 étages, nouveau tirage aléatoire au-dessus (voir Structure & Difficulté).
 
 ---
 
 ## 4. Combat
 
-- **Temps réel**, inspiration directe *Hadès* : dash avec i-frames, attaque en arc, objet actif. Touches : ZQSD (ou flèches) pour se déplacer, J attaque, K dash, L objet actif, E interagir, Tab passifs. **Manette** : stick gauche ou croix, X attaque, B dash, Y objet actif, A interagir, Select passifs, Start menu. Toutes les touches se changent dans Paramètres > Touches.
+- **Temps réel**, inspiration directe *Hadès* : dash avec i-frames, attaque en arc, objet actif. **Enchaînement** : trois coups rapprochés, le troisième frappe deux fois plus fort et plus loin, puis demande un temps de récupération. **Coup plongeant** : attaquer pendant un dash ou juste après ajoute 1 dégât et de la portée, une fois toutes les 2,5 s. Touches : ZQSD (ou flèches) pour se déplacer, J attaque, K dash, L objet actif, E interagir, Tab passifs. **Manette** : stick gauche ou croix, X attaque, B dash, Y objet actif, A interagir, Select passifs, Start menu. Toutes les touches se changent dans Paramètres > Touches.
+- **Tutoriel** : le tout premier combat du jeu (lundi, étage 0) oppose un seul ennemi d'entraînement, immobile, et demande les gestes un par un (se déplacer, frapper, enchaîner trois coups, dasher) ; il se réveille ensuite pour un vrai combat. `scripts/ui/tutorial.gd`.
+- **Annonces d'attaque** : chaque ennemi montre un « ! » et un anneau à ses pieds qui se referme jusqu'à sa frappe ; chaque danger (zone, rayon, onde, bras) s'annonce en pointillés qui se remplissent, puis frappe en plein (`scripts/combat/hazards/`).
+- **Boss** : une barre de vie en haut de l'écran, avec un trait à chaque seuil de phase pour les boss de fin.
 - Arène séparée de la map d'exploration, habillée avec les tuiles du type d'étage.
 - **Rencontres** : 2 à 4 ennemis en mode Cauchemar (un de plus tous les 4 étages), un de moins en mode Normal (1 à 3). Les **boss combattent seuls**.
 - Les mobs ont des patterns d'attaque **télégraphiés** clairement (lisibilité avant tout) : la difficulté augmente leurs PV, leur vitesse et leur cadence, **jamais la durée des télégraphes**.
@@ -66,6 +69,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - **Taille des étages** : petits au début (16×10 cases), de plus en plus grands jusqu'au dernier étage (34×20).
 - **Courbe de difficulté** : +8 % par étage atteint, +15 % en sommeil profond (modificateur de type), plus le bonus propre à la nuit.
 - **À la mort** : le joueur redescend de 2 étages en dessous de sa position actuelle (les nuits ne font que 6 à 12 étages), avec un **nouveau tirage aléatoire des étages au-dessus** de ce point. Une run n'est donc jamais totalement perdue, mais recule concrètement.
+- **Fuite** : on ne fuit jamais un gardien ni un boss. Un combat ordinaire se fuit en appuyant deux fois sur Menu : cela coûte 3 pièces, et les PV perdus pendant le combat le restent.
 - **Quitter le jeu en plein combat compte comme une mort** (pas de fuite par la fermeture du jeu).
 - **Plongée négative** : à l'étage 0, un second portail (rouge) mène aux profondeurs (étages -1 à -10), plus dangereuses (les boss de la nuit y rôdent). Les remonter rapporte un butin ; y mourir referme le passage pour la partie.
 
@@ -101,13 +105,16 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - Entre les runs, le joueur gagne des **pièces** (indépendantes du loot en run, qui reset toujours à la mort) : 1 par combat gagné, 3 par gardien, 2 par quête, et une récompense en fin de nuit.
 - La **boutique des songes** (menu) propose 3 objets passifs, renouvelés après chaque réveil (mort ou fin de nuit). Prix selon la rareté (15 / 35 / 80).
 - Un achat rejoint la nuit en cours, ou attend dans le **sac de départ** de la prochaine nuit.
+- **Améliorations permanentes** (boutique, « Pour toujours ») : Cœur solide (+1 PV de départ, 2 niveaux : 40 puis 90 pièces), Poches profondes (garde 1 objet de plus à la mort, 2 niveaux : 60 puis 120), Doudou de voyage (un objet commun au début de chaque nuit, 50), Amie de la marchande (une offre de plus en boutique, 45).
+- **Bilan de nuit** : à la fin d'une nuit, le menu résume la run (combats gagnés, ennemis vaincus, objets pris, morts, temps de jeu).
+- **Semaine suivante** : quand les sept nuits sont terminées, une nouvelle semaine commence. Toutes les nuits redeviennent à faire, avec +25 % de difficulté et +50 % de récompense par semaine écoulée.
 - Ce système garantit que même en cas de mort, le joueur repart avec un sentiment de progression tangible.
 
 ---
 
 ## 8. Système de loot
 
-- **Reset complet du stuff de run à chaque mort** (roguelite pur) — justifié narrativement par le réveil/redémarrage du rêve.
+- **À la mort**, l'objet actif, les malédictions et les passifs sont perdus, **sauf 2 passifs gardés au hasard** (3 ou 4 avec Poches profondes) : repartir les mains vides au milieu d'une nuit était presque injouable. Justifié narrativement par le réveil en sursaut : on garde des bribes du rêve.
 - **Objets passifs** : cumulables sans limite (y compris plusieurs exemplaires du même), mais certains effets sont plafonnés pour qu'un empilement ne rende pas intouchable : esquive 50 %, soin en frappant 30 %, soin en tuant 50 %, 3 coups bloqués et 2 survies par combat, ennemis affaiblis de moitié au plus. Chacun est décrit par des effets chiffrés (PV, dégâts, vitesse, critiques, esquive, vol de vie, bouclier, ennemis affaiblis...) : ajouter un passif ne demande pas de code.
 - **Objet actif** : un seul à la fois, utilisé avec L (Y à la manette) en combat, 3 charges. Un combat gagné rend une charge. Prendre un nouvel actif laisse l'ancien au sol, avec ses charges restantes.
 - Le butin tombe **au sol** : le joueur choisit de le prendre (E) ou non. Les objets au sol restent sur l'étage.
@@ -138,6 +145,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 - Rêve / cauchemar : palettes claires ou sombres.
 - **Cinématique d'introduction** : quatre plans en 3D, rendus en pixel art dans Blender (640×360, sans lissage, couleurs postérisées) par `tools/blender/intro_cinematic.py`, joués en vidéo (`assets/cinematics/intro/`). Le texte, les paupières et l'écran-titre restent dessinés par Godot par-dessus (`scripts/story/intro.gd`). Les **sept fins de nuit** sont faites de la même façon (`tools/blender/endings_cinematic.py`, vidéos dans `assets/cinematics/fins/`, `scripts/story/endings.gd`) : une scène par nuit, et deux pour le dimanche (l'aube où les tours se dissolvent, puis le réveil).
 - Retours de combat : flash à l'impact, arrêt sur image, secousses, particules (chaque effet désactivable dans les Paramètres).
+- **Bruitages des cinématiques** : l'intro et les fins de nuit jouent des bruitages calés sur l'image (la veilleuse qui grésille, la porte, le tonnerre du jeudi, l'étoile du mardi...), listés dans `scripts/story/intro.gd` et `scripts/story/endings.gd`.
 - **Son** : effets sonores enregistrés sous licence CC0 (voir `CREDITS.md`) : bruitages de Kenney (tissu, impacts doux, verre, cloches, pièces), plusieurs variantes tirées au hasard, importés par `tools/import_sfx.py`. **Musiques originales**, écrites dans `tools/compose_music.py` (partitions dans `music/`, retouchables dans MuseScore) et jouées par MuseScore 4 avec les Muse Sounds : *Rêverie* (menus et sommeil paradoxal : harpe, piano, célesta), *Profond* (sommeil profond : bourdon grave, chœur, soupirs des altos), *Combat* (cordes piquées façon Hollow Knight) et *Cauchemar* (boss : cuivres, timbales, chœur).
 
 ---
@@ -145,14 +153,14 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 ## 11. Questions ouvertes à trancher
 
 - **Texte définitif du récit** : le premier jet de `scripts/story.gd` est à relire et réécrire.
-- **Fin du jeu global** : que se passe-t-il quand le dimanche est terminé (fin de la semaine, nouvelle semaine plus dure) ?
-- **Méta-progression au-delà des passifs** : capacités permanentes, cosmétiques ?
+- **Cosmétiques** : des tenues ou des veilleuses à débloquer ?
 
-*Tranché depuis la première version : 7 nuits (une semaine), hub marchable pour les choisir, mode Speedrun (chrono global, fin = réveil), déblocage (terminer la nuit de la veille), taux de rencontre (4 % / 7 %), nature des achats (objets passifs), contenu propre à chaque nuit (bestiaire, lieux, règles d'étage, cinématique de fin), modes Normal / Cauchemar, recul de 2 étages à la mort.*
+*Tranché depuis la première version : 7 nuits (une semaine), hub marchable pour les choisir, mode Speedrun (chrono global, fin = réveil), déblocage (terminer la nuit de la veille), taux de rencontre (4 % / 7 %), nature des achats (objets passifs), contenu propre à chaque nuit (bestiaire, lieux, règles d'étage, cinématique de fin), modes Normal / Cauchemar, recul de 2 étages à la mort, fin du jeu global (une nouvelle semaine plus dure), méta-progression (améliorations permanentes), fuite payante, objets gardés à la mort.*
 
 ---
 
 ## 12. Prochaines étapes
 
-- Réécrire le texte définitif du récit (`scripts/story.gd`).
+- Relire une dernière fois le texte du récit (`scripts/story.gd`).
+- Tests : `tools/run_tests.sh` lance tous les tests sans fenêtre ; GitHub les rejoue à chaque push (`.github/workflows/tests.yml`).
 - Équilibrage en jeu (nombre d'ennemis, prix de la boutique, chrono du speedrun, taux de rencontre).

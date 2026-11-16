@@ -24,6 +24,16 @@ const NIGHTS := {
 	"dimanche": [18.0, [0.8, 6.2, 11.8]],
 }
 const DAWN := Color("FFF4DE")  # le dimanche se referme sur la lumiere du jour
+# Nuit -> bruitages cales sur la video : [instant, nom (Sound.play)].
+const SOUNDS := {
+	"lundi": [[0.5, "encounter"], [1.4, "encounter"], [2.2, "encounter"], [3.0, "encounter"], [7.9, "heal"]],  # la dispute, puis le sommeil
+	"mardi": [[6.6, "sparkle"], [6.8, "victory"]],  # l'etoile se pose
+	"mercredi": [[6.7, "pop"], [7.5, "pop"], [8.3, "pop"], [9.1, "pop"], [9.9, "pop"], [10.7, "pop"], [11.5, "pop"]],  # les pierres s'allument
+	"jeudi": [[1.4, "boss"], [2.9, "boss"], [4.3, "boss"], [6.4, "portal"]],  # le tonnerre, puis l'orage s'eloigne
+	"vendredi": [[5.5, "chest"], [7.6, "pop"]],  # les cartons poses, le the
+	"samedi": [[6.2, "sparkle"], [6.8, "sparkle"], [7.4, "sparkle"], [8.0, "sparkle"]],  # les silhouettes entrent
+	"dimanche": [[9.0, "sparkle"], [9.8, "sparkle"], [10.6, "sparkle"], [11.4, "sparkle"], [12.6, "heal"], [13.6, "victory"]],  # les tours, le reveil
+}
 
 static func shots(night: String) -> Array[Shot]:
 	return [NightEnding.new(night if NIGHTS.has(night) else "dimanche")]
@@ -50,6 +60,7 @@ class NightEnding extends Shot:
 	func _init(night: String) -> void:
 		var data: Array = Endings.NIGHTS[night]
 		Endings.setup(self, night, data[0], data[1])
+		sounds = Endings.SOUNDS[night]
 		if night == "dimanche":
 			end_color = Endings.DAWN
 		film = video(self, "fins/fin_" + night)

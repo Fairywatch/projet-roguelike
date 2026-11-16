@@ -11,6 +11,11 @@ const MYSTERY_CHANCE := 0.2
 const MYSTERY_CURSE_CHANCE := 0.5
 const MYSTERY_QUALITY_BONUS := 0.3
 const DEATH_SETBACK_FLOORS := 2  # les nuits font 6 a 12 etages
+# A la mort, on garde quelques passifs tires au hasard : repartir les mains vides au milieu d'une
+# nuit etait presque injouable (3 a 5 PV perdus par combat pour 3 PV).
+const DEATH_KEPT_ITEMS := 2
+# Fuir un combat ordinaire coute des pieces, et les PV perdus le restent. On ne fuit pas un gardien.
+const FLEE_COST := 3
 const MIN_FLOOR_INDEX := -10
 const ACTIVE_MAX_CHARGES := 3
 const ACTIVE_DROP_WEIGHT := 0.25
@@ -27,6 +32,16 @@ const COINS_PER_QUEST := 2
 const SHOP_SIZE := 3
 const SHOP_PRICES := [15, 35, 80]  # commun, rare, legendaire
 const SHOP_QUALITY := 0.5
+# Ameliorations permanentes (boutique) : gardees pour toujours, un prix par niveau.
+const UPGRADES := [
+	{"id": "coeur", "name": "Cœur solide", "desc": "+1 PV de départ", "prices": [40, 90]},
+	{"id": "poches", "name": "Poches profondes", "desc": "Garde 1 objet de plus à la mort", "prices": [60, 120]},
+	{"id": "doudou", "name": "Doudou de voyage", "desc": "Chaque nuit commence avec un objet commun", "prices": [50]},
+	{"id": "marchande", "name": "Amie de la marchande", "desc": "Une offre de plus à la boutique", "prices": [45]},
+]
+# Une fois les sept nuits terminees, une nouvelle semaine commence : plus dure, mieux payee.
+const WEEK_DIFFICULTY := 0.25
+const WEEK_REWARD := 0.5
 # Mode speedrun (GDD section 6) : un chrono pour toute la nuit, qui ne tourne qu'en jeu.
 const SPEEDRUN_SECONDS_PER_FLOOR := 75.0
 const GAMEPLAY_SCENES := ["Map", "CombatArena"]
@@ -40,9 +55,10 @@ const SAVED_FIELDS := [
 	"floor_index", "floor_data_by_index", "negative_dive_available", "return_position",
 	"run_started", "passive_items", "active_item_id", "active_charges", "hp_lost",
 	"pending_ground_item", "tower_index", "speedrun", "time_left", "run_time", "in_combat",
-	"boss_history", "nightmare_mode", "curses", "legendaries_seen",
+	"boss_history", "nightmare_mode", "curses", "legendaries_seen", "run_stats",
 ]
-const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag", "shop_offers", "best_times", "intro_seen"]
+const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag", "shop_offers", "best_times", "intro_seen",
+	"upgrades", "week", "tutorial_done"]
 
 var save_path := "user://run.save"
 var meta_path := "user://meta.save"
@@ -90,6 +106,11 @@ var coins: int = 0
 var unlocked_towers: int = 1
 var completed_towers: Array = []  # ids des nuits deja terminees au moins une fois
 var intro_seen: bool = false
+var upgrades: Dictionary = {}  # id d'amelioration -> niveau achete
+var week: int = 1  # semaine en cours (1 = la premiere)
+var tutorial_done: bool = false
+# Bilan de la nuit en cours : combats gagnes, ennemis vaincus, objets pris, morts, fuites.
+var run_stats: Dictionary = {}
 
 # Scene de recit a jouer (scripts/story.gd) : "intro" ou "ending_<id de nuit>", puis cutscene_next.
 var cutscene_id: String = ""
@@ -144,6 +165,7 @@ func end_combat() -> void:
 
 # Mort en combat : recul classique, ou perte du passage vers les profondeurs.
 func apply_combat_death() -> void:
+	note("deaths")
 	in_combat = false
 	guardian_fight = false
 	if floor_index < 0:
@@ -194,7 +216,54 @@ func current_floor() -> Dictionary:
 func difficulty() -> float:
 	var family: int = current_floor()["family"]
 	var bonus := PROFOND_DIFFICULTY_BONUS if family == FloorGenerator.Family.PROFOND else 0.0
-	return 1.0 + abs(floor_index) * DIFFICULTY_PER_FLOOR + bonus + tower()["difficulty"]
+	return 1.0 + abs(floor_index) * DIFFICULTY_PER_FLOOR + bonus + tower()["difficulty"] + (week - 1) * WEEK_DIFFICULTY
+
+func tower_reward() -> int:
+	return roundi(tower()["reward"] * (1.0 + (week - 1) * WEEK_REWARD))
+
+# Compte un evenement dans le bilan de la nuit ("wins", "kills", "items", "deaths", "fled").
+func note(stat: String, amount: int = 1) -> void:
+	run_stats[stat] = run_stats.get(stat, 0) + amount
+
+func run_summary() -> String:
+	var deaths: int = run_stats.get("deaths", 0)
+	return "Bilan : %d combat%s gagné%s, %d ennemi%s vaincu%s, %d objet%s, %s, en %s." % [
+		run_stats.get("wins", 0), _s(run_stats.get("wins", 0)), _s(run_stats.get("wins", 0)),
+		run_stats.get("kills", 0), _s(run_stats.get("kills", 0)), _s(run_stats.get("kills", 0)),
+		run_stats.get("items", 0), _s(run_stats.get("items", 0)),
+		"sans mourir" if deaths == 0 else "%d mort%s" % [deaths, _s(deaths)], format_time(run_time)]
+
+static func _s(count: int) -> String:
+	return "s" if count > 1 else ""
+
+# --- Ameliorations permanentes ------------------------------------------------------
+
+func upgrade_level(id: String) -> int:
+	return upgrades.get(id, 0)
+
+# Prix du prochain niveau, ou -1 si l'amelioration est au maximum.
+func upgrade_price(id: String) -> int:
+	for upgrade in UPGRADES:
+		if upgrade["id"] == id:
+			var level := upgrade_level(id)
+			return upgrade["prices"][level] if level < upgrade["prices"].size() else -1
+	return -1
+
+func buy_upgrade(id: String) -> bool:
+	var price := upgrade_price(id)
+	if price < 0 or coins < price:
+		return false
+	coins -= price
+	upgrades[id] = upgrade_level(id) + 1
+	if id == "marchande":
+		shop_offers.clear()  # la nouvelle offre apparait tout de suite
+	save_meta()
+	return true
+
+# Premier combat du jeu : un tutoriel (scripts/ui/tutorial.gd). Pas pendant les tests sans fenetre.
+func needs_tutorial() -> bool:
+	return not tutorial_done and completed_towers.is_empty() and tower_index == 0 and floor_index == 0 \
+		and not guardian_fight and DisplayServer.get_name() != "headless"
 
 func tower() -> Dictionary:
 	return Towers.get_tower(tower_index)
@@ -212,9 +281,11 @@ func _process(delta: float) -> void:
 
 # Avance le chrono ; renvoie true quand le temps est ecoule (la nuit est alors terminee).
 func tick_speedrun(delta: float) -> bool:
-	if not (run_started and speedrun):
+	if not run_started:
 		return false
-	run_time += delta
+	run_time += delta  # le temps de jeu compte toujours (bilan de fin de nuit)
+	if not speedrun:
+		return false
 	time_left -= delta
 	if time_left > 0.0:
 		return false
@@ -238,6 +309,9 @@ func new_run(index: int = tower_index, speedrun_mode: bool = false, nightmare: b
 	reset_run_items()
 	boss_history.clear()
 	legendaries_seen.clear()
+	run_stats.clear()
+	if upgrade_level("doudou") > 0:  # Doudou de voyage : un objet commun pour commencer
+		add_passive_item(Items.PASSIVES.filter(func(item): return item["rarity"] == Items.COMMUN).pick_random()["id"])
 	for id in start_bag:
 		add_passive_item(id)
 		_note_legendary(id)
@@ -271,14 +345,15 @@ func _end_run() -> void:
 	shop_offers.clear()
 
 func complete_tower() -> void:
+	var summary := run_summary()
 	_end_run()
-	coins += tower()["reward"]
+	coins += tower_reward()
 	cutscene_id = "ending_" + tower()["id"]
 	cutscene_tower = tower_index
 	cutscene_next = MENU_PATH
 	if tower()["id"] not in completed_towers:
 		completed_towers.append(tower()["id"])
-	menu_message = "Le rêveur se réveille... %s terminée ! +%d pièces." % [tower()["name"], tower()["reward"]]
+	menu_message = "Le rêveur se réveille... %s terminée ! +%d pièces." % [tower()["name"], tower_reward()]
 	if speedrun:
 		var id: String = tower()["id"]
 		menu_message += " Temps : %s." % format_time(run_time)
@@ -288,6 +363,12 @@ func complete_tower() -> void:
 	if tower_index + 1 < Towers.LIST.size() and unlocked_towers <= tower_index + 1:
 		unlocked_towers = tower_index + 2
 		menu_message += " Nouvelle nuit débloquée : %s !" % Towers.get_tower(tower_index + 1)["name"]
+	menu_message += "\n" + summary
+	# Le dimanche boucle la semaine : la suivante recommence au lundi, plus dure et mieux payee.
+	if tower_index == Towers.LIST.size() - 1 and completed_towers.size() >= Towers.LIST.size():
+		week += 1
+		completed_towers.clear()
+		menu_message += "\nLa semaine est finie... et une autre commence. Semaine %d : des nuits plus dures, de plus belles récompenses." % week
 
 # Chaque portail est garde par un boss : on ne change d'etage qu'apres l'avoir vaincu.
 func start_guardian_fight(going_down: bool) -> void:
@@ -330,9 +411,8 @@ func apply_death_setback() -> void:
 			floor_data_by_index.erase(key)
 	floor_index = new_index
 	return_position = Vector2.ZERO
-	reset_run_items()
-	_recount_legendaries()
-	menu_message = "Tu te réveilles en sursaut... Tu reprendras à l'étage %d, les mains vides." % floor_index
+	var kept := lose_items_on_death()
+	menu_message = "Tu te réveilles en sursaut... Tu reprendras à l'étage %d, %s." % [floor_index, kept]
 	shop_offers.clear()
 
 func apply_negative_death() -> void:
@@ -342,9 +422,7 @@ func apply_negative_death() -> void:
 	floor_index = 0
 	negative_dive_available = false
 	return_position = Vector2.ZERO
-	menu_message = "Tu t'es perdu dans les profondeurs... le passage s'est referme pour de bon."
-	reset_run_items()
-	_recount_legendaries()
+	menu_message = "Tu t'es perdu dans les profondeurs... le passage s'est refermé pour de bon. Il te reste %s." % lose_items_on_death().trim_prefix("avec ")
 
 func complete_negative_run() -> void:
 	for key in floor_data_by_index.keys():
@@ -405,6 +483,8 @@ func _note_legendary(id: String) -> void:
 # Apres une mort : les legendaires perdus peuvent retomber, sauf ceux encore poses au sol.
 func _recount_legendaries() -> void:
 	legendaries_seen.clear()
+	for id in passive_items:
+		_note_legendary(id)
 	for data in floor_data_by_index.values():
 		for entry in data.get("ground_items", []):
 			_note_legendary(entry["id"])
@@ -440,6 +520,7 @@ func take_item(id: String, charges: int = -1) -> String:
 		curses.append({"id": id, "floors": Items.CURSE_FLOORS})
 		_recompute_mods()
 		return ""
+	note("items")
 	if not Items.is_active(id):
 		add_passive_item(id)
 		return ""
@@ -453,6 +534,26 @@ func recharge_active() -> void:
 	if has_active_item():
 		active_charges = mini(ACTIVE_MAX_CHARGES, active_charges + 1 + int(mod("active_recharge")))
 
+# Mort : l'objet actif, les maledictions et la plupart des passifs sont perdus ; on en garde
+# kept_on_death() au hasard. Renvoie ce qu'il reste, pour le message ("les mains vides", "avec ...").
+func lose_items_on_death() -> String:
+	var owned: Array = []
+	for id in passive_items:
+		for i in passive_items[id]:
+			owned.append(id)
+	owned.shuffle()
+	var kept: Array = owned.slice(0, kept_on_death())
+	reset_run_items()
+	for id in kept:
+		add_passive_item(id)
+	_recount_legendaries()
+	if kept.is_empty():
+		return "les mains vides"
+	return "avec " + " et ".join(kept.map(func(id): return Items.find_passive(id)["name"]))
+
+func kept_on_death() -> int:
+	return DEATH_KEPT_ITEMS + upgrade_level("poches")
+
 func reset_run_items() -> void:
 	passive_items.clear()
 	curses.clear()
@@ -462,7 +563,7 @@ func reset_run_items() -> void:
 	hp_lost = 0
 
 func max_hp() -> int:
-	return clampi(BASE_MAX_HP + int(mod("max_hp")), 1, MAX_HP_CAP)
+	return clampi(BASE_MAX_HP + upgrade_level("coeur") + int(mod("max_hp")), 1, MAX_HP_CAP)
 
 func current_hp() -> int:
 	return clampi(max_hp() - hp_lost, 1, max_hp())
@@ -509,7 +610,7 @@ func shop_price(id: String) -> int:
 # Offres renouvelees apres chaque mort ou fin de nuit.
 func get_shop_offers() -> Array:
 	if shop_offers.is_empty():
-		while shop_offers.size() < SHOP_SIZE:
+		while shop_offers.size() < SHOP_SIZE + upgrade_level("marchande"):
 			var rarity := roll_rarity(SHOP_QUALITY)
 			var candidates := Items.PASSIVES.filter(func(item): return item["rarity"] == rarity and item["id"] not in shop_offers)
 			if not candidates.is_empty():

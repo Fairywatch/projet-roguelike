@@ -202,9 +202,12 @@ class Bot extends Node:
 		# Ouverture : le dash rend invincible, on s'en sert pour traverser les dangers jusqu'a la cible.
 		elif target and not target.invulnerable and can_dash:
 			var gap: Vector2 = target.global_position - here
-			if gap.length() > strike and gap.length() < dash_reach + strike and danger_along(here, target.global_position, HORIZON) >= 3.0:
-				player.facing = gap.normalized()
-				best_dir = player.facing
+			var toward := gap.normalized()
+			var landing := here + toward * minf(dash_reach, maxf(gap.length() - strike * 0.8, 0.0))
+			var blocked := danger_along(here, landing, player.dash_duration) >= 3.0
+			if gap.length() > strike and blocked and danger_along(landing, landing, HORIZON) < 3.0:
+				player.facing = toward
+				best_dir = toward
 				player._start_dash()
 		if best_dir != Vector2.ZERO:
 			if best_dir.x > 0: Input.action_press("move_right", best_dir.x)

@@ -54,6 +54,8 @@ func _initialize() -> void:
 	await process_frame
 	gs.save_path = "user://test_run.save"
 	gs.meta_path = "user://test_meta.save"
+	gs.upgrades = {}  # la vraie sauvegarde est deja chargee : pas d'ameliorations ni de semaine 2 ici
+	gs.week = 1
 	bestiary = load("res://scripts/combat/bestiary.gd")
 	var data: Dictionary = bestiary.NIGHTS[night]
 

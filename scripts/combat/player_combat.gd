@@ -18,6 +18,15 @@ const ATTACK_DURATION := 0.15
 const ATTACK_COOLDOWN := PlayerStats.ATTACK_COOLDOWN
 const ATTACK_REACH := PlayerStats.ATTACK_REACH
 const HURT_INVINCIBILITY := PlayerStats.HURT_INVINCIBILITY
+# Enchainement : trois coups rapproches, le troisieme frappe plus fort et plus loin, puis on souffle.
+const COMBO_WINDOW := 0.75      # secondes pour placer le coup suivant
+const COMBO_FINISHER := 3
+const FINISHER_REACH := 12.0
+const FINISHER_RECOVERY := 1.7  # le coup final rallonge le temps avant la prochaine attaque
+# Coup plongeant : attaquer pendant un dash ou juste apres frappe plus fort, d'un peu plus loin.
+const DASH_STRIKE_WINDOW := 0.25
+const DASH_STRIKE_COOLDOWN := 2.5  # sinon, avec un dash toutes les 0,6 s, il doublait presque les degats
+const DASH_STRIKE_REACH := 8.0
 const REVEIL_RADIUS := 220.0
 const OREILLER_RADIUS := 150.0
 const OREILLER_DAMAGE := 2
@@ -55,6 +64,13 @@ var slow_timer := 0.0
 var slow_factor := 1.0
 var move_velocity := Vector2.ZERO  # deplacement voulu, lisse (hors dash et forces externes)
 var last_attack_time := -100.0  # secondes (Time), pour les ennemis qui reagissent a nos attaques
+var combo := 0            # coups deja places dans l'enchainement en cours
+var combo_timer := 0.0    # temps restant pour le coup suivant
+var since_dash := 10.0    # secondes depuis la fin du dernier dash
+var dash_strike_timer := 0.0  # temps avant le prochain coup plongeant
+var strike_damage := 1    # degats du coup en cours
+var strike_reach := ATTACK_REACH
+var strike_kind := ""     # "" (coup simple), "finisher" (3e coup) ou "dash" (coup plongeant)
 
 # Statistiques calculees a partir des passifs (apply_items).
 var max_hp := GameState.BASE_MAX_HP
@@ -131,8 +147,23 @@ func _draw() -> void:
 	if slash_timer > 0.0:
 		var t := slash_timer / ATTACK_DURATION
 		var angle := facing.angle()
-		draw_arc(Vector2.ZERO, reach + 6.0, angle - 1.1, angle + 1.1, 12, Color(1, 1, 1, t), 6.0)
-		draw_arc(Vector2.ZERO, reach - 2.0, angle - 0.8, angle + 0.8, 10, Color(0.7, 0.85, 1, t * 0.7), 3.0)
+		if strike_kind == "finisher":  # grand arc dore, plus large
+			draw_arc(Vector2.ZERO, strike_reach + 10.0, angle - 1.5, angle + 1.5, 16, Color(1, 0.88, 0.45, t), 9.0)
+			draw_arc(Vector2.ZERO, strike_reach + 2.0, angle - 1.2, angle + 1.2, 14, Color(1, 1, 1, t), 4.0)
+			draw_arc(Vector2.ZERO, strike_reach - 8.0, angle - 0.9, angle + 0.9, 12, Color(1, 0.7, 0.3, t * 0.7), 3.0)
+		elif strike_kind == "dash":  # estoc : un trait qui file dans le sens du dash
+			draw_line(facing * 6.0, facing * (strike_reach + 22.0), Color(0.7, 0.9, 1, t), 7.0)
+			draw_line(facing * 10.0, facing * (strike_reach + 26.0), Color(1, 1, 1, t), 3.0)
+			draw_arc(Vector2.ZERO, strike_reach + 6.0, angle - 0.7, angle + 0.7, 10, Color(1, 1, 1, t), 5.0)
+		else:
+			draw_arc(Vector2.ZERO, strike_reach + 6.0, angle - 1.1, angle + 1.1, 12, Color(1, 1, 1, t), 6.0)
+			draw_arc(Vector2.ZERO, strike_reach - 2.0, angle - 0.8, angle + 0.8, 10, Color(0.7, 0.85, 1, t * 0.7), 3.0)
+	# Enchainement en cours : un point par coup place, au-dessus de la tete.
+	if combo > 0 and combo_timer > 0.0:
+		for i in COMBO_FINISHER - 1:
+			var at := Vector2(-5.0 + i * 10.0, -40.0)
+			draw_circle(at, 3.5, Color(0.08, 0.05, 0.1, 0.8))
+			draw_circle(at, 2.5, Color(1, 0.88, 0.45) if i < combo else Color(1, 1, 1, 0.25))
 	if ring_timer > 0.0:
 		var r := ring_radius * (1.0 - ring_timer / 0.35)
 		draw_arc(Vector2.ZERO, r, 0.0, TAU, 48, Color(ring_color, ring_timer / 0.35), 4.0)
@@ -144,6 +175,9 @@ func _physics_process(delta: float) -> void:
 		return
 	dash_cooldown_timer = max(0.0, dash_cooldown_timer - delta)
 	attack_cooldown_timer = max(0.0, attack_cooldown_timer - delta)
+	combo_timer = max(0.0, combo_timer - delta)
+	dash_strike_timer = max(0.0, dash_strike_timer - delta)
+	since_dash += delta
 	if hurt_timer > 0.0:
 		hurt_timer -= delta
 		if hurt_timer <= 0.0 and not dashing:
@@ -164,6 +198,7 @@ func _physics_process(delta: float) -> void:
 				_spawn_dash_trail()
 		if dash_timer <= 0.0:
 			dashing = false
+			since_dash = 0.0
 			invincible = hurt_timer > 0.0
 			modulate.a = 1.0
 			move_velocity = facing * move_speed  # on sort du dash en courant, sans a-coup
@@ -215,10 +250,22 @@ func _spawn_dash_trail() -> void:
 func _try_attack() -> void:
 	if attack_cooldown_timer > 0.0:
 		return
-	attack_cooldown_timer = attack_cooldown_effective
+	combo = combo + 1 if combo_timer > 0.0 else 1
+	var finisher := combo >= COMBO_FINISHER
+	var dash_strike := dash_strike_timer <= 0.0 and (dashing or since_dash <= DASH_STRIKE_WINDOW)
+	if dash_strike:
+		dash_strike_timer = DASH_STRIKE_COOLDOWN
+	strike_kind = "finisher" if finisher else ("dash" if dash_strike else "")
+	strike_damage = attack_damage * (2 if finisher else 1) + (1 if dash_strike else 0)
+	strike_reach = reach + (FINISHER_REACH if finisher else 0.0) + (DASH_STRIKE_REACH if dash_strike else 0.0)
+	attack_cooldown_timer = attack_cooldown_effective * (FINISHER_RECOVERY if finisher else 1.0)
+	combo_timer = 0.0 if finisher else attack_cooldown_effective + COMBO_WINDOW
+	if finisher:
+		combo = 0
 	Sound.play("slash")
 	slash_timer = ATTACK_DURATION
-	attack_hitbox.position = facing * reach
+	attack_hitbox.position = facing * strike_reach
+	attack_hitbox.scale = Vector2.ONE * (1.45 if finisher else (1.2 if dash_strike else 1.0))
 	last_attack_time = Time.get_ticks_msec() / 1000.0
 	attacked.emit(attack_hitbox.global_position)
 	attack_shape.disabled = false
@@ -296,10 +343,11 @@ func _heal(amount: int) -> void:
 func _on_attack_area_entered(area: Area2D) -> void:
 	if area.has_method("register_hit"):
 		var crit := randf() < crit_chance
-		area.register_hit(attack_damage * (2 if crit else 1))
-		Sound.play("crit" if crit else "hit")
-		shake = max(shake, 5.0 if crit else 2.5)
-		Fx.hitstop(get_tree(), 0.08 if crit else 0.04)
+		var heavy := crit or strike_kind == "finisher"
+		area.register_hit(strike_damage * (2 if crit else 1))
+		Sound.play("crit" if heavy else "hit")
+		shake = max(shake, 5.0 if heavy else 2.5)
+		Fx.hitstop(get_tree(), 0.08 if heavy else 0.04)
 		var target := area.get_parent()
 		if knockback > 0.0 and is_instance_valid(target) and target is CharacterBody2D:
 			target.move_and_collide((target.global_position - global_position).normalized() * knockback)

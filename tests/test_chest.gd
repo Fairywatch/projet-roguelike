@@ -7,6 +7,8 @@ func _initialize() -> void:
 	# Fichier a part : les tests ne touchent pas a la vraie sauvegarde du joueur.
 	gs.save_path = "user://test_run.save"
 	gs.meta_path = "user://test_meta.save"
+	gs.upgrades = {}  # la vraie sauvegarde est deja chargee : pas d'ameliorations ni de semaine 2 ici
+	gs.week = 1
 	gs.new_run()
 
 	for seed in 20:

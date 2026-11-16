@@ -18,6 +18,7 @@ class Bedroom extends Shot:
 	func _init() -> void:
 		duration = 13.5
 		lines = [[1.7, 5.6, Story.INTRO[0], 30.0]]
+		sounds = [[1.0, "pop"], [1.25, "pop"], [5.6, "sparkle"]]  # la veilleuse gresille, la chambre se devoile
 		film = video(self, "intro/intro_1_chambre")
 
 	func update(t: float) -> void:
@@ -33,6 +34,9 @@ class Voices extends Shot:
 		duration = 16.0
 		fade_in = 0.6
 		lines = [[1.2, 15.8, Story.INTRO[1], 32.0]]
+		sounds = [[1.0, "chest"], [2.6, "encounter"], [3.5, "encounter"], [4.4, "encounter"]]  # la porte, les voix
+		for i in 7:  # chaque souci qui apparait
+			sounds.append([8.4 + i * 0.45, "pop"])
 		film = video(self, "intro/intro_2_voix")
 
 	func update(t: float) -> void:
@@ -49,6 +53,8 @@ class Week extends Shot:
 	func _init() -> void:
 		duration = 17.5
 		lines = [[1.0, 7.3, Story.INTRO[2], 30.0], [8.3, 12.6, Story.INTRO[3], 30.0], [13.0, 17.6, Story.INTRO[4], 22.0]]
+		for i in 7:  # chaque tour qui surgit
+			sounds.append([1.45 + i * 0.65, "portal"])
 		film = video(self, "intro/intro_3_semaine")
 		lid_top = _lid(false)
 		lid_bottom = _lid(true)
@@ -106,6 +112,7 @@ class Dive extends Shot:
 		duration = 12.5
 		hold_at_end = true
 		lines = [[0.3, 4.4, Story.INTRO[5], 30.0]]
+		sounds = [[0.3, "dash"], [4.2, "sparkle"], [5.9, "victory"]]  # la chute, l'eclair, le titre
 		fall = video(self, "intro/intro_4_chute")
 		title = group()
 		layer(title, "intro/titre_fond")

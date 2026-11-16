@@ -2,7 +2,7 @@ extends BaseMob
 
 # L'Horloge de Classe (boss du mardi) : ses deux aiguilles balaient l'arene comme des bras
 # rotatifs (trait pale avant de tourner), un peu plus vite a chaque attaque.
-# Toutes les trois attaques, la sonnerie : une couronne de "DRING" part du cadran.
+# Une attaque sur deux, la sonnerie : une couronne de "DRING" part du cadran.
 # Variante : les aiguilles tournent en sens contraire. Cauchemar : tournent plus vite.
 
 const HAND_COLOR := Color(0.9, 0.3, 0.3)
@@ -25,9 +25,9 @@ func _on_ready() -> void:
 
 func _on_attack_begin() -> void:
 	cycle += 1
-	var speed := minf(1.0 + cycle * 0.12, 2.2) * (1.25 if nightmare else 1.0)
+	var speed := minf(1.25 + cycle * 0.14, 2.4) * (1.25 if nightmare else 1.0)
 	var start := (player.global_position - global_position).angle() + PI * 0.6
 	Hazards.sweep(global_position, start, speed, 560.0, 18.0, 0.8, SWEEP_TIME, HAND_COLOR)
 	Hazards.sweep(global_position, start + PI, speed * (-0.7 if alt else 0.7), 320.0, 22.0, 0.8, SWEEP_TIME, HAND_COLOR)
-	if cycle % 3 == 0:  # la sonnerie
+	if cycle % 2 == 0:  # la sonnerie
 		Hazards.radial(self, 16 if nightmare else 12, 120.0, HAND_COLOR, randf() * TAU, ["DRING"])

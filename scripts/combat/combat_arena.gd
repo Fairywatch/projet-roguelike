@@ -24,9 +24,12 @@ var had_elite := false
 const ELITE_LOOT_BONUS := 0.2
 var combat_over := false
 var hearts := Hearts.new()
+var boss_bar := BossBar.new()
 var extra_mobs := 0  # ennemis en plus (regle du samedi)
 var message_serial := 0
 var waiting_to_leave := false
+const FLEE_CONFIRM_TIME := 2.5  # secondes pour confirmer une fuite d'un deuxieme appui
+var flee_asked_at := -100.0
 var leaving := false
 
 func _ready() -> void:
@@ -37,6 +40,9 @@ func _ready() -> void:
 	$UI/Instructions.text = Controls.help(["move", "attack", "dash", "active", "interact", "inventory"])
 	$UI/Instructions.create_tween().tween_property($UI/Instructions, "modulate:a", 0.0, 1.0).set_delay(4.0)
 	$UI.add_child(hearts)
+	boss_bar.position = Vector2((640 - BossBar.SIZE.x) / 2.0, 30)
+	boss_bar.visible = false
+	$UI.add_child(boss_bar)
 	$UI.add_child(InventoryPanel.new())
 	$UI.add_child(SpeedrunTimer.new())
 
@@ -55,13 +61,21 @@ func _ready() -> void:
 		rule_script.apply_combat(self, rule_strength())
 
 	GameState.start_combat()
-	var mobs := _pick_mobs()
+	var lesson := GameState.needs_tutorial()  # tout premier combat : un seul ennemi, d'entrainement
+	var mobs: Array = [Bestiary.make("lundi/mouton")] if lesson else _pick_mobs()
 	is_boss_fight = GameState.guardian_fight or mobs.any(func(m): return m.is_boss)
 	Sound.music("boss" if is_boss_fight else "combat")
 	if is_boss_fight:
 		Sound.play("boss")
 	for mob in mobs:
 		_spawn_mob(mob)
+	if lesson:
+		mobs[0].position = player.position + Vector2(170, 0)
+		var tutorial := Tutorial.new()
+		tutorial.player = player
+		tutorial.dummy = mobs[0]
+		$UI.add_child(tutorial)
+		$UI/Instructions.visible = false
 
 # Ennemis du combat (pas encore dans l'arbre), tires du bestiaire de la nuit (scripts/combat/bestiary.gd).
 func _pick_mobs() -> Array:
@@ -102,6 +116,7 @@ func _spawn_mob(mob: BaseMob) -> void:
 	mob.chase_speed *= maxf(0.3, 1.0 + GameState.mod("enemy_speed"))
 	mob.cooldown_duration *= maxf(0.3, 1.0 + GameState.mod("enemy_cooldown"))
 	mob.died.connect(player.on_enemy_killed)
+	mob.died.connect(GameState.note.bind("kills"))
 
 func _random_spawn_position() -> Vector2:
 	var pos := Vector2.ZERO
@@ -130,8 +145,9 @@ func _process(_delta: float) -> void:
 		_on_victory()
 	elif is_boss_fight:
 		var boss: BaseMob = alive.filter(func(m): return m.is_boss).front() if alive.any(func(m): return m.is_boss) else alive[0]
-		var boss_name: String = boss.display_name if boss.display_name != "" else "Gardien du portail"
-		mob_label.text = "%s  PV %d" % [boss_name, boss.hp]
+		mob_label.text = boss.display_name if boss.display_name != "" else "Gardien du portail"
+		boss_bar.visible = true
+		boss_bar.show_boss(boss)
 	else:
 		mob_label.text = "Ennemis : %d" % alive.size()
 
@@ -140,9 +156,27 @@ func _unhandled_input(event: InputEvent) -> void:
 	if waiting_to_leave and (event.is_action_pressed("ui_accept") or event.is_action_pressed("pause")):
 		_leave()
 	elif event.is_action_pressed("pause") and not combat_over:
-		GameState.end_combat()
-		GameState.guardian_fight = false
-		SceneTransition.change_scene(GameState.return_map_path)
+		_try_flee()
+
+# Fuite : jamais devant un gardien ou un boss. Ailleurs, elle se confirme d'un deuxieme appui, coute
+# des pieces, et les PV perdus pendant le combat le restent (sinon fuir soignait).
+func _try_flee() -> void:
+	if is_boss_fight or GameState.guardian_fight:
+		_on_item_message("Impossible de fuir un gardien !")
+		return
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - flee_asked_at > FLEE_CONFIRM_TIME:
+		flee_asked_at = now
+		var cost := mini(GameState.FLEE_COST, GameState.coins)
+		_on_item_message("%s encore pour fuir (-%d pièce%s, les PV perdus le restent)" % [Controls.name_of("pause"), cost, "s" if cost > 1 else ""], FLEE_CONFIRM_TIME)
+		return
+	combat_over = true
+	GameState.end_combat()
+	GameState.hp_lost = player.max_hp - player.hp
+	GameState.coins = maxi(0, GameState.coins - GameState.FLEE_COST)
+	GameState.note("fled")
+	GameState.pending_message = "Tu as fui le combat..."
+	SceneTransition.change_scene(GameState.return_map_path)
 
 # duration <= 0 : le message reste affiche.
 func _on_item_message(text: String, duration: float = 2.0) -> void:
@@ -160,8 +194,10 @@ func _on_victory() -> void:
 	GameState.end_combat()
 	Sound.play("victory")
 	combat_over = true
+	boss_bar.visible = false
 	player.invincible = true
 	GameState.hp_lost = player.max_hp - player.hp  # les PV perdus le restent jusqu'aux etoiles
+	GameState.note("wins")
 	if not GameState.guardian_fight:
 		GameState.current_floor()["wins"] += 1
 	GameState.coins += GameState.COINS_PER_GUARDIAN if GameState.guardian_fight else GameState.COINS_PER_WIN

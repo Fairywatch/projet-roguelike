@@ -9,7 +9,7 @@ extends BaseMob
 const WORDS := ["CHUT", "PLUS TARD", "TAIS-TOI", "VA DORMIR", "PAS MAINTENANT"]
 const WORD_COLOR := Color(0.95, 0.85, 1.0)
 const PHASE_THRESHOLDS := [0.66, 0.33]  # ratio de PV ou l'on passe en phase 2, puis 3
-const PULL_SPEED := 55.0
+const PULL_SPEED := 45.0
 const FOG_COLOR := Color(0.45, 0.4, 0.6)
 const CREAK_EVERY := 3.5
 const CREAK_WARNING := 0.6
@@ -25,7 +25,7 @@ func _texture_path() -> String:
 func _on_ready() -> void:
 	display_name = "La Porte des Voix"
 	is_boss = true
-	hp = 34
+	hp = 30
 	chase_speed = 0.0
 	attack_range = 2000.0
 	telegraph_duration = 0.6
@@ -93,7 +93,7 @@ func _on_attack_begin() -> void:
 	var direction := player.global_position - global_position
 	match phase:
 		1:
-			Hazards.fan(self, direction, 5, 60.0, 160.0, WORD_COLOR, WORDS)
+			Hazards.fan(self, direction, 4, 60.0, 150.0, WORD_COLOR, WORDS)
 		2:
 			Hazards.fan(self, direction, 3, 40.0, 150.0, WORD_COLOR, WORDS)
 			for i in 2:

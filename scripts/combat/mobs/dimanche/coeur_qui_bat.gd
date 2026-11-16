@@ -7,7 +7,7 @@ extends BaseMob
 # Cauchemar : trous plus etroits.
 
 const RING_COLOR := Color(1, 0.35, 0.45)
-const MIN_COOLDOWN := 0.45
+const MIN_COOLDOWN := 0.75
 
 var beats := 0
 
@@ -17,7 +17,7 @@ func _texture_path() -> String:
 func _on_ready() -> void:
 	display_name = "Le Cœur qui Bat"
 	is_boss = true
-	hp = 24
+	hp = 20
 	chase_speed = 0.0
 	attack_range = 2000.0
 	telegraph_duration = 0.35

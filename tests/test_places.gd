@@ -19,6 +19,8 @@ func _initialize() -> void:
 	await process_frame
 	gs.save_path = "user://test_run.save"
 	gs.meta_path = "user://test_meta.save"
+	gs.upgrades = {}  # la vraie sauvegarde est deja chargee : pas d'ameliorations ni de semaine 2 ici
+	gs.week = 1
 
 	# Chaque lieu a toutes ses tuiles (reve et cauchemar) et tous ses decors.
 	for night in Places.LIST:

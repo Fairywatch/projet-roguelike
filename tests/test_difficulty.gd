@@ -7,6 +7,8 @@ func _initialize() -> void:
 	# Fichier a part : les tests ne touchent pas a la vraie sauvegarde du joueur.
 	gs.save_path = "user://test_run.save"
 	gs.meta_path = "user://test_meta.save"
+	gs.upgrades = {}  # la vraie sauvegarde est deja chargee : pas d'ameliorations ni de semaine 2 ici
+	gs.week = 1
 	gs.new_run(0)  # la sauvegarde de test peut venir d'une autre nuit
 
 	# Z (position de W) fait monter, en plus des fleches.
@@ -221,8 +223,17 @@ func _initialize() -> void:
 	gs.start_combat()
 	gs.new_run(0)
 	gs.load_run()
-	assert(gs.floor_index == 5 and gs.passive_count() == 0 and not gs.in_combat)
+	assert(gs.floor_index == 5 and gs.passive_count() == 1 and not gs.in_combat)  # 1 passif, garde a la mort
 	assert(gs.menu_message.begins_with("Tu as fui un combat"))
+	for i in 4:
+		gs.take_item("plume_de_reve")
+	gs.take_item("mouchoir_usage")
+	gs.apply_death_setback()
+	assert(gs.passive_count() == gs.DEATH_KEPT_ITEMS and not gs.has_active_item())
+	assert(gs.menu_message.contains("avec Plume de rêve"))
+	gs.reset_run_items()
+	gs.apply_death_setback()
+	assert(gs.menu_message.contains("les mains vides"))
 	# Un actif repose au sol garde ses charges : pas de recharge gratuite en le reprenant.
 	gs.take_item("oreiller_volant")
 	gs.active_charges = 1

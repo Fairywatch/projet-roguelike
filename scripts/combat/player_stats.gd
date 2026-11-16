@@ -70,7 +70,7 @@ static func knockback() -> float:
 static func lines() -> Array:
 	var out := [
 		["PV", "%d / %d  (max %d)" % [GameState.current_hp(), GameState.max_hp(), GameState.MAX_HP_CAP]],
-		["Dégâts", str(damage())],
+		["Dégâts", "%d  (3e coup : %d)" % [damage(), damage() * 2]],
 		["Attaques / s", "%.1f" % (1.0 / attack_cooldown())],
 		["Portée", "%d" % roundi(reach())],
 		["Vitesse", _percent(move_speed() / SPEED - 1.0, true)],

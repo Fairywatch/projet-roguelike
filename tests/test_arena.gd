@@ -26,6 +26,8 @@ func _initialize() -> void:
 	# Fichier a part : les tests ne touchent pas a la vraie sauvegarde du joueur.
 	gs.save_path = "user://test_run.save"
 	gs.meta_path = "user://test_meta.save"
+	gs.upgrades = {}  # la vraie sauvegarde est deja chargee : pas d'ameliorations ni de semaine 2 ici
+	gs.week = 1
 	gs.new_run()
 	gs.floor_index = 0
 	gs.new_run(0, false, true)  # Cauchemar : toujours au moins 2 ennemis
@@ -120,7 +122,7 @@ func _initialize() -> void:
 	current_scene.player.take_damage()
 	await create_timer(1.8).timeout
 	assert(current_scene.name == "MainMenu")
-	assert(gs.run_started and gs.floor_index == 5 and gs.passive_count() == 0)
+	assert(gs.run_started and gs.floor_index == 5 and gs.passive_count() <= gs.DEATH_KEPT_ITEMS and not gs.has_active_item())
 
 	print("test_arena OK")
 	quit()

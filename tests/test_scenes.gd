@@ -16,6 +16,8 @@ func _initialize() -> void:
 	await process_frame
 	gs.save_path = "user://test_run.save"
 	gs.meta_path = "user://test_meta.save"
+	gs.upgrades = {}  # la vraie sauvegarde est deja chargee : pas d'ameliorations ni de semaine 2 ici
+	gs.week = 1
 	# Chaque effet du manifeste a bien tous ses fichiers de variantes.
 	for sfx_name in SfxManifest.SFX:
 		for i in SfxManifest.SFX[sfx_name]["variants"]:

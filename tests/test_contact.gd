@@ -7,6 +7,8 @@ func _initialize() -> void:
 	await process_frame
 	gs.save_path = "user://test_run.save"
 	gs.meta_path = "user://test_meta.save"
+	gs.upgrades = {}  # la vraie sauvegarde est deja chargee : pas d'ameliorations ni de semaine 2 ici
+	gs.week = 1
 	gs.new_run(0)
 	change_scene_to_file("res://scenes/combat/CombatArena.tscn")
 	for i in 10:

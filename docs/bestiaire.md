@@ -72,7 +72,7 @@
 
 **Boss tirés au hasard**
 - **Le Tableau Noir** : dessine à la craie des **motifs au sol** (télégraphes) qui frappent ensuite, de plus en plus vite.
-- **L'Horloge de Classe** : ses aiguilles balaient l'arène comme des **bras rotatifs** qui accélèrent ; toutes les trois attaques, sa **sonnerie** lance une couronne de « DRING ».
+- **L'Horloge de Classe** : ses aiguilles balaient l'arène comme des **bras rotatifs** qui accélèrent ; une attaque sur deux, sa **sonnerie** lance une couronne de « DRING ».
 - **La Cloche** : sonne des **anneaux concentriques** à franchir au bon moment et appelle des Trotteuses.
 
 **Boss de fin : L'Examen** *(la peur de décevoir)*

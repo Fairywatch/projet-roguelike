@@ -9,6 +9,8 @@ func _initialize() -> void:
 	await process_frame
 	gs.save_path = "user://test_run.save"
 	gs.meta_path = "user://test_meta.save"
+	gs.upgrades = {}  # la vraie sauvegarde est deja chargee : pas d'ameliorations ni de semaine 2 ici
+	gs.week = 1
 	gs.start_bag.clear()
 	gs.new_run(0)
 
@@ -102,7 +104,7 @@ func _initialize() -> void:
 	var lines: Dictionary = {}
 	for line in load("res://scripts/combat/player_stats.gd").lines():
 		lines[line[0]] = line[1]
-	assert(lines.has("PV") and lines["Dégâts"] == "1" and lines["Esquive"] == "+15 %")
+	assert(lines.has("PV") and lines["Dégâts"].begins_with("1 ") and lines["Esquive"] == "+15 %")
 
 	# L'Autre Soi copie le joueur : PV max, degats, esquive, coups bloques, portee, objet actif.
 	gs.new_run(0)

@@ -5,16 +5,17 @@ extends RefCounted
 # traverse. Chaque nuit est un age de la vie ; chacune se termine par une petite lueur d'espoir.
 # Le texte est raconte par l'introduction (facon The Binding of Isaac), par les habitants du
 # reve (PNJ) et par une fin a chaque nuit.
-# PREMIER JET : ce fichier ne contient que du texte, a reecrire librement.
+# Ce fichier ne contient que du texte, a reecrire librement. Relu apres la refonte des cinematiques :
+# chaque phrase decrit ce que montre son plan (les voix derriere la porte, les sept nuits...).
 #
 # Chaque phrase s'affiche sur un plan anime de la cinematique (scripts/story/intro.gd pour
 # l'intro, scripts/story/endings.gd pour les fins) : garder le meme nombre de phrases.
 
 const INTRO := [
 	"Il était une fois un rêveur qui ne dormait plus vraiment.",
-	"Chaque soir, ses journées le suivaient jusque dans ses rêves : les voix, les regrets, les peurs qu'il n'avait jamais dites.",
-	"Une semaine entière pesait sur lui. Sept jours, comme les sept âges d'une vie... et chaque jour plus lourd que le précédent.",
-	"Pour se réveiller enfin apaisé, il lui faudrait traverser chaque nuit, et affronter ce qui s'y cachait.",
+	"Chaque soir, ses journées le suivaient jusque dans son lit : les voix derrière la porte, les regrets, les peurs jamais dites.",
+	"Toute une semaine pesait sur lui. Sept nuits, comme les sept âges d'une vie, chacune plus lourde que la précédente.",
+	"Pour se réveiller enfin reposé, il lui faudrait les traverser une à une, et regarder en face ce qui s'y cachait.",
 	"Alors il ferma les yeux...",
 	"...et plongea.",
 ]

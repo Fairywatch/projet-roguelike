@@ -12,6 +12,7 @@ const VIDEO_DRIFT := 0.3  # ecart tolere (secondes) entre une video et le temps 
 
 var duration := 10.0
 var lines: Array = []  # [debut, fin, texte, caracteres par seconde]
+var sounds: Array = []  # [instant, nom du bruitage (Sound.play)] : joues par la cinematique
 var fade_in := 0.0  # fondu depuis le noir au debut du plan
 var fade_out := 0.0  # fondu vers end_color a la fin du plan
 var end_color := NIGHT

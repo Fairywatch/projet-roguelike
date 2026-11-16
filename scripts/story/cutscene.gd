@@ -11,6 +11,7 @@ extends Node2D
 var shots: Array[Shot] = []
 var starts: Array[float] = []
 var lines: Array = []  # [debut, fin, texte, caracteres par seconde], en temps de la cinematique
+var sounds: Array = []  # [instant, bruitage], en temps de la cinematique
 var total := 0.0
 var time := 0.0
 var finishing := false
@@ -28,6 +29,8 @@ func _ready() -> void:
 		starts.append(total)
 		for line in shot.lines:
 			lines.append([line[0] + total, line[1] + total, line[2], line[3]])
+		for cue in shot.sounds:
+			sounds.append([cue[0] + total, cue[1]])
 		total += shot.duration
 		stage.add_child(shot)
 	Sound.music("reve")
@@ -36,6 +39,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if finishing:
 		return
+	# Bruitages dont l'instant vient de passer (pas ceux qu'un saut de phrase a enjambes).
+	for cue in sounds:
+		if cue[0] > time and cue[0] <= time + delta:
+			Sound.play(cue[1])
 	time += delta
 	if time >= total:
 		if not shots.back().hold_at_end:
