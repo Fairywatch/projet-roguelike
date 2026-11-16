@@ -62,6 +62,12 @@ const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag
 
 var save_path := "user://run.save"
 var meta_path := "user://meta.save"
+# Trois sauvegardes independantes (partie en cours + meta-progression chacune). La premiere garde
+# les noms de fichiers d'origine : une sauvegarde d'avant les emplacements devient la sauvegarde 1.
+const SLOT_COUNT := 3
+var save_dir := "user://"
+var slot := 0  # sauvegarde en cours (0 a SLOT_COUNT - 1), retenue dans <save_dir>slot.cfg
+var _defaults: Dictionary = {}  # valeur de depart de chaque champ sauvegarde (nouvelle partie)
 
 var return_map_path := "res://scenes/exploration/Map.tscn"
 var return_position: Vector2 = Vector2.ZERO
@@ -130,8 +136,84 @@ func _ready() -> void:
 	get_tree().root.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	Controls.setup()
 	Settings.load_settings()
+	for field in SAVED_FIELDS + META_FIELDS:
+		_defaults[field] = _copy(get(field))
+	slot = _read_slot()
+	_use_slot_paths()
 	load_run()
 	_load_fields(meta_path, META_FIELDS)
+
+# --- Sauvegardes (emplacements) -------------------------------------------------------
+
+func slot_paths(index: int) -> Array:
+	var suffix := "" if index == 0 else "_%d" % (index + 1)
+	return [save_dir + "run%s.save" % suffix, save_dir + "meta%s.save" % suffix]
+
+func _use_slot_paths() -> void:
+	var paths := slot_paths(slot)
+	save_path = paths[0]
+	meta_path = paths[1]
+
+func _read_slot() -> int:
+	var config := ConfigFile.new()
+	if config.load(save_dir + "slot.cfg") != OK:
+		return 0
+	return clampi(int(config.get_value("save", "slot", 0)), 0, SLOT_COUNT - 1)
+
+# Change de sauvegarde : la partie en cours est enregistree, puis l'autre est chargee (ou une
+# nouvelle partie commence si l'emplacement est vide).
+func select_slot(index: int) -> void:
+	save_run()
+	slot = clampi(index, 0, SLOT_COUNT - 1)
+	var config := ConfigFile.new()
+	config.set_value("save", "slot", slot)
+	config.save(save_dir + "slot.cfg")
+	_use_slot_paths()
+	_reset_state()
+	load_run()
+	_load_fields(meta_path, META_FIELDS)
+
+# Efface une sauvegarde : ses fichiers sont supprimes. Si c'est celle en cours, on repart de zero.
+func erase_slot(index: int) -> void:
+	for path in slot_paths(index):
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
+	if index == slot:
+		_reset_state()
+
+func _reset_state() -> void:
+	for field in _defaults:
+		set(field, _copy(_defaults[field]))
+	mods.clear()
+	guardian_fight = false
+	pending_message = ""
+	menu_message = ""
+	cutscene_id = ""
+
+static func _copy(value: Variant) -> Variant:
+	return value.duplicate(true) if value is Array or value is Dictionary else value
+
+# Resume d'une sauvegarde pour le menu, lu dans ses fichiers ("" : emplacement vide).
+func slot_summary(index: int) -> String:
+	var paths := slot_paths(index)
+	var meta := _read_file(paths[1])
+	var run := _read_file(paths[0])
+	var started: bool = run.get("run_started", false)
+	var fresh: bool = meta.get("coins", 0) == 0 and meta.get("completed_towers", []).is_empty() and meta.get("unlocked_towers", 1) <= 1 \
+		and meta.get("upgrades", {}).is_empty() and meta.get("week", 1) <= 1
+	if not started and fresh:
+		return ""
+	var text := "Semaine %d  ·  %d/%d nuits  ·  %d pièces" % [meta.get("week", 1), meta.get("completed_towers", []).size(), Towers.LIST.size(), meta.get("coins", 0)]
+	if started:
+		text += "  ·  %s, étage %d" % [Towers.get_tower(run.get("tower_index", 0))["name"], run.get("floor_index", 0)]
+	return text
+
+func _read_file(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var file := FileAccess.open(path, FileAccess.READ)
+	var data = file.get_var() if file else null
+	return data if data is Dictionary and data.get("version") == SAVE_VERSION else {}
 
 # Fermeture de la fenetre : on garde la partie (la carte met d'abord a jour la position du joueur).
 func _notification(what: int) -> void:

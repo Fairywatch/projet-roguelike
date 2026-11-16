@@ -77,7 +77,8 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, rencontr
 
 ## 6. Modes de jeu & sélection des tours
 
-- **Menu principal** : Continuer (partie sauvegardée), Choisir une nuit (hub), Paramètres.
+- **Menu principal** : Continuer (partie sauvegardée), Choisir une nuit (hub), Sauvegardes, Paramètres.
+- **Trois sauvegardes** indépendantes : chacune garde sa partie en cours et sa méta-progression (pièces, nuits terminées, améliorations, semaine). Le panneau Sauvegardes montre le résumé de chacune ; on en choisit une pour y jouer (le jeu la retient au prochain lancement), ou on l'efface, en deux appuis, pour y commencer une nouvelle partie. Les paramètres et les touches sont communs aux trois.
 - **Hub de la semaine** : un lieu où l'on marche, comme un menu vivant. Les 7 tours y sont alignées du lundi au dimanche, de plus en plus sombres et tordues. On y trouve aussi la Marchande de lune (boutique) et l'horloge du réveil (mode speedrun). Entrer dans une autre nuit que celle en cours demande une confirmation (la partie en cours est abandonnée).
 - **Déblocage progressif** : on ne peut entrer dans une nuit qu'après avoir terminé celle de la veille. Les nuits terminées portent une étoile.
 - **Les 7 nuits** (données dans `scripts/towers.gd`) :

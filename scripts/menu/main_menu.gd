@@ -40,11 +40,12 @@ func _ready() -> void:
 	message_label.text = GameState.menu_message
 	GameState.menu_message = ""
 	GameState.save_run()
-	coins_label.text = "Pièces : %d" % GameState.coins
+	coins_label.text = _coins_text()
 	if GameState.run_started:
 		var mode := "  -  %s" % GameState.format_time(GameState.time_left) if GameState.speedrun else ""
 		_add_button("Continuer  (%s, étage %d%s)" % [Towers.title(GameState.tower_index), GameState.floor_index, mode], _go)
 	_add_button("Choisir une nuit", _open_hub)
+	_add_button("Sauvegardes", _open_panel.bind(SlotsPanel))
 	_add_button("Paramètres", _open_panel.bind(SettingsPanel))
 	_add_button("Quitter", get_tree().quit)
 	buttons.get_child(0).grab_focus()
@@ -53,7 +54,7 @@ func _ready() -> void:
 func _add_button(label: String, action: Callable) -> void:
 	var button := Button.new()
 	button.text = label
-	button.custom_minimum_size = Vector2(240, 24)
+	button.custom_minimum_size = Vector2(240, 22)
 	button.add_theme_font_size_override("font_size", 13)
 	button.pressed.connect(func(): Sound.play("ui_select"); action.call())
 	buttons.add_child(button)
@@ -76,8 +77,11 @@ func _open_panel(panel_script: GDScript) -> void:
 	panel.closed.connect(_close_panel)
 	$UI.add_child(panel)
 
+func _coins_text() -> String:
+	return "Sauvegarde %d  ·  Pièces : %d" % [GameState.slot + 1, GameState.coins]
+
 func _close_panel() -> void:
-	coins_label.text = "Pièces : %d" % GameState.coins
+	coins_label.text = _coins_text()
 	buttons.visible = true
 	buttons.get_child(0).grab_focus()
 
