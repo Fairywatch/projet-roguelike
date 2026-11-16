@@ -72,7 +72,7 @@
 
 **Boss tirés au hasard**
 - **Le Tableau Noir** : dessine à la craie des **motifs au sol** (télégraphes) qui frappent ensuite, de plus en plus vite.
-- **L'Horloge de Classe** : ses aiguilles balaient l'arène comme des **bras rotatifs** qui accélèrent.
+- **L'Horloge de Classe** : ses aiguilles balaient l'arène comme des **bras rotatifs** qui accélèrent ; toutes les trois attaques, sa **sonnerie** lance une couronne de « DRING ».
 - **La Cloche** : sonne des **anneaux concentriques** à franchir au bon moment et appelle des Trotteuses.
 
 **Boss de fin : L'Examen** *(la peur de décevoir)*
@@ -99,7 +99,7 @@
 - **Les Deux Voies** : un boss jumeau ; frapper le mauvais **soigne l'autre**, il faut trouver lequel attaquer.
 
 **Boss de fin : L'Autre Soi** *(qui devenir ?)*
-1. Un double du rêveur qui utilise **les mêmes coups que le joueur** : dash, attaque, objet actif.
+1. Un double du rêveur, **son miroir exact** : au début du combat, il copie les statistiques et les objets du joueur et s'en sert contre lui. Même portée, même cadence (en plus lent), mêmes dégâts, mêmes critiques ; il esquive, bloque des coups et survit au coup fatal si le joueur le fait ; ses épines piquent, son dash laisse une traînée, il ralentit au coup ; il utilise le même objet actif. Plus de PV max pour le joueur, plus de PV pour lui. Un build « intouchable » se retourne contre celui qui l'a construit.
 2. Il se divise en **trois futurs possibles** ; un seul est réel et les deux autres frappent puis disparaissent.
 3. Le vrai double cesse d'attaquer quand **le joueur cesse d'attaquer** (façon Undertale) : on gagne en arrêtant de douter... ou on le bat.
 
@@ -163,7 +163,7 @@
 | **Lettre sans réponse** | Enveloppe qui vole | Lance des **avions de papier** qui suivent lentement le joueur | Se **divise** en 3 avions quand on la frappe |
 
 **Boss tirés au hasard**
-- **La Maison Vide** : ses fenêtres tirent des rayons, ses portes laissent sortir des Silhouettes.
+- **La Maison Vide** : ses fenêtres tirent des rayons, ses portes laissent sortir des Silhouettes, et une porte **claque sous les pieds** du joueur une attaque sur deux.
 - **Le Téléphone Muet** : sonne en **ondes de choc** ; il faut « décrocher » (le frapper) au bon moment.
 - **La Foule Lointaine** : une foule de silhouettes qui **se disperse** quand on approche ; le vrai boss se cache dedans.
 
@@ -187,8 +187,8 @@
 
 **Boss tirés au hasard**
 - **Le Dimanche Soir** : une bête crépusculaire ; les **bords de l'arène s'assombrissent** et la réduisent.
-- **La Liste du Lendemain** : un parchemin de tâches qui **pleut** en motifs serrés.
-- **Le Cœur qui Bat** : un cœur géant dont les **battements accélèrent** en ondes de choc.
+- **La Liste du Lendemain** : un parchemin de tâches qui **pleut** en motifs serrés ; toutes les trois attaques, une autre liste **déferle de côté**.
+- **Le Cœur qui Bat** : un cœur géant dont les **battements accélèrent** en ondes de choc ; tous les trois battements, il projette des **globules** vers le joueur.
 
 **Boss de fin : La Dernière Nuit** *(la peur de la fin, le dernier boss du jeu)*
 1. Elle reprend les **attaques des boss de fin** de toute la semaine, en accéléré.

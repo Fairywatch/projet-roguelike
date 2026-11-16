@@ -2,7 +2,8 @@ extends BaseMob
 
 # Le Coeur qui Bat (boss du dimanche) : un coeur geant dont les battements accelerent a mesure
 # qu'il faiblit ; chaque battement envoie une onde de choc avec un trou, et un battement sur
-# quatre en envoie deux. Variante : chaque battement fait aussi pulser des zones autour de lui.
+# quatre en envoie deux ; tous les trois, il projette des globules vers le joueur.
+# Variante : chaque battement fait aussi pulser des zones autour de lui.
 # Cauchemar : trous plus etroits.
 
 const RING_COLOR := Color(1, 0.35, 0.45)
@@ -32,6 +33,8 @@ func _on_attack_begin() -> void:
 	var width := 0.4 if nightmare else 0.55
 	var gap := randf() * TAU
 	Hazards.ring(global_position, 180.0, [[gap, width]], RING_COLOR)
+	if beats % 3 == 0:  # des globules vers le joueur
+		Hazards.fan(self, player.global_position - global_position, 5, 50.0, 150.0, RING_COLOR)
 	if beats % 4 == 0 and await pause(0.3):
 		Hazards.ring(global_position, 180.0, [[gap + PI, width]], RING_COLOR)
 	if alt:

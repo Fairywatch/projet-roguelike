@@ -1,7 +1,8 @@
 extends BaseMob
 
 # La Maison Vide (boss du samedi) : ses fenetres tirent des rayons (annonces) et sa porte laisse
-# sortir des Silhouettes. Variante : la fenetre allumee tire une couronne de souvenirs.
+# sortir des Silhouettes ; une attaque sur deux, une porte claque sous les pieds du joueur.
+# Variante : la fenetre allumee tire une couronne de souvenirs.
 # Cauchemar : un rayon de plus.
 
 const LIGHT := Color(1, 0.88, 0.55)
@@ -33,5 +34,7 @@ func _on_attack_begin() -> void:
 	for i in count:
 		var angle := aim + (i - (count - 1) / 2.0) * 0.35
 		Hazards.beam(global_position, Vector2.from_angle(angle), 22.0, 0.9, 0.3, LIGHT)
+	if cycle % 2 == 0:  # une porte claque la ou se tient le joueur
+		Hazards.zone(player.global_position, 70.0, "damage", 0.9, 0.2, Color(0.55, 0.45, 0.6))
 	if alt:
 		Hazards.radial(self, 10, 110.0, LIGHT, randf() * TAU)
