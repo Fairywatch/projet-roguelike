@@ -42,7 +42,7 @@ def reset(name, duration):
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob, do_unlink=True)
     for blocks in (bpy.data.meshes, bpy.data.materials, bpy.data.lights, bpy.data.cameras, bpy.data.node_groups,
-                   bpy.data.worlds, bpy.data.actions, bpy.data.curves, bpy.data.fonts):
+                   bpy.data.worlds, bpy.data.actions, bpy.data.curves):
         for block in list(blocks):
             blocks.remove(block)
     _mats.clear()
@@ -498,11 +498,11 @@ def dreamer(pose="standing", eyes="closed"):
     sphere("CheekR", 0.04, (0.105, -0.155, 0.03), mat("cheek", "#f0a3a0"), scale=(1, 0.4, 0.8), parent=head)
     dark = mat("eye", "#2a1c1c")
     if eyes == "open":
-        sphere("EyeL", 0.026, (-0.07, -0.172, 0.11), dark, scale=(1, 0.5, 1.25), parent=head)
-        sphere("EyeR", 0.026, (0.07, -0.172, 0.11), dark, scale=(1, 0.5, 1.25), parent=head)
+        parts["eyes"] = [sphere("EyeL", 0.026, (-0.07, -0.172, 0.11), dark, scale=(1, 0.5, 1.25), parent=head),
+                         sphere("EyeR", 0.026, (0.07, -0.172, 0.11), dark, scale=(1, 0.5, 1.25), parent=head)]
     else:
-        sphere("EyeL", 0.03, (-0.07, -0.176, 0.1), dark, scale=(1.15, 0.4, 0.28), parent=head)
-        sphere("EyeR", 0.03, (0.07, -0.176, 0.1), dark, scale=(1.15, 0.4, 0.28), parent=head)
+        parts["eyes"] = [sphere("EyeL", 0.03, (-0.07, -0.176, 0.1), dark, scale=(1.15, 0.4, 0.28), parent=head),
+                         sphere("EyeR", 0.03, (0.07, -0.176, 0.1), dark, scale=(1.15, 0.4, 0.28), parent=head)]
     # Bonnet : une calotte, un cone qui retombe sur le cote, le pompon au bout.
     cap = mat("cap", CAP)
     sphere("CapBase", 0.205, (0, 0.02, 0.17), cap, scale=(1.03, 1.0, 0.72), parent=head)
@@ -559,7 +559,7 @@ def seven_segment(name, digit, loc, size, material, parent):
         box("%s_%s" % (name, key), (sx, 0.004, sz), (loc[0] + dx, loc[1], loc[2] + dz), material, parent=parent)
 
 
-def chambre(towers_outside=False):
+def chambre(towers_outside=False, clock="0317"):
     """La chambre du reveur, la nuit. Renvoie les elements a animer."""
     c = {}
     wall = wallpaper_mat()
@@ -661,7 +661,7 @@ def chambre(towers_outside=False):
     digits = glow_mat("digits", "#ff3b3f", 6.0)
     c["digits_mat"] = digits
     clock_face = empty("ClockFace", (1.55, -0.435, 0.74))
-    for i, (digit, px) in enumerate((("0", -0.165), ("3", -0.075), ("1", 0.075), ("7", 0.165))):
+    for i, (digit, px) in enumerate(zip(clock, (-0.165, -0.075, 0.075, 0.165))):
         seven_segment("Digit%d" % i, digit, (px, 0, 0), (0.055, 0.12), digits, clock_face)
     colon = empty("Colon", (0, 0, 0), parent=clock_face)
     c["colon"] = colon
@@ -752,9 +752,9 @@ def drift_clouds(clouds, duration, speed=0.12):
     interpolation(clouds, "LINEAR")
 
 
-def lying_dreamer():
+def lying_dreamer(eyes="closed"):
     """Le reveur couche sur le dos dans son lit, la tete sur l'oreiller (a gauche), sous la couette."""
-    d = dreamer("standing", "closed")
+    d = dreamer("standing", eyes)
     # Axes du personnage : +Z (la tete) vers -X du monde, -Y (le visage) vers le plafond.
     d["root"].matrix_world = Matrix(((0, 0, -1, PILLOW.x + 0.92), (1, 0, 0, -1.5), (0, -1, 0, 0.9), (0, 0, 0, 1)))
     d["head"].rotation_euler = (math.radians(-12), math.radians(-14), 0)
@@ -1288,11 +1288,12 @@ SHOTS = {"chambre": shot_chambre, "voix": shot_voix, "soucis": shot_soucis, "hor
 
 
 
-def build(names):
+def build(names, shots=None, prefix="intro_"):
+    shots = shots or SHOTS
     os.makedirs(SCENES_DIR, exist_ok=True)
     for name in names:
-        SHOTS[name]()
-        bpy.ops.wm.save_as_mainfile(filepath=os.path.join(SCENES_DIR, "intro_%s.blend" % name))
+        shots[name]()
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.join(SCENES_DIR, "%s%s.blend" % (prefix, name)))
 
 
 # --- Montage : les images rendues deviennent une video par plan ----------------------------
@@ -1309,11 +1310,12 @@ VIDEO_SCALE = 2  # 640x360 agrandi sans lissage : la couleur garde un echantillo
 VIDEO_BITRATE = 3500  # kb/s
 
 
-def assemble(frames_dir, out_dir, names):
+def assemble(frames_dir, out_dir, names, videos=None, bitrate=VIDEO_BITRATE):
     """frames_dir/<scene>/0001.png... -> out_dir/<video>.ogv (Ogg Theora, le format lu par Godot)."""
+    videos = videos or VIDEOS
     os.makedirs(out_dir, exist_ok=True)
     for name in names:
-        duration, parts = VIDEOS[name]
+        duration, parts = videos[name]
         reset(name, duration)
         scene = bpy.context.scene
         r = scene.render
@@ -1341,9 +1343,9 @@ def assemble(frames_dir, out_dir, names):
         r.image_settings.file_format = "FFMPEG"
         r.ffmpeg.format = "OGG"
         r.ffmpeg.codec = "THEORA"
-        r.ffmpeg.video_bitrate = VIDEO_BITRATE
+        r.ffmpeg.video_bitrate = bitrate
         r.ffmpeg.minrate = 0
-        r.ffmpeg.maxrate = VIDEO_BITRATE * 2
+        r.ffmpeg.maxrate = bitrate * 2
         r.ffmpeg.gopsize = 12
         r.ffmpeg.audio_codec = "NONE"
         r.use_file_extension = False
