@@ -22,7 +22,7 @@ config/features=PackedStringArray("4.7")
 
 GameState="*res://autoload/game_state.gd"
 SceneTransition="*res://scenes/transitions/SceneTransition.tscn"
-MCPRuntime="*uid://sqnp6go752x2"
+MCPRuntime="*res://addons/godot_mcp/runtime/mcp_runtime.gd"
 
 [display]
 

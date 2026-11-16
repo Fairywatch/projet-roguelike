@@ -12,3 +12,6 @@ graphify-out/
 
 # Sauvegardes automatiques de Blender
 *.blend1
+
+# Captures du plugin Godot MCP
+addons/godot_mcp/cache/
