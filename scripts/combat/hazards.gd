@@ -12,6 +12,7 @@ const Zone := preload("res://scripts/combat/hazards/zone.gd")
 const Sweep := preload("res://scripts/combat/hazards/sweep.gd")
 const Shrink := preload("res://scripts/combat/hazards/shrink.gd")
 const Boulder := preload("res://scripts/combat/hazards/boulder.gd")
+const WallArt := preload("res://scripts/combat/hazards/wall_art.gd")
 # Surface jouable de l'arene (900 x 540 moins une marge).
 const ARENA := Rect2(50, 50, 800, 440)
 # Projectiles dessines (tools/gen_pixel_art.py) : par defaut ils pointent dans leur direction ;
@@ -46,6 +47,8 @@ static func shoot(source: Node2D, direction: Vector2, speed: float = 170.0, colo
 	projectile.global_position = source.global_position + projectile.direction * 22.0
 	var visual: Polygon2D = projectile.get_node("Visual")
 	visual.color = color
+	if text == "":
+		projectile.trail = color
 	var texture := projectile_texture(source)
 	if texture and text == "":
 		visual.visible = false
@@ -160,10 +163,9 @@ static func wall(rect: Rect2, duration: float, color: Color = Color(0.4, 0.45, 0
 	shape.shape = RectangleShape2D.new()
 	shape.shape.size = rect.size
 	body.add_child(shape)
-	var visual := ColorRect.new()
+	var visual: Node2D = WallArt.new()
 	visual.color = color
 	visual.size = rect.size
-	visual.position = -rect.size / 2.0
 	body.add_child(visual)
 	_scene().add_child(body)
 	body.global_position = rect.get_center()

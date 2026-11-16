@@ -30,6 +30,17 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	# L'ombre et la lumiere ne tournent pas avec le rocher ; ses fissures, si.
+	draw_set_transform(Vector2(0, radius * 0.85).rotated(-rotation), -rotation, Vector2(1.0, 0.35))
+	draw_circle(Vector2.ZERO, radius * 1.05, Color(0, 0, 0, 0.35))
+	draw_set_transform(Vector2.ZERO, -rotation)
+	draw_circle(Vector2.ZERO, radius + 2.0, HazardArt.outline(color))
 	draw_circle(Vector2.ZERO, radius, color)
-	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 24, color.darkened(0.4), 3.0)
-	draw_line(Vector2(-radius * 0.6, 0), Vector2(radius * 0.6, 0), color.lightened(0.3), 3.0)
+	draw_circle(Vector2(radius * 0.12, radius * 0.14), radius * 0.86, color.darkened(0.18))
+	draw_circle(Vector2(-radius * 0.08, -radius * 0.1), radius * 0.8, color)
+	draw_arc(Vector2.ZERO, radius * 0.7, -2.6, -1.5, 10, HazardArt.light(color, 0.8), 3.0)
+	draw_set_transform(Vector2.ZERO)
+	var crack := color.darkened(0.5)
+	draw_polyline(PackedVector2Array([Vector2(-radius * 0.7, -radius * 0.1), Vector2(-radius * 0.25, radius * 0.1), Vector2(0, -radius * 0.15), Vector2(radius * 0.45, radius * 0.2)]), crack, 2.0)
+	draw_line(Vector2(0, -radius * 0.15), Vector2(radius * 0.15, -radius * 0.6), crack, 2.0)
+	draw_line(Vector2(-radius * 0.25, radius * 0.1), Vector2(-radius * 0.35, radius * 0.55), crack, 2.0)

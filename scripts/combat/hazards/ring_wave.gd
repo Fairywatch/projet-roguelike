@@ -33,9 +33,31 @@ func in_gap(angle: float) -> bool:
 	return false
 
 func _draw() -> void:
-	for i in SEGMENTS:
+	# Chaque troncon plein de l'anneau : contour sombre, couleur, rehaut clair cote interieur, et
+	# un echo pale derriere lui. Les bords des trous sont marques d'un point clair : on voit ou passer.
+	var dark := HazardArt.outline(color, 0.8)
+	var bright := HazardArt.light(color, 0.9)
+	var run := PackedVector2Array()
+	var inner := PackedVector2Array()
+	var echo := PackedVector2Array()
+	for i in SEGMENTS + 1:
 		var a := TAU * i / SEGMENTS
-		var b := TAU * (i + 1) / SEGMENTS
-		if in_gap((a + b) / 2.0):
-			continue
-		draw_line(Vector2.from_angle(a) * radius, Vector2.from_angle(b) * radius, Color(color, 0.85), THICKNESS)
+		var open := i == SEGMENTS or in_gap(a)
+		if not open:
+			var dir := Vector2.from_angle(a)
+			run.append(dir * radius)
+			inner.append(dir * (radius - THICKNESS * 0.25))
+			echo.append(dir * maxf(radius - 16.0, 0.0))
+		if open or i == SEGMENTS - 1:
+			if run.size() >= 2:
+				if radius > 20.0:
+					draw_polyline(echo, Color(color, 0.22), 4.0)
+				draw_polyline(run, dark, THICKNESS + 4.0)
+				draw_polyline(run, Color(color, 0.95), THICKNESS)
+				draw_polyline(inner, bright, 3.0)
+				if not gaps.is_empty():
+					draw_circle(run[0], THICKNESS * 0.55, bright)
+					draw_circle(run[run.size() - 1], THICKNESS * 0.55, bright)
+			run = PackedVector2Array()
+			inner = PackedVector2Array()
+			echo = PackedVector2Array()

@@ -34,6 +34,7 @@ var base_color: Color
 var player: Node2D
 var action_id := 0
 var bob_time := randf() * TAU
+var telegraph_time := 0.0  # temps ecoule depuis le debut de l'annonce d'attaque
 
 # Bestiaire par nuit (scripts/combat/mobs/<nuit>/) : nom affiche, boss, variantes.
 var display_name := ""
@@ -147,6 +148,8 @@ func _sprite_half_height() -> float:
 
 func _process(delta: float) -> void:
 	bob_time += delta
+	if state == State.TELEGRAPH:
+		telegraph_time += delta
 	sprite.position.y = round(sin(bob_time * 5.0) * 1.5)
 	if auto_frames:
 		sprite.frame = int(bob_time * ANIM_FPS) % ANIM_FRAMES
@@ -154,12 +157,33 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var half := _sprite_half_height()
-	Fx.draw_shadow(self, half, sprite.texture.get_width() / ANIM_FRAMES * sprite.scale.x * 0.8)
+	var body_width := sprite.texture.get_width() / ANIM_FRAMES * sprite.scale.x * 0.8
+	Fx.draw_shadow(self, half, body_width)
+	if state == State.TELEGRAPH:
+		_draw_telegraph(half, body_width)
 	if hp < max_hp and state != State.DEAD:
 		var ratio := clampf(float(hp) / max_hp, 0.0, 1.0)
 		var top := -half - 10.0
 		draw_rect(Rect2(-HP_BAR_WIDTH / 2 - 1, top - 1, HP_BAR_WIDTH + 2, 5), Color(0.05, 0.03, 0.08))
 		draw_rect(Rect2(-HP_BAR_WIDTH / 2, top, HP_BAR_WIDTH * ratio, 3), Color(0.95, 0.3, 0.35))
+
+# Annonce d'attaque, la meme pour tout le bestiaire : un anneau a ses pieds qui se referme jusqu'a
+# la frappe (on lit le temps qu'il reste), et un "!" au-dessus de lui.
+func _draw_telegraph(half: float, body_width: float) -> void:
+	var p := clampf(telegraph_time / maxf(telegraph_duration, 0.01), 0.0, 1.0)
+	var warn := Color(1, 0.86, 0.25)
+	var ring := body_width * 0.62 + 4.0
+	draw_set_transform(Vector2(0, half), 0.0, Vector2(1.0, 0.35))
+	draw_arc(Vector2.ZERO, ring, 0.0, TAU, 28, Color(0.1, 0.06, 0.12, 0.5), 5.0)
+	draw_arc(Vector2.ZERO, ring, -PI / 2.0, -PI / 2.0 + TAU * p, 28, warn if p < 0.75 or int(telegraph_time * 16.0) % 2 == 0 else Color(1, 1, 1), 3.0)
+	draw_set_transform(Vector2.ZERO)
+	var pop := 1.0 + 0.35 * maxf(0.0, 1.0 - telegraph_time / 0.12)  # il surgit, puis se pose
+	var top := Vector2(0, -half - 26.0 - 2.0 * sin(telegraph_time * 14.0))
+	draw_set_transform(top, 0.0, Vector2(pop, pop))
+	draw_rect(Rect2(-4, -9, 8, 18), Color(0.1, 0.06, 0.12, 0.85))
+	draw_rect(Rect2(-2, -7, 4, 8), warn)
+	draw_rect(Rect2(-2, 3, 4, 4), warn)
+	draw_set_transform(Vector2.ZERO)
 
 func _physics_process(_delta: float) -> void:
 	if state == State.DEAD or player == null:
@@ -194,6 +218,7 @@ func _wait(duration: float) -> bool:
 
 func _start_telegraph() -> void:
 	state = State.TELEGRAPH
+	telegraph_time = 0.0
 	sprite.modulate = Color(1, 0.85, 0.2, 1)
 	_on_telegraph_begin()
 	if await _wait(telegraph_duration):

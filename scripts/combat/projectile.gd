@@ -9,6 +9,7 @@ var homing := 0.0     # force de guidage vers le joueur (radians/s) : avions de 
 var harmless := false # faux projectile (leurre) : ne blesse pas
 var sprite: Sprite2D = null  # dessin du mob (voir Hazards.shoot)
 var look := "aim"    # aim : suit sa trajectoire ; spin : tourne ; still : reste droit
+var trail := Color(0, 0, 0, 0)  # couleur de la trainee (transparente : pas de trainee, ex. les mots)
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -27,6 +28,15 @@ func _physics_process(delta: float) -> void:
 		sprite.rotation = direction.angle()
 	elif sprite and look == "spin":
 		sprite.rotation += 7.0 * delta
+	if trail.a > 0.0:
+		queue_redraw()
+
+# Trainee : trois points qui s'effacent derriere le projectile (sous son dessin).
+func _draw() -> void:
+	if trail.a <= 0.0:
+		return
+	for k in [3, 2, 1]:
+		draw_circle(-direction * k * 7.0, 6.5 - k * 1.4, Color(trail, trail.a * (0.42 - k * 0.1)))
 
 func _on_body_entered(body: Node2D) -> void:
 	if body == source:
