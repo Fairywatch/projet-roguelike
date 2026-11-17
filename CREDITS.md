@@ -13,6 +13,7 @@ Composées pour le jeu (partitions dans music/, jouées par MuseScore 4 : tools/
 
 - Packs *Impact Sounds*, *RPG Audio* et *UI Audio* par Kenney : https://www.kenney.nl
 
-## Police (licence OFL)
+## Polices (licence OFL)
 
 - **Nunito** par The Nunito Project Authors, licence SIL Open Font License 1.1 (assets/fonts/OFL.txt) : https://github.com/googlefonts/nunito
+- **Pixelify Sans** par The Pixelify Sans Project Authors, licence SIL Open Font License 1.1 (assets/fonts/PixelifySans-OFL.txt), pour les titres et les chiffres : https://github.com/eifetx/Pixelify-Sans

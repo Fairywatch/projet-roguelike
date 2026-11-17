@@ -105,13 +105,13 @@ func talk() -> void:
 				Sound.play("victory")
 				var entry := GameState.roll_drop(GameState.QUEST_LOOT_BONUS)
 				if entry.is_empty():
-					_say("Merci, voyageur ! Je n'ai rien d'autre que ces pièces... (+%d pièces)" % GameState.COINS_PER_QUEST)
+					_say("%s Je n'ai que ces pièces... (+%d pièces)" % [thanks(), GameState.COINS_PER_QUEST])
 					return
 				entry["pos"] = position + REWARD_OFFSET
 				GameState.current_floor()["ground_items"].append(entry)
 				rewarded.emit(entry)
 				var shown: String = Items.MYSTERY["id"] if entry["hidden"] else entry["id"]
-				_say("Merci, voyageur ! Prends ceci : %s. (+%d pièces)" % [Items.find(shown)["name"], GameState.COINS_PER_QUEST])
+				_say("%s Prends ceci : %s. (+%d pièces)" % [thanks(), Items.find(shown)["name"], GameState.COINS_PER_QUEST])
 			elif quest["kind"] == "chasse":
 				var left: int = quest["target"] - (GameState.current_floor()["wins"] - quest["start_wins"])
 				_say("Encore %d combat(s) à gagner." % left)
@@ -124,6 +124,11 @@ func talk() -> void:
 func story_line() -> String:
 	var lines: Array = Story.NPC_LINES.get(GameState.tower()["id"], [])
 	return lines[quest["npc"] % lines.size()] if not lines.is_empty() else "Bonne nuit, voyageur."
+
+# Remerciement propre a la nuit et a l'habitant (scripts/story.gd).
+func thanks() -> String:
+	var lines: Array = Story.NPC_THANKS.get(GameState.tower()["id"], [])
+	return lines[quest["npc"] % lines.size()] if not lines.is_empty() else "Merci, voyageur !"
 
 func _say(text: String) -> void:
 	said.emit("%s : %s" % [npc["name"], text])

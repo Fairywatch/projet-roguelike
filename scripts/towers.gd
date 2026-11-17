@@ -4,6 +4,8 @@ extends RefCounted
 # Les 7 nuits de la semaine du reveur (GDD section 5-6). Chaque jour, la semaine se degrade
 # un peu plus sur le plan des emotions : la nuit est plus longue, plus dure et plus cauchemardesque.
 # Une nuit se debloque en terminant celle de la veille. Ajouter ou modifier une nuit = cette table.
+# Les nuits ont ete raccourcies (6 a 9 etages au lieu de 6 a 12) : le bonus de difficulte de chaque
+# nuit a ete releve pour que son dernier etage reste aussi dur qu'avant.
 #   floors : nombre d'etages ; difficulty : ajoute a GameState.difficulty() ;
 #   nightmare_chance : part d'etages "cauchemar" ; reward : pieces en fin de nuit.
 # Le sprite de chaque tour (assets/sprites/hub/tower_<id>.png) vient de tools/gen_pixel_art.py.
@@ -13,22 +15,22 @@ const LIST := [
 		"floors": 6, "difficulty": 0.0, "nightmare_chance": 0.1, "reward": 15},
 	{"id": "mardi", "name": "Mardi", "emotion": "Stress",
 		"desc": "Les choses à faire s'empilent plus vite qu'elles ne se font.",
-		"floors": 7, "difficulty": 0.1, "nightmare_chance": 0.2, "reward": 25},
+		"floors": 6, "difficulty": 0.18, "nightmare_chance": 0.2, "reward": 25},
 	{"id": "mercredi", "name": "Mercredi", "emotion": "Doute",
 		"desc": "Et si rien de tout ça n'avait de sens ?",
-		"floors": 8, "difficulty": 0.2, "nightmare_chance": 0.35, "reward": 35},
+		"floors": 7, "difficulty": 0.28, "nightmare_chance": 0.35, "reward": 35},
 	{"id": "jeudi", "name": "Jeudi", "emotion": "Frustration",
 		"desc": "Rien ne se passe comme prévu, la colère monte.",
-		"floors": 9, "difficulty": 0.3, "nightmare_chance": 0.5, "reward": 50},
+		"floors": 7, "difficulty": 0.46, "nightmare_chance": 0.5, "reward": 50},
 	{"id": "vendredi", "name": "Vendredi", "emotion": "Épuisement",
 		"desc": "Plus d'énergie, plus de patience, juste tenir.",
-		"floors": 10, "difficulty": 0.4, "nightmare_chance": 0.65, "reward": 65},
+		"floors": 8, "difficulty": 0.56, "nightmare_chance": 0.65, "reward": 65},
 	{"id": "samedi", "name": "Samedi", "emotion": "Solitude",
 		"desc": "Le temps libre est là, mais personne pour le partager.",
-		"floors": 11, "difficulty": 0.5, "nightmare_chance": 0.8, "reward": 80},
+		"floors": 8, "difficulty": 0.74, "nightmare_chance": 0.8, "reward": 80},
 	{"id": "dimanche", "name": "Dimanche", "emotion": "Angoisse",
 		"desc": "La semaine suivante approche, et avec elle toutes les peurs.",
-		"floors": 12, "difficulty": 0.6, "nightmare_chance": 0.95, "reward": 120},
+		"floors": 9, "difficulty": 0.84, "nightmare_chance": 0.95, "reward": 120},
 ]
 
 static func get_tower(index: int) -> Dictionary:

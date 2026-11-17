@@ -8,7 +8,9 @@ extends RefCounted
 #   ex. 0.1 = +10 %) ; reach, knockback (pixels) ; heal_on_hit, heal_on_kill, crit, evasion
 #   (chances) ; iframes (secondes) ; extra_lives, shield, thorns, active_recharge (entiers) ;
 #   slow_on_hit, dash_trail (drapeaux) ; enemy_hp, enemy_speed, enemy_cooldown, telegraph,
-#   drop_chance, encounter_rate (fractions).
+#   drop_chance, encounter_rate (fractions) ; feathers (plumes en plus a la rafale),
+#   special_cooldown (fraction), feather_pierce, finisher_volley (drapeaux).
+# Ensembles : Plumier + Plume de paon = Tempete de plumes (voir PlayerStats.STORM_SET).
 # Chaque objet a aussi un tier (S, A, B, C : sa puissance) et une icone (tools/gen_items.py).
 enum { COMMUN, RARE, LEGENDAIRE, MAUDIT }
 const RARITY_NAMES := ["Commun", "Rare", "Légendaire", "Maudit"]
@@ -59,6 +61,11 @@ const PASSIVES := [
 	{"id": "etoile_du_berger", "name": "Étoile du berger", "desc": "25 % de critiques, attaque bien plus longue", "mods": {"crit": 0.25, "reach": 15}, "rarity": LEGENDAIRE, "tier": "S"},
 	{"id": "sommeil_de_plomb", "name": "Sommeil de plomb", "desc": "Bloque les deux premiers coups de chaque combat", "mods": {"shield": 2}, "rarity": LEGENDAIRE, "tier": "S"},
 	{"id": "montre_a_gousset", "name": "Montre à gousset", "desc": "Ennemis attaquent 15 % moins souvent", "mods": {"enemy_cooldown": 0.15}, "rarity": RARE, "tier": "B"},
+	# Rafale de plumes : objets qui changent l'attaque speciale, et un ensemble.
+	{"id": "plumier", "name": "Plumier", "desc": "+2 plumes à la rafale (ensemble avec la Plume de paon)", "mods": {"feathers": 2}, "rarity": RARE, "tier": "A"},
+	{"id": "plume_de_paon", "name": "Plume de paon", "desc": "Les plumes traversent les ennemis (ensemble avec le Plumier)", "mods": {"feather_pierce": 1}, "rarity": RARE, "tier": "A"},
+	{"id": "oreiller_eventre", "name": "Oreiller éventré", "desc": "La rafale recharge 35 % plus vite", "mods": {"special_cooldown": -0.35}, "rarity": COMMUN, "tier": "C"},
+	{"id": "bouquet_final", "name": "Bouquet final", "desc": "Le 3e coup de l'enchaînement lance aussi une rafale", "mods": {"finisher_volley": 1}, "rarity": LEGENDAIRE, "tier": "S"},
 ]
 
 # Objets actifs : un seul a la fois, utilise en combat (touche de l'objet actif).

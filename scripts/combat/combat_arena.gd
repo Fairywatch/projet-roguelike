@@ -19,6 +19,8 @@ var counter := PanelContainer.new()  # ennemis restants, en haut au centre
 var mob_label := Label.new()
 
 var is_boss_fight := false
+var picked_boss := false  # _pick_mobs a tire un boss (ils ne se declarent boss qu'une fois dans l'arbre)
+const AMBUSH_STUN := 1.6
 var had_elite := false
 const ELITE_LOOT_BONUS := 0.2
 var combat_over := false
@@ -35,9 +37,10 @@ func _ready() -> void:
 	player.item_message.connect(_on_item_message)
 	player.hp_changed.connect(_on_player_hp_changed)
 	# Rappel des touches au debut du combat, puis il s'efface pour ne pas cacher les ennemis.
-	$UI/Instructions.text = Controls.help(["move", "attack", "dash", "active", "interact", "inventory"])
+	$UI/Instructions.text = Controls.help(["move", "attack", "dash", "special", "active", "interact", "inventory"])
 	$UI/Instructions.create_tween().tween_property($UI/Instructions, "modulate:a", 0.0, 1.0).set_delay(4.0)
 	hud.toast.at_top = true
+	$UI.add_child(OffscreenMarkers.new())
 	$UI.add_child(hud)
 	_build_counter()
 	boss_bar.position = Vector2(roundf((640 - BossBar.SIZE.x) / 2.0), 8)
@@ -49,6 +52,7 @@ func _ready() -> void:
 	var floor_meta := GameState.current_floor()
 	DreamTheme.set_family(floor_meta["family"])
 	var night: String = GameState.tower()["id"]
+	background.veiled = true
 	background.setup(floor_meta["family"], floor_meta["intensity"], night)
 	var ambient := CanvasModulate.new()
 	# Arene moins sombre que l'exploration : les telegraphes doivent rester lisibles.
@@ -63,12 +67,18 @@ func _ready() -> void:
 	GameState.start_combat()
 	var lesson := GameState.needs_tutorial()  # tout premier combat : un seul ennemi, d'entrainement
 	var mobs: Array = [Bestiary.make("lundi/mouton")] if lesson else _pick_mobs()
-	is_boss_fight = GameState.guardian_fight or mobs.any(func(m): return m.is_boss)
+	is_boss_fight = picked_boss
 	Sound.music("boss" if is_boss_fight else "combat")
 	if is_boss_fight:
 		Sound.play("boss")
 	for mob in mobs:
 		_spawn_mob(mob)
+	if GameState.ambush and not lesson:
+		for mob in mobs:
+			mob.stun(AMBUSH_STUN)
+		_on_item_message("Embuscade ! Les cauchemars sont pris de court.", 2.5)
+	GameState.ambush = false
+	GameState.encounter_lead = ""
 	if lesson:
 		mobs[0].position = player.position + Vector2(170, 0)
 		var tutorial := Tutorial.new()
@@ -104,13 +114,23 @@ func _pick_mobs() -> Array:
 	var nightmare_floor: bool = GameState.current_floor()["intensity"] == FloorGenerator.Intensity.CAUCHEMAR
 	if GameState.guardian_fight:
 		if GameState.is_last_floor() and not GameState.guardian_exit_down:
+			picked_boss = true
 			return [Bestiary.final_boss(night)]
-		return [Bestiary.boss(night, nightmare_floor, GameState.boss_history)]
-	if GameState.floor_index < 0 and randf() < NEGATIVE_BOSS_CHANCE:
+		if GameState.floor_has_boss():
+			picked_boss = true
+			return [Bestiary.boss(night, nightmare_floor, GameState.boss_history)]
+	elif GameState.floor_index < 0 and randf() < NEGATIVE_BOSS_CHANCE:
+		picked_boss = true
 		return [Bestiary.boss(night, nightmare_floor, GameState.boss_history)]
 	var mobs := []
 	for i in _encounter_size() + extra_mobs + int(GameState.mod("enemy_count")):
 		mobs.append(Bestiary.creature(night, nightmare_floor))
+	# Le cauchemar errant touche sur la carte mene le combat.
+	if GameState.encounter_lead != "" and not mobs.is_empty():
+		mobs[0] = Bestiary.creature(night, nightmare_floor, GameState.encounter_lead)
+	# Gardien sans boss : une meute menee par une elite.
+	if GameState.guardian_fight:
+		mobs[0].elite = true
 	return mobs
 
 # Meme progression que la regle sur la carte : 0 au premier etage, 1 au dernier.
@@ -155,6 +175,7 @@ func _process(_delta: float) -> void:
 	if shown_hp < 0:
 		shown_hp = player.hp
 	hud.set_dash(1.0 - clampf(player.dash_cooldown_timer / player.dash_cooldown_effective, 0.0, 1.0))
+	hud.set_special(1.0 - clampf(player.special_timer / player.special_cooldown_effective, 0.0, 1.0))
 	hud.sync()
 
 	if combat_over:
@@ -217,7 +238,7 @@ func _on_victory() -> void:
 	TitleBanner.show_text($UI, "Gardien vaincu !" if GameState.guardian_fight else "Victoire !", Color(1, 0.88, 0.45))
 	# Gardiens et boss : butin garanti. Combats ordinaires : au plus quelques objets par etage.
 	var dropped := false
-	if is_boss_fight:
+	if is_boss_fight or GameState.guardian_fight:  # gardiens (boss ou meute) : butin garanti
 		dropped = _drop_item()
 	elif GameState.combat_items_left() <= 0:
 		_on_item_message("Plus de butin sur cet étage")

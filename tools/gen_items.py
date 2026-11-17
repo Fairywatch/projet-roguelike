@@ -123,6 +123,19 @@ ICONS = {
     "montre_a_gousset": ([
         "...GG...", "..G..G..", ".GGGGGG.", "GWWkWWWG", "GWWkWWWG", "GWWkkWWG", "GWWWWWWG", ".GGGGGG.",
     ], {"G": GOLD, "W": WHITE, "k": DARK}),
+    # Rafale de plumes : objets de l'attaque speciale
+    "plumier": ([
+        "..W.W.W..", "..WwWwW..", "..WwWwW..", ".BBBBBBB.", ".BbbbbbB.", ".BbbbbbB.", ".BBBBBBB.",
+    ], {"W": WHITE, "w": LILAC, "B": BROWN, "b": rgba(206, 156, 104)}),
+    "plume_de_paon": ([
+        "...GGG...", "..GBBBG..", "..GBYBG..", "..GBBBG..", "...GgG...", "....g....", "....g....", "....g....",
+    ], {"G": rgba(70, 170, 130), "B": BLUE, "Y": GOLD, "g": rgba(50, 120, 90)}),
+    "oreiller_eventre": ([
+        "W.w....w.", ".PPPPPP..", "PPPPPPPP.", "PPpPPkPPW", "PPPPPPPP.", ".PPPPPP.w",
+    ], {"P": LILAC, "p": PURPLE, "k": DARK, "W": WHITE, "w": WHITE}),
+    "bouquet_final": ([
+        "y..W..y", ".y.W.y.", "..WWW..", "WWWYWWW", "..WWW..", ".y.W.y.", "y..W..y",
+    ], {"W": WHITE, "Y": GOLD, "y": GOLD_D}),
     # Objets actifs
     "sept_ans_de_malheur": ([
         ".MMMMM..", "MMWMMk..", "MMMMk.M.", "MMMk.MMM", "MMk.MMWM", ".k.MMMM.",

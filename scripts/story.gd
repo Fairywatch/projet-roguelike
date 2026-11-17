@@ -20,35 +20,36 @@ const INTRO := [
 	"...et plongea.",
 ]
 
-# id de nuit (scripts/towers.gd) -> fin de la nuit.
+# id de nuit (scripts/towers.gd) -> fin de la nuit. Chaque phrase accompagne un plan de la video
+# (scripts/story/endings.gd) : elle montre ce qui arrive au lieu d'expliquer la lecon.
 const ENDINGS := {
 	"lundi": [
-		"Lundi. L'enfant qu'il était veillait tard, les yeux grands ouverts, à écouter les disputes derrière la porte. Il avait appris très tôt à être fatigué.",
-		"Mais cette nuit, pour la première fois, il s'est endormi sans attendre que le silence revienne.",
+		"Lundi. Derrière la porte, les voix montaient puis retombaient. L'enfant comptait les fissures du plafond en attendant le silence.",
+		"Cette nuit, le silence est venu plus tôt. Il a remonté la couverture jusqu'au menton, et ses yeux se sont fermés tout seuls.",
 	],
 	"mardi": [
-		"Mardi. Les devoirs, les notes, le regard des autres. Toujours plus vite, toujours mieux, de peur de décevoir.",
-		"Il a compris cette nuit qu'on pouvait l'aimer aussi les jours où il échouait.",
+		"Mardi. Les copies rouges de corrections, la pendule qui courait plus vite que sa main, les regards posés sur lui.",
+		"Sur la copie ratée, une main a posé une petite étoile dorée. Juste comme ça, pour rien.",
 	],
 	"mercredi": [
-		"Mercredi. Le milieu de la semaine, le milieu du chemin. Qui devenir ? Chaque choix ressemblait à une porte qui se refermait.",
-		"Il a cessé d'attendre d'être sûr. Il a choisi, et le chemin s'est dessiné sous ses pas.",
+		"Mercredi. Au carrefour, chaque chemin portait le visage de quelqu'un qu'il aurait pu devenir.",
+		"Il a fait un pas sans être sûr. Sous ses pieds, les pierres se sont allumées, une à une.",
 	],
 	"jeudi": [
-		"Jeudi. Les efforts sans récompense, les portes closes, la colère avalée chaque soir en rentrant.",
-		"Cette nuit, il a laissé la colère passer, comme un orage. Sa valeur ne s'était jamais mesurée à ses réussites.",
+		"Jeudi. Les portes restaient closes, quoi qu'il fasse. Le soir, il rentrait les poings serrés au fond des poches.",
+		"Cette nuit, l'orage a grondé longtemps au-dessus de la fournaise. Puis il s'est éloigné, et l'air sentait la pluie.",
 	],
 	"vendredi": [
-		"Vendredi. Prendre soin de tout le monde, sauf de soi. Porter les autres jusqu'à ne plus tenir debout.",
-		"Il s'est enfin autorisé à s'asseoir. Et le monde ne s'est pas effondré.",
+		"Vendredi. Des cartons, des valises, les soucis des autres. Il portait tout, et personne ne voyait ses genoux trembler.",
+		"Il a posé les cartons et s'est assis sur un banc. Quelqu'un avait laissé là une tasse de thé encore chaude.",
 	],
 	"samedi": [
-		"Samedi. Les amis éloignés, les chaises vides, le silence d'une maison trop grande.",
-		"Il a compris que ceux qu'on a aimés restent un peu en nous, même après leur départ.",
+		"Samedi. La salle de bal était vide, les chaises alignées le long des murs, la musique jouée pour personne.",
+		"Puis, une à une, des silhouettes de lumière sont entrées. Elles avaient la démarche de ceux qu'il avait aimés.",
 	],
 	"dimanche": [
-		"Dimanche. La peur de ce qui vient, de ce qui finit. La plus longue de toutes les nuits.",
-		"Il a cessé de lutter contre l'aube. Elle est venue quand même, douce et pâle.",
+		"Dimanche. La plus longue des nuits. Chaque tic-tac rapprochait la semaine suivante, et toutes ses peurs.",
+		"Il a cessé de compter. L'aube est venue quand même, et les sept tours se sont défaites dans la lumière.",
 		"Et pour la première fois depuis très longtemps, le rêveur s'est réveillé reposé.",
 	],
 }
@@ -90,5 +91,45 @@ const NPC_LINES := {
 		"La nuit la plus longue... Je veillerai avec toi jusqu'au bout.",
 		"Il ne reste presque plus de tic-tac. N'aie pas peur de l'aube.",
 		"Ma dernière lune est pour toi, voyageur. Demain, il fera jour.",
+	],
+}
+
+# id de nuit -> remerciement de chaque habitant (meme ordre que NPC_LINES) quand on lui rend
+# service : un petit signe que la nuit s'adoucit.
+const NPC_THANKS := {
+	"lundi": [
+		"Merci. Écoute... on dirait que les voix se sont tues.",
+		"Merci ! Le tic-tac ralentit, d'un coup. C'est l'heure de dormir.",
+		"Merci, petit. Garde un bout de lune sous ton oreiller.",
+	],
+	"mardi": [
+		"Merci. Tu vois ? Personne ne t'a mis de note.",
+		"Merci ! Et pour une fois, on n'est pas en retard.",
+		"Merci. Ça, c'était gratuit, et ça compte quand même.",
+	],
+	"mercredi": [
+		"Merci. Ce chemin-là, tu l'as choisi tout seul.",
+		"Merci ! Ma montre s'est décidée : c'est l'heure d'être toi.",
+		"Merci. Regarde, ta lune brille déjà un peu.",
+	],
+	"jeudi": [
+		"Merci. Celui-là, quelqu'un l'a vu, au moins.",
+		"Merci ! Une heure rendue, pour une fois.",
+		"Merci. Ouvre les mains : la colère peut sortir.",
+	],
+	"vendredi": [
+		"Merci. À ton tour de recevoir, maintenant.",
+		"Merci ! Prends ton temps, mes aiguilles peuvent attendre.",
+		"Merci. Celle-ci, garde-la pour toi.",
+	],
+	"samedi": [
+		"Merci. Ça faisait longtemps qu'on ne m'avait pas répondu.",
+		"Merci ! Elle tourne de nouveau. Quelqu'un est venu.",
+		"Merci. Tu vois, une lumière, ça se partage.",
+	],
+	"dimanche": [
+		"Merci. Encore un peu de nuit, et puis le jour.",
+		"Merci ! Plus qu'un tic-tac. Et puis le matin.",
+		"Merci. Pour demain : un peu de lune, pour ne pas oublier.",
 	],
 }

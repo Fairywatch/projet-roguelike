@@ -14,6 +14,7 @@ const ACTIONS := {
 	"move_right": ["Droite", KEY_D, JOY_BUTTON_DPAD_RIGHT],
 	"attack": ["Attaque", KEY_J, JOY_BUTTON_X],
 	"dash": ["Dash", KEY_K, JOY_BUTTON_B],
+	"special": ["Rafale de plumes", KEY_I, JOY_BUTTON_RIGHT_SHOULDER],
 	"active": ["Objet actif", KEY_L, JOY_BUTTON_Y],
 	"interact": ["Interagir", KEY_E, JOY_BUTTON_A],
 	"inventory": ["Objets passifs", KEY_TAB, JOY_BUTTON_BACK],
@@ -33,7 +34,7 @@ const PAD_NAMES := {
 }
 # Libelles courts des aides a l'ecran.
 const HELP := {
-	"move": "déplacement", "attack": "attaque", "dash": "dash", "active": "objet actif",
+	"move": "déplacement", "attack": "attaque", "dash": "dash", "special": "rafale", "active": "objet actif",
 	"interact": "interagir", "inventory": "passifs", "pause": "menu",
 }
 

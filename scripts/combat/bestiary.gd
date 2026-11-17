@@ -51,8 +51,8 @@ static func make(path: String) -> BaseMob:
 	return load(MOBS_DIR + path + ".gd").new()
 
 # Ennemi ordinaire : cauchemar sur les etages cauchemar, elite et variante de comportement au hasard.
-static func creature(night_id: String, nightmare_floor: bool) -> BaseMob:
-	var mob := make(NIGHTS[night_id]["creatures"].pick_random())
+static func creature(night_id: String, nightmare_floor: bool, path: String = "") -> BaseMob:
+	var mob := make(path if path != "" else NIGHTS[night_id]["creatures"].pick_random())
 	mob.nightmare = nightmare_floor
 	mob.elite = randf() < ELITE_CHANCE
 	mob.alt = randf() < ALT_CHANCE

@@ -58,6 +58,7 @@ func _ready() -> void:
 # Le titre se pose puis flotte doucement ; les boutons arrivent l'un apres l'autre.
 func _animate_entrance() -> void:
 	var title: Label = $UI/Title
+	title.theme_type_variation = &"PixelTitle"
 	title.pivot_offset = title.size / 2.0
 	title.modulate.a = 0.0
 	title.scale = Vector2(1.15, 1.15)

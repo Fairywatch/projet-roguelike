@@ -12,6 +12,14 @@ const CONSUMABLE_DECOR := ["etoile", "lune", "horloge", "bulle", "champignon", "
 const GUIDE_DURATION := 10.0
 const CLOCK_PAUSE := 15.0
 const CRYSTAL_ITEM_CHANCE := 0.3
+# Cauchemars errants (scripts/exploration/wanderer.gd) : 3 sur un petit etage, jusqu'a 6 sur un
+# grand, un de plus en sommeil profond. Chaque combat gagne sur l'etage en retire un (il en reste
+# toujours un, pour les quetes et le coffre scelle). Ils apparaissent loin du reveur.
+const WANDERERS_BASE := 3.0
+const WANDERERS_PER_SIZE := 3.0
+const WANDERERS_MAX := 8
+const WANDERER_MIN_DISTANCE := 300.0
+const WANDERER_HINT := "Des cauchemars rôdent sur l'étage : évite leur regard pour les semer, ou prends-les à revers pour les surprendre."
 # Chance qu'un PNJ habite l'etage : le sommeil paradoxal est plus peuple (GDD).
 const NPC_CHANCE := {FloorGenerator.Family.PARADOXAL: 0.85, FloorGenerator.Family.PROFOND: 0.35}
 const QuestItemTexture := preload("res://assets/sprites/props/quest_item.png")
@@ -26,7 +34,8 @@ const ChestScene := preload("res://scenes/exploration/Chest.tscn")
 var hud := GameHud.make(false)
 var message_label: Label  # texte du dernier message (bulle du HUD)
 
-var encounter_chance := ENCOUNTER_CHANCE_PARADOXAL
+var encounter_chance := ENCOUNTER_CHANCE_PARADOXAL  # pression de l'etage (regles, objets) : voir pressure()
+var base_encounter := ENCOUNTER_CHANCE_PARADOXAL
 var exit_position := Vector2.ZERO
 var guide_timer := 0.0
 var encounter_pause := 0.0
@@ -52,6 +61,7 @@ func _ready() -> void:
 	family = floor_meta["family"]
 
 	encounter_chance = ENCOUNTER_CHANCE_PROFOND if floor_meta["family"] == FloorGenerator.Family.PROFOND else ENCOUNTER_CHANCE_PARADOXAL
+	base_encounter = encounter_chance
 	encounter_chance *= maxf(0.2, 1.0 + GameState.mod("encounter_rate"))
 	_start_rule(floor_meta, floor_data)
 
@@ -71,6 +81,7 @@ func _ready() -> void:
 	else:
 		player.global_position = _cell_to_world(floor_data.spawn_cell)
 	player.reset_physics_interpolation()  # sinon il glisse depuis (0, 0) a la premiere image
+	_spawn_wanderers(floor_data, floor_meta, size_ratio)
 
 	if GameState.pending_ground_item != "":
 		floor_meta["ground_items"].append({"id": GameState.pending_ground_item, "pos": player.global_position + Vector2(70, 0)})
@@ -83,13 +94,20 @@ func _ready() -> void:
 	guide_arrow.visible = false
 	player.add_child(guide_arrow)
 
-	encounter_timer.timeout.connect(_on_encounter_timer_timeout)
+	encounter_timer.stop()  # les rencontres viennent des cauchemars errants, plus du hasard
 	_refresh_hud()
 	GameState.save_run()
 
-	if GameState.pending_message != "":
+	var had_message := GameState.pending_message != ""
+	if had_message:
 		_show_message(GameState.pending_message)
 		GameState.pending_message = ""
+	if not GameState.wanderer_hint_seen:
+		GameState.wanderer_hint_seen = true
+		GameState.save_meta()
+		if had_message:
+			await get_tree().create_timer(MESSAGE_DURATION + 0.3, false).timeout
+		_show_message(WANDERER_HINT)
 
 # La regle monte au fil de la nuit : 0 au premier etage, 1 au dernier (et dans les profondeurs).
 static func rule_strength() -> float:
@@ -323,7 +341,11 @@ func _mark_used(decor: DreamDecor) -> void:
 	GameState.current_floor()["used_decor"].append(decor.decor_id)
 
 func _setup_ambience(floor_data) -> void:
-	Sound.music("reve" if floor_data.family == FloorGenerator.Family.PARADOXAL else "profond")
+	# Chaque nuit a son theme ; en sommeil profond, il est etouffe. Les profondeurs ont le leur.
+	if GameState.floor_index < 0:
+		Sound.music("profond")
+	else:
+		Sound.music("nuit_" + night, floor_data.family == FloorGenerator.Family.PROFOND)
 	var ambient := CanvasModulate.new()
 	ambient.color = DreamTheme.ambient_color(floor_data.family, floor_data.intensity, night)
 	add_child(ambient)
@@ -353,11 +375,36 @@ func _cell_to_world(cell: Vector2i) -> Vector2:
 	var half := FloorGenerator.CELL_SIZE / 2.0
 	return Vector2(cell.x * FloorGenerator.CELL_SIZE + half, cell.y * FloorGenerator.CELL_SIZE + half)
 
-func _on_encounter_timer_timeout() -> void:
-	if player.frozen or player.velocity.length() < 10.0 or encounter_pause > 0.0:
+# Pression de l'etage, 1 par defaut : la regle du mardi la fait monter, la Veilleuse et la regle
+# du samedi la font baisser. Les cauchemars errants voient plus loin et courent plus vite avec elle.
+func pressure() -> float:
+	return clampf(encounter_chance / maxf(base_encounter, 0.0001), 0.3, 3.0)
+
+func _spawn_wanderers(floor_data, floor_meta: Dictionary, size_ratio: float) -> void:
+	var count := WANDERERS_BASE + WANDERERS_PER_SIZE * size_ratio + (1.0 if family == FloorGenerator.Family.PROFOND else 0.0)
+	count *= clampf(pressure(), 0.5, 1.5)
+	var alive := maxi(1, mini(WANDERERS_MAX, roundi(count)) - int(floor_meta["wins"]))
+	var cells: Array = floor_data.floor_cells.keys()
+	var far := cells.filter(func(c: Vector2i): return _cell_to_world(c).distance_to(player.global_position) >= WANDERER_MIN_DISTANCE and c != floor_data.exit_cell)
+	far.shuffle()
+	var creatures: Array = Bestiary.NIGHTS[night]["creatures"]
+	for i in mini(alive, far.size()):
+		var wanderer := DreamWanderer.new()
+		wanderer.path = creatures.pick_random()
+		wanderer.map = self
+		wanderer.player = player
+		wanderer.cells = cells
+		wanderer.position = _cell_to_world(far[i])
+		wanderer.caught.connect(_on_wanderer_caught)
+		generated_root.add_child(wanderer)
+
+func _on_wanderer_caught(wanderer: DreamWanderer, ambush: bool) -> void:
+	if player.frozen:
 		return
-	if randf() < encounter_chance:
-		_trigger_encounter()
+	GameState.encounter_lead = wanderer.path
+	GameState.ambush = ambush
+	wanderer.queue_free()
+	_trigger_encounter()
 
 func _trigger_encounter() -> void:
 	if player.frozen:

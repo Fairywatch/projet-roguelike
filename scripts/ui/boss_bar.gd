@@ -27,7 +27,8 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(SIZE.x, HEIGHT)
 	size = custom_minimum_size
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	title.add_theme_font_size_override("font_size", 13)
+	title.theme_type_variation = &"PixelTitle"
+	title.add_theme_font_size_override("font_size", 14)
 	title.add_theme_constant_override("outline_size", 5)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.position = Vector2(-40, -6)

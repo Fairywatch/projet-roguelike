@@ -12,6 +12,11 @@ const DASH_COOLDOWN := 0.6
 const ATTACK_COOLDOWN := 0.35
 const ATTACK_REACH := 30.0
 const HURT_INVINCIBILITY := 0.8
+# Rafale de plumes (attaque speciale) : 3 plumes en eventail, toutes les 3 s.
+const FEATHERS := 3
+const SPECIAL_COOLDOWN := 3.0
+# Ensemble : Plumier + Plume de paon = Tempete de plumes (la rafale part dans toutes les directions).
+const STORM_SET := ["plumier", "plume_de_paon"]
 # Plafonds : un empilement d'objets ne doit pas rendre intouchable.
 const MIN_COOLDOWN_MULT := 0.3
 const MIN_SPEED_MULT := 0.5
@@ -66,6 +71,18 @@ static func thorns() -> int:
 static func knockback() -> float:
 	return GameState.mod("knockback")
 
+static func feathers() -> int:
+	return FEATHERS + int(GameState.mod("feathers"))
+
+static func special_cooldown() -> float:
+	return SPECIAL_COOLDOWN * maxf(MIN_COOLDOWN_MULT, 1.0 + GameState.mod("special_cooldown"))
+
+static func feather_pierce() -> bool:
+	return GameState.mod("feather_pierce") > 0.0
+
+static func feather_storm() -> bool:
+	return STORM_SET.all(func(id): return GameState.passive_items.has(id))
+
 # Fiche de stats : [nom, valeur] ; les effets que le joueur n'a pas ne sont pas listes.
 static func lines() -> Array:
 	var out := [
@@ -75,7 +92,14 @@ static func lines() -> Array:
 		["Portée", "%d" % roundi(reach())],
 		["Vitesse", _percent(move_speed() / SPEED - 1.0, true)],
 		["Dash", "recharge %.2f s" % dash_cooldown()],
+		["Rafale", "%d plumes, recharge %.1f s" % [feathers(), special_cooldown()]],
 	]
+	if feather_pierce():
+		out.append(["Plumes", "traversent les ennemis"])
+	if feather_storm():
+		out.append(["Tempête de plumes", "rafale tout autour"])
+	if GameState.mod("finisher_volley") > 0.0:
+		out.append(["3e coup", "lance une rafale"])
 	var optional := [
 		["Critiques (x2)", crit(), true], ["Esquive", evasion(), true], ["Soin en frappant", heal_on_hit(), true],
 		["Soin en tuant", heal_on_kill(), true], ["Coups bloqués / combat", shield(), false],

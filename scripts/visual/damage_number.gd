@@ -21,7 +21,8 @@ static func spawn(parent: Node, at: Vector2, amount: int, is_heavy: bool = false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	z_index = 60
-	add_theme_font_size_override("font_size", 15 if heavy else 11)
+	theme_type_variation = &"PixelTitle"
+	add_theme_font_size_override("font_size", 17 if heavy else 13)
 	add_theme_color_override("font_color", Color(1, 0.86, 0.35) if heavy else Color(1, 1, 1))
 	add_theme_color_override("font_outline_color", Color(0.12, 0.03, 0.08))
 	add_theme_constant_override("outline_size", 5)

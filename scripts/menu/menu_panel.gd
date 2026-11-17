@@ -57,7 +57,8 @@ func add_title(text: String) -> void:
 	var title := Label.new()
 	title.text = text
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 16)
+	title.theme_type_variation = &"PixelTitle"
+	title.add_theme_font_size_override("font_size", 18)
 	box.add_child(title)
 
 func add_note(text: String, color: Color = Color(1, 1, 1, 0.65)) -> void:

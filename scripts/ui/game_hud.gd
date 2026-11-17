@@ -11,6 +11,7 @@ const ACTIVE_ICON := 22.0
 
 var hearts := Hearts.new()
 var dash_gauge: DashGauge  # seulement en combat
+var special_gauge: DashGauge  # rafale de plumes, seulement en combat
 var toast := Toast.new()
 var place_label := Label.new()
 var hurt_overlay := ColorRect.new()
@@ -33,6 +34,9 @@ static func make(with_dash: bool) -> GameHud:
 	var hud := GameHud.new()
 	if with_dash:
 		hud.dash_gauge = DashGauge.new()
+		hud.special_gauge = DashGauge.new()
+		hud.special_gauge.fill = Color(0.82, 0.72, 1)
+		hud.special_gauge.charging = Color(0.5, 0.42, 0.72)
 	return hud
 
 func _ready() -> void:
@@ -54,6 +58,7 @@ func _ready() -> void:
 	left.add_child(hearts)
 	if dash_gauge:
 		left.add_child(dash_gauge)
+		left.add_child(special_gauge)
 	place_label.add_theme_font_size_override("font_size", 10)
 	place_label.add_theme_constant_override("line_spacing", -2)
 	place_label.modulate = Color(0.88, 0.85, 1)
@@ -127,7 +132,7 @@ func _counter(icon_kind: String, label: Label) -> HBoxContainer:
 	row.add_theme_constant_override("separation", 4)
 	row.alignment = BoxContainer.ALIGNMENT_END
 	row.add_child(HudIcon.make(icon_kind))
-	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_font_size_override("font_size", 11)  # Nunito : la police pixel deforme les petits chiffres
 	label.custom_minimum_size.x = 18
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	row.add_child(label)
@@ -179,6 +184,10 @@ func set_health(hp: int, max_hp: int) -> void:
 func set_dash(ratio: float) -> void:
 	if dash_gauge:
 		dash_gauge.ratio = ratio
+
+func set_special(ratio: float) -> void:
+	if special_gauge:
+		special_gauge.ratio = ratio
 
 func say(text: String, duration: float = 4.0) -> void:
 	toast.say(text, duration)

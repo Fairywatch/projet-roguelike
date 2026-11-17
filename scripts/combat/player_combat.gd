@@ -5,6 +5,7 @@ signal died
 signal item_message(text: String)
 # Chaque attaque du joueur, avec la position de son coup (l'Echo la repete, l'Autre Soi l'observe).
 signal attacked(at: Vector2)
+signal special_used
 
 # Valeurs de base et plafonds des statistiques : voir PlayerStats.
 const SPEED := PlayerStats.SPEED
@@ -70,6 +71,9 @@ var dash_buffer := 0.0
 var dash_ghost_timer := 0.0
 var swing_side := 1.0  # sens du balayage, alterne a chaque coup de l'enchainement
 var squash_tween: Tween
+var special_timer := 0.0  # recharge de la rafale de plumes
+var special_buffer := 0.0
+var special_cooldown_effective := PlayerStats.SPECIAL_COOLDOWN
 var bob_time := 0.0
 var ring_timer := 0.0
 var ring_color := Color(1, 0.95, 0.5)
@@ -139,6 +143,7 @@ func apply_items() -> void:
 	thorns = PlayerStats.thorns()
 	extra_lives = PlayerStats.extra_lives()
 	shield = PlayerStats.shield()
+	special_cooldown_effective = PlayerStats.special_cooldown()
 	hp = clampi(max_hp - lost, 1, max_hp)  # un +PV max arrive plein
 
 func _process(delta: float) -> void:
@@ -232,6 +237,11 @@ func _physics_process(delta: float) -> void:
 	dash_strike_timer = max(0.0, dash_strike_timer - delta)
 	since_dash += delta
 	attack_buffer = maxf(0.0, attack_buffer - delta)
+	special_timer = maxf(0.0, special_timer - delta)
+	special_buffer = maxf(0.0, special_buffer - delta)
+	if special_buffer > 0.0 and special_timer <= 0.0:
+		special_buffer = 0.0
+		_try_special()
 	dash_buffer = maxf(0.0, dash_buffer - delta)
 	if attack_buffer > 0.0 and attack_cooldown_timer <= 0.0:
 		attack_buffer = 0.0
@@ -299,6 +309,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_try_attack()
 	elif event.is_action_pressed("dash"):
 		dash_buffer = DASH_BUFFER
+	elif event.is_action_pressed("special"):
+		if special_timer > 0.0:
+			special_buffer = ATTACK_BUFFER
+		else:
+			_try_special()
 	elif event.is_action_pressed("active"):
 		_use_active_item()
 
@@ -342,6 +357,8 @@ func _try_attack() -> void:
 	if finisher:
 		combo = 0
 	swing_side = 1.0 if finisher else -swing_side
+	if finisher and GameState.mod("finisher_volley") > 0.0:
+		_volley()  # Bouquet final : le coup final lance une rafale, sans toucher a sa recharge
 	_squash(Vector2(1.12, 0.9) if finisher else Vector2(1.06, 0.95), 0.12)
 	Sound.play("slash")
 	slash_timer = ATTACK_DURATION
@@ -352,6 +369,41 @@ func _try_attack() -> void:
 	attack_shape.disabled = false
 	await get_tree().create_timer(ATTACK_DURATION, false).timeout
 	attack_shape.disabled = true
+
+# Rafale de plumes : l'attaque speciale, a distance. En eventail devant soi, ou tout autour avec
+# la Tempete de plumes (ensemble Plumier + Plume de paon).
+func _try_special() -> bool:
+	if special_timer > 0.0 or dead:
+		return false
+	special_timer = special_cooldown_effective
+	_volley()
+	special_used.emit()
+	return true
+
+func _volley() -> void:
+	var count := PlayerStats.feathers()
+	var storm := PlayerStats.feather_storm()
+	var directions := []
+	if storm:
+		count = maxi(count + 3, 8)
+		for i in count:
+			directions.append(facing.rotated(TAU * i / count))
+	else:
+		var spread := 0.22 * (count - 1)  # environ 12 degres entre deux plumes
+		for i in count:
+			directions.append(facing.rotated(-spread / 2.0 + spread * i / maxf(count - 1, 1)))
+	var volley := {}
+	for direction in directions:
+		var feather := Feather.new()
+		feather.direction = direction
+		feather.damage = attack_damage
+		feather.pierce = PlayerStats.feather_pierce()
+		feather.volley = volley
+		feather.position = global_position + direction * 14.0
+		get_parent().add_child(feather)
+	Sound.play("slash", -2.0)
+	_squash(Vector2(0.9, 1.1), 0.14)
+	add_trauma(0.12)
 
 func _use_active_item() -> void:
 	if not GameState.has_active_item():

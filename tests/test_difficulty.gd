@@ -94,7 +94,7 @@ func _initialize() -> void:
 	var known := ["max_hp", "damage", "speed", "dash_cooldown", "attack_cooldown", "dash_length", "reach",
 		"knockback", "heal_on_hit", "heal_on_kill", "crit", "evasion", "iframes", "extra_lives", "shield",
 		"thorns", "active_recharge", "slow_on_hit", "dash_trail", "enemy_hp", "enemy_speed", "enemy_cooldown",
-		"telegraph", "drop_chance", "encounter_rate"]
+		"telegraph", "drop_chance", "encounter_rate", "feathers", "special_cooldown", "feather_pierce", "finisher_volley"]
 	for item in Items.PASSIVES:
 		for stat in item["mods"]:
 			assert(stat in known)
@@ -165,11 +165,20 @@ func _initialize() -> void:
 	gs.unlocked_towers = 1
 	gs.start_bag.clear()
 	gs.shop_offers.clear()
-	# 7 nuits, du lundi au dimanche : chaque jour est plus long, plus dur, plus cauchemardesque.
+	# 7 nuits, du lundi au dimanche : chaque jour est au moins aussi long, plus dur, plus
+	# cauchemardesque, et son dernier etage est plus dur que celui de la veille.
 	assert(Towers.LIST.size() == 7)
-	for day in range(1, Towers.LIST.size()):
-		for key in ["floors", "difficulty", "nightmare_chance", "reward"]:
-			assert(Towers.LIST[day][key] > Towers.LIST[day - 1][key])
+	var last_floor_difficulty := 0.0
+	for day in Towers.LIST.size():
+		if day > 0:
+			assert(Towers.LIST[day]["floors"] >= Towers.LIST[day - 1]["floors"])
+			for key in ["difficulty", "nightmare_chance", "reward"]:
+				assert(Towers.LIST[day][key] > Towers.LIST[day - 1][key])
+		gs.new_run(day)
+		gs.floor_index = gs.floor_count() - 1
+		gs.current_floor()["family"] = FloorGenerator.Family.PARADOXAL
+		assert(gs.difficulty() > last_floor_difficulty)
+		last_floor_difficulty = gs.difficulty()
 	gs.new_run(0)
 	var monday_difficulty: float = gs.difficulty()
 	var sunday := Towers.LIST.size() - 1

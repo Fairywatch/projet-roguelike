@@ -5,8 +5,8 @@ extends Control
 
 const SIZE := Vector2(54, 5)
 const BACK := Color(0.1, 0.07, 0.18, 0.9)
-const FILL := Color(0.5, 0.82, 1)
-const CHARGING := Color(0.35, 0.5, 0.75)
+var fill := Color(0.5, 0.82, 1)
+var charging := Color(0.35, 0.5, 0.75)
 
 var ratio := 1.0:
 	set(v):
@@ -28,7 +28,7 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2(-1, -1), SIZE + Vector2(2, 2)), Color(0.05, 0.02, 0.08))
 	draw_rect(Rect2(Vector2.ZERO, SIZE), BACK)
-	var color := FILL if ratio >= 1.0 else CHARGING
+	var color := fill if ratio >= 1.0 else charging
 	color = color.lerp(Color.WHITE, ready_flash / 0.3)
 	draw_rect(Rect2(0, 0, SIZE.x * ratio, SIZE.y), color)
 	draw_rect(Rect2(0, 0, SIZE.x * ratio, 1), Color(1, 1, 1, 0.35))

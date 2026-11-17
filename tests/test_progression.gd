@@ -42,6 +42,7 @@ func _initialize() -> void:
 	gs.unlocked_towers = 7
 	var last := Towers.LIST.size() - 1
 	gs.new_run(last)
+	gs.current_floor()["family"] = FloorGenerator.Family.PARADOXAL  # le sommeil profond ajoute 15 %
 	var base_difficulty: float = gs.difficulty()
 	gs.coins = 0
 	gs.floor_index = gs.floor_count() - 1
@@ -49,6 +50,7 @@ func _initialize() -> void:
 	assert(gs.week == 2 and gs.completed_towers.is_empty() and gs.coins == Towers.LIST[last]["reward"])
 	assert(gs.menu_message.contains("Semaine 2"))
 	gs.new_run(last)
+	gs.current_floor()["family"] = FloorGenerator.Family.PARADOXAL
 	assert(is_equal_approx(gs.difficulty(), base_difficulty + gs.WEEK_DIFFICULTY))
 	assert(gs.tower_reward() == roundi(Towers.LIST[last]["reward"] * 1.5))
 	gs.week = 1
@@ -73,6 +75,25 @@ func _initialize() -> void:
 	player._try_attack()
 	assert(player.strike_kind == "dash" and player.strike_damage == 2)
 
+	# Rafale de plumes : trois plumes, mais un ennemi n'est touche qu'une fois par rafale ; puis recharge.
+	var dummy: BaseMob = load("res://scripts/combat/bestiary.gd").make("lundi/mouton")
+	arena.add_child(dummy)
+	for mob in arena._alive_mobs():
+		if mob != dummy:
+			mob.queue_free()
+	await process_frame
+	dummy.set_physics_process(false)
+	dummy.hp = 50
+	dummy.max_hp = 50
+	player.facing = Vector2.RIGHT
+	dummy.global_position = player.global_position + Vector2(70, 0)
+	assert(player._try_special() and not player._try_special() and player.special_timer > 0.0)
+	var feathers := arena.get_children().filter(func(n): return n.get_script() != null and n.get_script().resource_path.ends_with("feather.gd"))
+	assert(feathers.size() == 3)
+	for i in 30:
+		await physics_frame
+	assert(dummy.hp == 50 - player.attack_damage)
+
 	# Fuite : deux appuis, des pieces en moins, et les PV perdus le restent.
 	gs.coins = 10
 	player.hp = player.max_hp - 1
@@ -81,8 +102,20 @@ func _initialize() -> void:
 	arena._try_flee()
 	assert(arena.combat_over and gs.coins == 10 - gs.FLEE_COST and gs.hp_lost == 1 and not gs.in_combat)
 	await create_timer(1.0).timeout
-	# On ne fuit pas un gardien.
+	# Gardien sans boss (etage 1) : une meute menee par une elite, qu'on ne fuit pas non plus.
 	gs.hp_lost = 0
+	assert(not gs.floor_has_boss(1) and gs.floor_has_boss(2) and gs.floor_has_boss(gs.floor_count() - 1))
+	assert(gs.floor_has_boss(-3) and not gs.floor_has_boss(-2) and gs.floor_has_boss(gs.MIN_FLOOR_INDEX))
+	gs.start_guardian_fight(false)
+	change_scene_to_file("res://scenes/combat/CombatArena.tscn")
+	for i in 10:
+		await process_frame
+	assert(not current_scene.is_boss_fight and current_scene.had_elite and current_scene._alive_mobs().size() >= 1)
+	current_scene._try_flee()
+	current_scene._try_flee()
+	assert(not current_scene.combat_over and not current_scene.boss_bar.visible)
+	# On ne fuit pas un boss gardien (etage 2).
+	gs.floor_index = 2
 	gs.start_guardian_fight(false)
 	change_scene_to_file("res://scenes/combat/CombatArena.tscn")
 	for i in 10:
@@ -90,8 +123,20 @@ func _initialize() -> void:
 	current_scene._try_flee()
 	current_scene._try_flee()
 	assert(not current_scene.combat_over and gs.coins == 10 - gs.FLEE_COST)
-	assert(current_scene.boss_bar.visible)
+	assert(current_scene.is_boss_fight and current_scene.boss_bar.visible)
 	gs.guardian_fight = false
+
+	# Cauchemar errant pris a revers : il mene le combat, et les ennemis commencent etourdis.
+	gs.floor_index = 1
+	gs.encounter_lead = "lundi/bailleur"
+	gs.ambush = true
+	change_scene_to_file("res://scenes/combat/CombatArena.tscn")
+	for i in 10:
+		await process_frame
+	var lead = current_scene._alive_mobs()[0]
+	assert(lead.get_script().resource_path.ends_with("lundi/bailleur.gd"))
+	assert(current_scene._alive_mobs().all(func(m): return m.state == BaseMob.State.COOLDOWN))
+	assert(gs.encounter_lead == "" and not gs.ambush)
 
 	print("test_progression OK")
 	quit()

@@ -23,7 +23,7 @@
 ### Par nuit
 
 - **4 créatures**, chacune avec une **variante de comportement** (même créature, autre attaque) : **8 ennemis par nuit**.
-- **3 boss tirés au hasard** pour les portails, déclinés en variantes : 3 boss × 4 versions (normale, cauchemar, élite, comportement) = 12 combinaisons. Une même combinaison ne sort jamais deux fois dans une même nuit (le dimanche a besoin de 11 boss de portail).
+- **3 boss tirés au hasard** pour les portails gardés par un boss (un étage sur trois ; les autres sont gardés par une meute menée par une élite), déclinés en variantes : 3 boss × 4 versions (normale, cauchemar, élite, comportement) = 12 combinaisons. Une même combinaison ne sort jamais deux fois dans une même nuit (le dimanche a besoin de 11 boss de portail).
 - **1 boss de fin dédié**, très difficile, gardant le dernier portail. Il a **plusieurs phases** et incarne l'épreuve de la nuit (voir `scripts/story.gd`).
 
 ### Variantes (valables pour tous les ennemis et les boss tirés au hasard)

@@ -10,6 +10,9 @@ var cell_seed := 0
 # Surface a couvrir (l'arene par defaut ; le hub et le menu en demandent une autre).
 var area := Vector2(ARENA_WIDTH, ARENA_HEIGHT)
 
+const FLOOR_VEIL := Color(0.07, 0.04, 0.13, 0.4)
+var veiled := false  # l'arene seulement (pas le menu ni le hub)
+
 func setup(family: int, intensity: int, night: String = "") -> void:
 	floor_textures = DreamTheme.floor_textures(DreamTheme.theme_name(family, intensity, night))
 	cell_seed = randi()
@@ -25,6 +28,10 @@ func _draw() -> void:
 			var clipped := rect.intersection(Rect2(Vector2.ZERO, area))
 			var src := Rect2(Vector2.ZERO, clipped.size / 2.0)
 			draw_texture_rect_region(tex, clipped, src)
+	# Sol en retrait : un voile sombre baisse son contraste, pour que les ennemis et leurs annonces
+	# d'attaque ressortent (le sol de certaines nuits est plein de motifs ronds, comme les dangers).
+	if veiled:
+		draw_rect(Rect2(Vector2.ZERO, area), FLOOR_VEIL)
 	# Bords assombris : l'arene semble posee au milieu du reve.
 	for i in EDGE_SHADE / 4:
 		var a := 0.5 * (1.0 - float(i) / (EDGE_SHADE / 4))

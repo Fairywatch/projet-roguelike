@@ -16,6 +16,7 @@ var last_position := Vector2.ZERO
 var hits := 0
 var finisher_done := false
 var dashed := false
+var volleyed := false
 var panel := PanelContainer.new()
 var label := Label.new()
 
@@ -35,6 +36,7 @@ func _ready() -> void:
 	dummy.max_hp = TRAINING_HP
 	last_position = player.global_position
 	player.attacked.connect(_on_attack)
+	player.special_used.connect(func(): volleyed = true)
 	_next()
 
 func _on_attack(_at: Vector2) -> void:
@@ -43,13 +45,13 @@ func _on_attack(_at: Vector2) -> void:
 		finisher_done = true
 
 func _process(_delta: float) -> void:
-	if not is_instance_valid(dummy) or step > 3:
+	if not is_instance_valid(dummy) or step > 4:
 		return
 	moved += player.global_position.distance_to(last_position)
 	last_position = player.global_position
 	dashed = dashed or player.dashing
 	dummy.hp = TRAINING_HP  # il encaisse tout
-	var done: bool = [moved >= MOVE_DISTANCE, hits >= 2, finisher_done, dashed][step]
+	var done: bool = [moved >= MOVE_DISTANCE, hits >= 2, finisher_done, dashed, volleyed][step]
 	if done:
 		Sound.play("sparkle")
 		_next()
@@ -58,6 +60,7 @@ func _next() -> void:
 	step += 1
 	hits = 0
 	dashed = false
+	volleyed = false
 	match step:
 		0:
 			_say("Déplace-toi : %s" % Controls.name_of("move"))
@@ -67,6 +70,8 @@ func _next() -> void:
 			_say("Enchaîne trois coups sans attendre : le troisième frappe deux fois plus fort.")
 		3:
 			_say("Dash : %s. Tu es intouchable pendant le dash. De temps en temps, frapper juste après fait plus mal." % Controls.name_of("dash"))
+		4:
+			_say("Rafale de plumes : %s. Elle touche de loin, puis se recharge (jauge violette sous les cœurs)." % Controls.name_of("special"))
 		_:
 			_finish()
 

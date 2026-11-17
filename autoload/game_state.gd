@@ -17,6 +17,9 @@ const DEATH_KEPT_ITEMS := 2
 # Fuir un combat ordinaire coute des pieces, et les PV perdus le restent. On ne fuit pas un gardien.
 const FLEE_COST := 3
 const MIN_FLOOR_INDEX := -10
+# Un portail sur trois est garde par un boss (et toujours le dernier) ; les autres par une meute
+# menee par une elite. Un boss a chaque etage n'etait plus un evenement.
+const GUARDIAN_EVERY := 3
 const ACTIVE_MAX_CHARGES := 3
 const ACTIVE_DROP_WEIGHT := 0.25
 const DIFFICULTY_PER_FLOOR := 0.08
@@ -57,7 +60,7 @@ const SAVED_FIELDS := [
 	"pending_ground_item", "tower_index", "speedrun", "time_left", "run_time", "in_combat",
 	"boss_history", "nightmare_mode", "curses", "legendaries_seen", "run_stats",
 ]
-const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag", "shop_offers", "best_times", "intro_seen",
+const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag", "shop_offers", "best_times", "intro_seen", "wanderer_hint_seen",
 	"upgrades", "week", "tutorial_done"]
 
 var save_path := "user://run.save"
@@ -84,6 +87,11 @@ var floor_index: int = 0
 var floor_data_by_index: Dictionary = {}
 var guardian_fight: bool = false
 var guardian_exit_down: bool = false
+# Rencontre en cours sur la carte (cauchemar errant touche) : la creature qui mene le combat, et
+# s'il a ete pris par surprise (embuscade : les ennemis commencent etourdis). Non sauvegardes.
+var encounter_lead: String = ""
+var wanderer_hint_seen := false  # explication des cauchemars errants, une fois par sauvegarde
+var ambush: bool = false
 var negative_dive_available: bool = true
 var pending_message: String = ""
 # Partie en cours : le menu propose alors "Continuer". Faux apres la fin d'une nuit.
@@ -365,6 +373,12 @@ func floor_count() -> int:
 
 func is_last_floor() -> bool:
 	return floor_index == floor_count() - 1
+
+# Vrai si le portail de cet etage est garde par un boss (sinon : une meute menee par une elite).
+func floor_has_boss(index: int = floor_index) -> bool:
+	if index < 0:
+		return index == MIN_FLOOR_INDEX or -index % GUARDIAN_EVERY == 0
+	return index == floor_count() - 1 or (index + 1) % GUARDIAN_EVERY == 0
 
 func _process(delta: float) -> void:
 	var scene := get_tree().current_scene

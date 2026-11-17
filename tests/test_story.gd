@@ -33,7 +33,7 @@ func _initialize() -> void:
 		assert(shot.lines.size() == Story.ENDINGS[tower["id"]].size())
 		for i in 40:
 			shot.update(shot.duration * i / 39.0)
-		assert(Story.NPC_LINES[tower["id"]].size() == 3)
+		assert(Story.NPC_LINES[tower["id"]].size() == 3 and Story.NPC_THANKS[tower["id"]].size() == 3)
 
 	# Finir une nuit : sa fin est racontee avant le retour au menu.
 	gs.new_run(2)
