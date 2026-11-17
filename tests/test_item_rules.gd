@@ -139,9 +139,15 @@ func _initialize() -> void:
 		await process_frame
 	var arena = current_scene
 	arena.had_elite = true  # butin garanti
-	for mob in arena._alive_mobs():
-		mob.take_hit(99)
-	await create_timer(0.5).timeout
+	# Ennemis tires au hasard : la Paupiere fermee est invulnerable, on la force a tomber.
+	for i in 60:
+		for mob in arena._alive_mobs():
+			mob.invulnerable = false
+			mob.take_hit(99)
+		if arena.combat_over:
+			break
+		await process_frame
+	await create_timer(0.3).timeout
 	assert(arena.combat_over and gs.current_floor()["wins"] == 3 and gs.current_floor()["combat_items"] == 1)
 	# Les listes d'un etage ne sont pas partagees avec le suivant.
 	gs.current_floor()["opened_chests"].append("b")
