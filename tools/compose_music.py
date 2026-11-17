@@ -3,17 +3,30 @@
 Lancer depuis la racine du projet : python tools/compose_music.py [morceau...]
 Pour chaque morceau : ecrit music/<nom>.musicxml (a ouvrir et retoucher dans MuseScore), fait
 jouer chaque instrument a part par MuseScore, les mixe (volume et panoramique par partie, voir
-"parts"), puis replie la queue de reverb sur le debut pour une boucle sans coupure :
-assets/audio/music/<nom>.wav. Si un music/<nom>.mscz existe (partition retouchee dans MuseScore),
-c'est lui qui est joue, avec le mixage regle dans MuseScore.
+"parts"), puis replie la queue de reverb sur le debut pour une boucle sans coupure. Le morceau
+est ensuite mis au volume percu commun (LOUDNESS, mesure en LUFS par ffmpeg) et encode en Ogg
+Vorbis : assets/audio/music/<nom>.ogg. Si un music/<nom>.mscz existe (partition retouchee dans
+MuseScore), c'est lui qui est joue, avec le mixage regle dans MuseScore.
+
+Themes des nuits : tools/night_music.py (nuit_lundi ... nuit_dimanche).
+  python tools/compose_music.py --level   remet au volume commun les .wav deja rendus, en .ogg
+Necessite ffmpeg (winget install Gyan.FFmpeg).
 """
 import array
+import glob
 import os
+import re
+import shutil
 import struct
 import subprocess
 import sys
 import tempfile
 import wave
+
+import numpy as np
+
+sys.path.insert(0, os.path.dirname(__file__))
+import night_music  # noqa: E402
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 SCORE_DIR = os.path.join(ROOT, "music")
@@ -39,7 +52,19 @@ INSTRUMENTS = {
     "trumpets": ("Trumpets", "brass.trumpet", ("G", 2)),
     "trombones": ("Trombones", "brass.trombone", ("F", 4)),
     "timpani": ("Timpani", "drum.timpani", ("F", 4)),
+    "marimba": ("Marimba", "pitched-percussion.marimba", ("G", 2)),
+    "glockenspiel": ("Glockenspiel", "pitched-percussion.glockenspiel", ("G", 2)),
+    "vibraphone": ("Vibraphone", "pitched-percussion.vibraphone", ("G", 2)),
 }
+# Note la plus grave de chaque instrument : en dessous, Muse Sounds ne joue rien. fit_range()
+# remonte d'une octave les notes trop graves.
+LOWEST = {"cellos": "C2", "violas": "C3", "violins": "G3", "marimba": "C2", "trombones": "E2",
+          "horns": "B1", "choir": "E2", "celesta": "C4", "glockenspiel": "G5", "vibraphone": "F3",
+          "trumpets": "F#3", "piano": "A0", "harp": "C1", "timpani": "D2"}
+# Volume percu vise (LUFS integres) : la carte un peu plus douce que les combats.
+LOUDNESS = {"combat": -18.0, "boss": -18.0}
+DEFAULT_LOUDNESS = -20.0
+TRUE_PEAK = 0.89  # crete maximale apres reglage (-1 dB)
 # Instruments installes en Muse Sounds (les autres sonnent avec la banque de base, bien moins
 # belle) : piano, celesta, harpe, violons, altos, violoncelles, contrebasses, choeur, cors,
 # trompettes, trombones, timbales, glockenspiel, marimba, vibraphone.
@@ -56,6 +81,31 @@ def pitch_xml(name):
 
 
 ARTICULATIONS = {"s": "<staccato/>", "a": "<accent/>"}  # pique, accent
+
+
+STEPS = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
+
+
+def midi(name):
+    step, rest = name[0], name[1:]
+    alter = 0
+    while rest and rest[0] in "#b":
+        alter += 1 if rest[0] == "#" else -1
+        rest = rest[1:]
+    return 12 * (int(rest) + 1) + STEPS[step] + alter
+
+
+def fit_range(text, inst):
+    """Remonte d'une octave (autant qu'il faut) les notes sous la tessiture de l'instrument."""
+    lowest = midi(LOWEST.get(inst, "A0"))
+
+    def lift(match):
+        note = match.group(0)
+        octave = int(note[-1])
+        while midi(note[:-1] + str(octave)) < lowest:
+            octave += 1
+        return note[:-1] + str(octave)
+    return re.sub(r"[A-G][#b]*\d", lift, text)
 
 
 def note_xml(pitches, dur, marks=""):
@@ -108,6 +158,7 @@ def score_xml(piece, only=None):
         sign, line = INSTRUMENTS[inst][2]
         body.append(f'<part id="P{i}">')
         for m, (text, dynamic) in enumerate(measures):
+            text = fit_range(text, inst)
             body.append(f'<measure number="{m + 1}">')
             if m == 0:
                 body.append(f'<attributes><divisions>{DIVISIONS}</divisions><key><fifths>{piece["fifths"]}</fifths></key>'
@@ -157,6 +208,71 @@ def mix(stems):
     return out
 
 
+def stem_level(samples):
+    """Niveau (dB) d'une piste la ou elle joue : RMS des blocs de 0,1 s au-dessus de -50 dB."""
+    data = np.asarray(samples, dtype=np.float32)
+    block = 8820  # 0,1 s en stereo
+    count = len(data) // block
+    if count == 0:
+        return -120.0
+    rms = np.sqrt(np.mean(data[:count * block].reshape(count, block) ** 2, axis=1))
+    active = rms[rms > 10 ** (-50 / 20) * np.max(rms)]
+    return 20 * np.log10(np.sqrt(np.mean(active ** 2)) + 1e-12)
+
+
+def balance_stems(stems, roles):
+    """Mixage par roles (tools/night_music.ROLE_LEVELS) : chaque piste est mesuree puis amenee a
+    son niveau relatif, au lieu de regler des dB a l'aveugle. stems : [(echantillons, pan)]."""
+    out = np.zeros(max(len(s) for s, _ in stems), dtype=np.float32)
+    for (samples, pan), role in zip(stems, roles):
+        target = role[1] if isinstance(role, tuple) else night_music.ROLE_LEVELS[role]
+        data = np.asarray(samples, dtype=np.float32)
+        gain = 10 ** ((target - 20.0 - stem_level(data)) / 20)  # melodie a -20 dB RMS
+        data = data * gain
+        data[0::2] *= min(1.0, 1.0 - pan)
+        data[1::2] *= min(1.0, 1.0 + pan)
+        out[:len(data)] += data
+    return array.array("f", out.tobytes())
+
+
+def ffmpeg():
+    found = shutil.which("ffmpeg")
+    if found:
+        return found
+    pattern = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Microsoft", "WinGet", "Packages", "Gyan.FFmpeg*", "*", "bin", "ffmpeg.exe")
+    matches = glob.glob(pattern)
+    if not matches:
+        sys.exit("ffmpeg introuvable : winget install Gyan.FFmpeg")
+    return matches[0]
+
+
+def loudness(path):
+    """Volume percu integre (LUFS) d'un fichier, mesure par ffmpeg (EBU R128)."""
+    result = subprocess.run([ffmpeg(), "-hide_banner", "-nostats", "-i", path, "-af", "ebur128=framelog=quiet", "-f", "null", "-"],
+                            capture_output=True, text=True)
+    values = re.findall(r"I:\s+(-?[\d.]+) LUFS", result.stderr)
+    return float(values[-1])
+
+
+def to_ogg(wav_path, name):
+    """Met le morceau au volume commun (gain fixe, la boucle reste intacte), puis l'encode en .ogg."""
+    with wave.open(wav_path, "rb") as w:
+        channels, rate = w.getnchannels(), w.getframerate()
+        pcm = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float32) / 32768
+    gain_db = LOUDNESS.get(name, DEFAULT_LOUDNESS) - loudness(wav_path)
+    gain = min(10 ** (gain_db / 20), TRUE_PEAK / max(np.max(np.abs(pcm)), 1e-6))
+    leveled = os.path.join(tempfile.gettempdir(), f"{name}_leveled.wav")
+    with wave.open(leveled, "wb") as w:
+        w.setnchannels(channels)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(np.clip(pcm * gain * 32767, -32768, 32767).astype(np.int16).tobytes())
+    out = os.path.join(OUT_DIR, name + ".ogg")
+    subprocess.run([ffmpeg(), "-y", "-hide_banner", "-loglevel", "error", "-i", leveled, "-c:a", "libvorbis", "-q:a", "5", out], check=True)
+    os.remove(leveled)
+    print(f"{name} -> {out}  ({loudness(out):.1f} LUFS, gain {20 * np.log10(gain):+.1f} dB)")
+
+
 def write_loop(path, samples, channels, rate, seconds):
     """Coupe a la longueur exacte du morceau, ajoute ce qui depasse (reverb) au debut, normalise, 16 bits."""
     length = int(seconds * rate) * channels
@@ -184,16 +300,23 @@ def build(name, piece):
         else:  # une piste par instrument, mixees ici (volume et panoramique de chaque partie)
             stems = []
             for i, (inst, _, db, pan) in enumerate(piece["parts"]):
-                stem_xml = os.path.join(tmp, f"{inst}.musicxml")
+                stem_xml = os.path.join(tmp, f"{i}_{inst}.musicxml")
                 with open(stem_xml, "w", encoding="utf-8") as f:
                     f.write(score_xml(piece, only=i))
-                channels, rate, samples = render(stem_xml, os.path.join(tmp, f"{inst}.wav"))
+                channels, rate, samples = render(stem_xml, os.path.join(tmp, f"{i}_{inst}.wav"))
                 stems.append((samples, db, pan))
-            samples = mix(stems)
-    out = os.path.join(OUT_DIR, name + ".wav")
-    bars = len(piece["parts"][0][1])
-    write_loop(out, samples, channels, rate, bars * 4 * 60.0 / piece["tempo"])
-    print(f"{name} -> {out}")
+            if piece.get("balance"):  # themes des nuits : volumes mesures, par role
+                samples = balance_stems([(s, pan) for s, _, pan in stems], [db for _, db, _ in stems])
+            else:
+                samples = mix(stems)
+        wav = os.path.join(tmp, name + ".wav")
+        bars = len(piece["parts"][0][1])
+        write_loop(wav, samples, channels, rate, bars * 4 * 60.0 / piece["tempo"])
+        to_ogg(wav, name)
+    old = os.path.join(OUT_DIR, name + ".wav")
+    for leftover in (old, old + ".import"):
+        if os.path.exists(leftover):
+            os.remove(leftover)
 
 
 # --- Partitions -------------------------------------------------------------------------------
@@ -414,8 +537,22 @@ def boss():
     }
 
 
-PIECES = {"reve": reve, "profond": profond, "combat": combat, "boss": boss}
+PIECES = {"reve": reve, "profond": profond, "combat": combat, "boss": boss, **night_music.NIGHTS}
+
+
+def level_existing():
+    """Morceaux deja rendus en .wav : remis au volume commun et encodes en .ogg, sans MuseScore."""
+    for wav in sorted(glob.glob(os.path.join(OUT_DIR, "*.wav"))):
+        name = os.path.splitext(os.path.basename(wav))[0]
+        to_ogg(wav, name)
+        os.remove(wav)
+        if os.path.exists(wav + ".import"):
+            os.remove(wav + ".import")
+
 
 if __name__ == "__main__":
-    for name in sys.argv[1:] or PIECES:
-        build(name, PIECES[name]())
+    if sys.argv[1:] == ["--level"]:
+        level_existing()
+    else:
+        for name in sys.argv[1:] or PIECES:
+            build(name, PIECES[name]())

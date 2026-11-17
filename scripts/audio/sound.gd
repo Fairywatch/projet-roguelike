@@ -13,6 +13,8 @@ const BUSES := {"Music": "music_volume", "SFX": "sfx_volume"}
 const FADE := 0.8
 # Un meme son joue plusieurs fois dans la meme frame (4 mobs qui telegraphient) : on n'en garde qu'un.
 const MIN_INTERVAL := 0.05
+# Sommeil profond : la musique de la nuit passe sous un filtre passe-bas, comme entendue de loin.
+const MUFFLED_CUTOFF := 900.0
 
 static var _music_player: AudioStreamPlayer
 static var _music_name := ""
@@ -46,11 +48,12 @@ static func play(sfx_name: String, volume_db: float = 0.0, pitch_jitter: float =
 	tree.root.add_child.call_deferred(player)
 
 # Change de musique en fondu ; ne fait rien si elle joue deja.
-static func music(music_name: String) -> void:
+static func music(music_name: String, muffled: bool = false) -> void:
 	var tree := _tree()
 	if tree == null:
 		return
 	_music_name = music_name
+	set_muffled(muffled)
 	if Settings.volume("music_volume") <= 0.0:
 		stop_music()
 		return
@@ -86,6 +89,24 @@ static func _music_stream(music_name: String) -> AudioStream:
 			stream.loop = true  # AudioStreamOggVorbis, AudioStreamMP3
 		return stream
 	return null
+
+# Filtre passe-bas sur le bus de la musique (ajoute une fois, puis active ou non).
+static func set_muffled(on: bool) -> void:
+	var bus := AudioServer.get_bus_index("Music")
+	if bus == -1:
+		return
+	var index := -1
+	for i in AudioServer.get_bus_effect_count(bus):
+		if AudioServer.get_bus_effect(bus, i) is AudioEffectLowPassFilter:
+			index = i
+	if index == -1:
+		if not on:
+			return
+		var filter := AudioEffectLowPassFilter.new()
+		filter.cutoff_hz = MUFFLED_CUTOFF
+		AudioServer.add_bus_effect(bus, filter)
+		index = AudioServer.get_bus_effect_count(bus) - 1
+	AudioServer.set_bus_effect_enabled(bus, index, on)
 
 static func stop_music() -> void:
 	if _music_player and is_instance_valid(_music_player):
