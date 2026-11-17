@@ -33,6 +33,16 @@ const OREILLER_DAMAGE := 2
 const THORNS_RADIUS := 90.0
 const CAFE_DURATION := 4.0
 const CAFE_SPEED_MULT := 1.5
+# Appuis memorises : une attaque (ou un dash) demandee juste avant la fin de la recharge part des
+# qu'elle est prete, au lieu d'etre perdue. Les enchainements deviennent fluides.
+const ATTACK_BUFFER := 0.18
+const DASH_BUFFER := 0.12
+# Secousse d'ecran : "trauma" de 0 a 1, qui decroit en temps reel ; l'ecran bouge de trauma^2
+# (les petits coups bougent a peine, les gros secouent), en sinus lisses plutot qu'au hasard.
+const SHAKE_DECAY := 1.6
+const SHAKE_OFFSET := Vector2(9, 6)
+const DASH_GHOST_EVERY := 0.03
+const SPRITE_SCALE := Vector2(2, 2)  # taille du sprite dans la scene : reference des etirements
 
 const DashTrailScene := preload("res://scenes/combat/DashTrail.tscn")
 const MirrorDecoyScene := preload("res://scenes/combat/MirrorDecoy.tscn")
@@ -52,7 +62,14 @@ var attack_cooldown_timer := 0.0
 var dash_trail_timer := 0.0
 var hurt_timer := 0.0
 var slash_timer := 0.0
-var shake := 0.0
+var trauma := 0.0
+var shake_time := 0.0
+var kick := Vector2.ZERO  # petit a-coup de camera dans le sens du coup
+var attack_buffer := 0.0
+var dash_buffer := 0.0
+var dash_ghost_timer := 0.0
+var swing_side := 1.0  # sens du balayage, alterne a chaque coup de l'enchainement
+var squash_tween: Tween
 var bob_time := 0.0
 var ring_timer := 0.0
 var ring_color := Color(1, 0.95, 0.5)
@@ -128,9 +145,7 @@ func _process(delta: float) -> void:
 	slash_timer = max(0.0, slash_timer - delta)
 	ring_timer = max(0.0, ring_timer - delta)
 	speed_boost_timer = max(0.0, speed_boost_timer - delta)
-	shake = move_toward(shake, 0.0, delta * 30.0)
-	var amount := shake if Settings.enabled("screen_shake") else 0.0
-	camera.offset = Vector2(randf_range(-amount, amount), randf_range(-amount, amount))
+	_update_camera(delta)
 	PlayerFrames.animate(sprite, velocity.length() > 10.0)
 	if velocity.length() > 10.0 and not dashing:
 		bob_time += delta
@@ -142,22 +157,60 @@ func _process(delta: float) -> void:
 		sprite.visible = hurt_timer <= 0.0 or int(hurt_timer * 20.0) % 2 == 0
 	queue_redraw()
 
+# Secousse (trauma) et a-coup du coup, en temps reel : elles continuent de retomber pendant l'arret
+# sur image au lieu de figer la camera de travers.
+func _update_camera(delta: float) -> void:
+	var real_delta := delta / maxf(Engine.time_scale, 0.0001)
+	trauma = maxf(0.0, trauma - SHAKE_DECAY * real_delta)
+	kick = kick.lerp(Vector2.ZERO, 1.0 - exp(-14.0 * real_delta))
+	shake_time += real_delta * 30.0
+	if not Settings.enabled("screen_shake"):
+		camera.offset = Vector2.ZERO
+		return
+	var amount := trauma * trauma
+	camera.offset = kick + Vector2(SHAKE_OFFSET.x * amount * sin(shake_time * 1.7), SHAKE_OFFSET.y * amount * sin(shake_time * 2.3))
+
+func add_trauma(amount: float) -> void:
+	trauma = clampf(trauma + amount, 0.0, 1.0)
+
 func _draw() -> void:
 	Fx.draw_shadow(self, PlayerFrames.SHADOW_Y, 26.0)
 	if slash_timer > 0.0:
-		var t := slash_timer / ATTACK_DURATION
-		var angle := facing.angle()
-		if strike_kind == "finisher":  # grand arc dore, plus large
-			draw_arc(Vector2.ZERO, strike_reach + 10.0, angle - 1.5, angle + 1.5, 16, Color(1, 0.88, 0.45, t), 9.0)
-			draw_arc(Vector2.ZERO, strike_reach + 2.0, angle - 1.2, angle + 1.2, 14, Color(1, 1, 1, t), 4.0)
-			draw_arc(Vector2.ZERO, strike_reach - 8.0, angle - 0.9, angle + 0.9, 12, Color(1, 0.7, 0.3, t * 0.7), 3.0)
-		elif strike_kind == "dash":  # estoc : un trait qui file dans le sens du dash
-			draw_line(facing * 6.0, facing * (strike_reach + 22.0), Color(0.7, 0.9, 1, t), 7.0)
-			draw_line(facing * 10.0, facing * (strike_reach + 26.0), Color(1, 1, 1, t), 3.0)
-			draw_arc(Vector2.ZERO, strike_reach + 6.0, angle - 0.7, angle + 0.7, 10, Color(1, 1, 1, t), 5.0)
-		else:
-			draw_arc(Vector2.ZERO, strike_reach + 6.0, angle - 1.1, angle + 1.1, 12, Color(1, 1, 1, t), 6.0)
-			draw_arc(Vector2.ZERO, strike_reach - 2.0, angle - 0.8, angle + 0.8, 10, Color(0.7, 0.85, 1, t * 0.7), 3.0)
+		_draw_slash()
+
+# Le coup balaie son arc (vite au debut, puis il ralentit) et laisse une trainee qui s'eteint.
+func _draw_slash() -> void:
+	var t := 1.0 - slash_timer / ATTACK_DURATION  # 0 -> 1 pendant le coup
+	var sweep := 1.0 - pow(1.0 - minf(t * 1.6, 1.0), 3.0)
+	var fade := 1.0 - maxf(0.0, t - 0.45) / 0.55
+	var angle := facing.angle()
+	if strike_kind == "dash":  # estoc : un trait qui file dans le sens du dash
+		var tip := facing * lerpf(strike_reach, strike_reach + 26.0, sweep)
+		draw_line(facing * 6.0, tip, Color(0.7, 0.9, 1, fade), 7.0)
+		draw_line(facing * 10.0, tip + facing * 3.0, Color(1, 1, 1, fade), 3.0)
+		draw_arc(Vector2.ZERO, strike_reach + 6.0, angle - 0.7, angle + 0.7, 10, Color(1, 1, 1, fade * 0.8), 4.0)
+		return
+	var finisher := strike_kind == "finisher"
+	var half := 1.5 if finisher else 1.1
+	var start := angle - half * swing_side
+	var end := start + 2.0 * half * swing_side * sweep
+	var trail := start + (end - start) * 0.45  # la fin du balayage, plus vive
+	var from := minf(start, end)
+	var to := maxf(start, end)
+	var trail_from := minf(trail, end)
+	var trail_to := maxf(trail, end)
+	if to - from < 0.02:
+		return
+	if finisher:  # grand arc dore, plus large
+		draw_arc(Vector2.ZERO, strike_reach + 10.0, from, to, 18, Color(1, 0.88, 0.45, fade * 0.85), 9.0)
+		draw_arc(Vector2.ZERO, strike_reach + 2.0, trail_from, trail_to, 12, Color(1, 1, 1, fade), 4.0)
+		draw_arc(Vector2.ZERO, strike_reach - 8.0, from, to, 14, Color(1, 0.7, 0.3, fade * 0.6), 3.0)
+	else:
+		draw_arc(Vector2.ZERO, strike_reach + 6.0, from, to, 14, Color(0.8, 0.9, 1, fade * 0.55), 6.0)
+		draw_arc(Vector2.ZERO, strike_reach + 6.0, trail_from, trail_to, 10, Color(1, 1, 1, fade), 6.0)
+		draw_arc(Vector2.ZERO, strike_reach - 2.0, from, to, 12, Color(0.7, 0.85, 1, fade * 0.6), 3.0)
+	# Pointe de la lame, au bout du balayage.
+	draw_circle(Vector2.from_angle(end) * (strike_reach + 6.0), 3.5 if finisher else 2.5, Color(1, 1, 1, fade))
 	# Enchainement en cours : un point par coup place, au-dessus de la tete.
 	if combo > 0 and combo_timer > 0.0:
 		for i in COMBO_FINISHER - 1:
@@ -178,6 +231,11 @@ func _physics_process(delta: float) -> void:
 	combo_timer = max(0.0, combo_timer - delta)
 	dash_strike_timer = max(0.0, dash_strike_timer - delta)
 	since_dash += delta
+	attack_buffer = maxf(0.0, attack_buffer - delta)
+	dash_buffer = maxf(0.0, dash_buffer - delta)
+	if attack_buffer > 0.0 and attack_cooldown_timer <= 0.0:
+		attack_buffer = 0.0
+		_try_attack()
 	if hurt_timer > 0.0:
 		hurt_timer -= delta
 		if hurt_timer <= 0.0 and not dashing:
@@ -191,6 +249,10 @@ func _physics_process(delta: float) -> void:
 
 	if dashing:
 		dash_timer -= delta
+		dash_ghost_timer -= delta
+		if dash_ghost_timer <= 0.0:
+			dash_ghost_timer = DASH_GHOST_EVERY
+			Fx.ghost(sprite, Color(0.6, 0.8, 1, 0.55), 0.22)
 		if has_dash_trail:
 			dash_trail_timer -= delta
 			if dash_trail_timer <= 0.0:
@@ -202,9 +264,11 @@ func _physics_process(delta: float) -> void:
 			invincible = hurt_timer > 0.0
 			modulate.a = 1.0
 			move_velocity = facing * move_speed  # on sort du dash en courant, sans a-coup
+			_squash(Vector2(0.85, 1.15), 0.16)  # il se pose
 		velocity = facing * DASH_SPEED
 	else:
-		if Input.is_action_pressed("dash") and dash_cooldown_timer <= 0.0:
+		if (Input.is_action_pressed("dash") or dash_buffer > 0.0) and dash_cooldown_timer <= 0.0:
+			dash_buffer = 0.0
 			_start_dash()
 		var target := input_vector * move_speed * (CAFE_SPEED_MULT if speed_boost_timer > 0.0 else 1.0)
 		move_velocity = move_velocity.move_toward(target, (ACCELERATION if target != Vector2.ZERO else FRICTION) * delta)
@@ -229,7 +293,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if dead:
 		return
 	if event.is_action_pressed("attack"):
-		_try_attack()
+		if attack_cooldown_timer > 0.0:
+			attack_buffer = ATTACK_BUFFER  # partira des que possible
+		else:
+			_try_attack()
+	elif event.is_action_pressed("dash"):
+		dash_buffer = DASH_BUFFER
 	elif event.is_action_pressed("active"):
 		_use_active_item()
 
@@ -240,7 +309,17 @@ func _start_dash() -> void:
 	dash_timer = dash_duration
 	dash_cooldown_timer = dash_cooldown_effective
 	dash_trail_timer = 0.0
+	dash_ghost_timer = 0.0
 	modulate.a = 0.5
+	_squash(Vector2(1.3, 0.75), 0.12)  # il s'etire dans l'elan
+
+# Etirement / ecrasement du sprite (visuel seulement), qui revient a sa taille en rebondissant.
+func _squash(amount: Vector2, duration: float) -> void:
+	if squash_tween:
+		squash_tween.kill()
+	sprite.scale = SPRITE_SCALE * amount
+	squash_tween = sprite.create_tween()
+	squash_tween.tween_property(sprite, "scale", SPRITE_SCALE, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _spawn_dash_trail() -> void:
 	var trail: Area2D = DashTrailScene.instantiate()
@@ -262,6 +341,8 @@ func _try_attack() -> void:
 	combo_timer = 0.0 if finisher else attack_cooldown_effective + COMBO_WINDOW
 	if finisher:
 		combo = 0
+	swing_side = 1.0 if finisher else -swing_side
+	_squash(Vector2(1.12, 0.9) if finisher else Vector2(1.06, 0.95), 0.12)
 	Sound.play("slash")
 	slash_timer = ATTACK_DURATION
 	attack_hitbox.position = facing * strike_reach
@@ -324,7 +405,7 @@ func _ring(color: Color, radius: float) -> void:
 	ring_color = color
 	ring_radius = radius
 	ring_timer = 0.35
-	shake = 5.0
+	add_trauma(0.45)
 
 func _mobs_within(radius: float) -> Array:
 	return get_tree().get_nodes_in_group("mobs").filter(func(mob): return global_position.distance_to(mob.global_position) <= radius)
@@ -346,11 +427,16 @@ func _on_attack_area_entered(area: Area2D) -> void:
 		var heavy := crit or strike_kind == "finisher"
 		area.register_hit(strike_damage * (2 if crit else 1))
 		Sound.play("crit" if heavy else "hit")
-		shake = max(shake, 5.0 if heavy else 2.5)
-		Fx.hitstop(get_tree(), 0.08 if heavy else 0.04)
+		add_trauma(0.32 if heavy else 0.16)
+		kick = facing * (4.0 if heavy else 2.0)
+		Fx.hitstop(get_tree(), 0.075 if heavy else 0.035)
 		var target := area.get_parent()
 		if knockback > 0.0 and is_instance_valid(target) and target is CharacterBody2D:
-			target.move_and_collide((target.global_position - global_position).normalized() * knockback)
+			var push: Vector2 = (target.global_position - global_position).normalized() * knockback
+			if target.has_method("knock"):
+				target.knock(push)
+			else:
+				target.move_and_collide(push)
 	if has_slow_on_hit and area.get_parent() and area.get_parent().has_method("apply_slow"):
 		area.get_parent().apply_slow(1.0, 0.5)
 	if heal_on_hit_chance > 0.0 and hp < max_hp and randf() < heal_on_hit_chance:
@@ -373,7 +459,7 @@ func take_damage(amount: int = 1) -> void:
 		_start_hurt_invincibility()
 		item_message.emit("Doudou protecteur : coup bloqué !")
 		return
-	shake = 7.0
+	add_trauma(0.55)
 	Sound.play("hurt")
 	Fx.flash(sprite, Color(1, 0.3, 0.3), 0.2)
 	if thorns > 0:

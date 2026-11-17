@@ -23,17 +23,14 @@ const ChestScene := preload("res://scenes/exploration/Chest.tscn")
 @onready var background: Node2D = $Background
 @onready var generated_root: Node2D = $Generated
 @onready var encounter_timer: Timer = $EncounterTimer
-@onready var floor_label: Label = $UI/FloorLabel
-@onready var message_label: Label = $UI/MessageLabel
-@onready var items_label: Label = $UI/ItemsLabel
+var hud := GameHud.make(false)
+var message_label: Label  # texte du dernier message (bulle du HUD)
 
 var encounter_chance := ENCOUNTER_CHANCE_PARADOXAL
-var message_serial := 0
 var exit_position := Vector2.ZERO
 var guide_timer := 0.0
 var encounter_pause := 0.0
 var guide_arrow := Polygon2D.new()
-var hearts := Hearts.new()
 var night := ""
 var rule: Node  # regle d'etage de la nuit (scripts/exploration/rules/), si elle en a une
 # Reglages qu'une regle peut changer avant le placement de l'etage.
@@ -42,6 +39,8 @@ var npc_factor := 1.0
 var family := 0
 
 func _ready() -> void:
+	$UI.add_child(hud)
+	message_label = hud.toast.label
 	var floor_meta := GameState.current_floor()
 	night = GameState.tower()["id"]
 	DreamTheme.set_family(floor_meta["family"])
@@ -63,9 +62,7 @@ func _ready() -> void:
 	_spawn_npc(floor_data, floor_meta)
 	_spawn_decor(floor_data, floor_meta["seed"])
 	_setup_ambience(floor_data)
-	floor_label.text = "%s  -  Étage %d / %d\n%s" % [GameState.tower()["name"], GameState.floor_index, GameState.floor_count() - 1, FAMILY_NAMES[floor_meta["family"]]]
-	hearts.position = Vector2(10, 8)
-	$UI.add_child(hearts)
+	hud.set_place("%s  -  Étage %d / %d\n%s" % [GameState.tower()["name"], GameState.floor_index, GameState.floor_count() - 1, FAMILY_NAMES[floor_meta["family"]]])
 	$UI.add_child(InventoryPanel.new())
 	$UI.add_child(SpeedrunTimer.new())
 
@@ -121,21 +118,15 @@ func _process(delta: float) -> void:
 	guide_timer = max(0.0, guide_timer - delta)
 	guide_arrow.visible = guide_timer > 0.0
 	guide_arrow.rotation = (exit_position - player.global_position).angle()
+	_refresh_hud()
 
 func _refresh_hud() -> void:
-	hearts.max_hp = GameState.max_hp()
-	hearts.hp = GameState.current_hp()
-	items_label.text = "%s\nPassifs : %d  (%s)   Pièces : %d" % [GameState.active_summary(), GameState.passive_count(), Controls.name_of("inventory"), GameState.coins]
+	hud.set_health(GameState.current_hp(), GameState.max_hp())
+	hud.sync()
 
 func _show_message(text: String) -> void:
-	message_serial += 1
-	var serial := message_serial
-	message_label.text = text
-	message_label.visible = true
 	_refresh_hud()
-	await get_tree().create_timer(MESSAGE_DURATION, false).timeout
-	if serial == message_serial:
-		message_label.visible = false
+	hud.say(text, MESSAGE_DURATION)
 
 func _build_walls(floor_data) -> void:
 	var shared_shape := RectangleShape2D.new()

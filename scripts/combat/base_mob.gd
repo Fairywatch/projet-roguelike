@@ -35,6 +35,7 @@ var player: Node2D
 var action_id := 0
 var bob_time := randf() * TAU
 var telegraph_time := 0.0  # temps ecoule depuis le debut de l'annonce d'attaque
+var hit_kick := Vector2.ZERO  # recul visuel du sprite quand il est touche (revient tout seul)
 
 # Bestiaire par nuit (scripts/combat/mobs/<nuit>/) : nom affiche, boss, variantes.
 var display_name := ""
@@ -119,6 +120,9 @@ func _ready() -> void:
 	player = get_tree().get_first_node_in_group("player")
 	_on_ready()
 	max_hp = hp
+	# Il apparait en fondu au lieu de surgir d'un coup.
+	modulate.a = 0.0
+	create_tween().tween_property(self, "modulate:a", 1.0, 0.3)
 
 func _on_ready() -> void:
 	pass
@@ -150,7 +154,9 @@ func _process(delta: float) -> void:
 	bob_time += delta
 	if state == State.TELEGRAPH:
 		telegraph_time += delta
-	sprite.position.y = round(sin(bob_time * 5.0) * 1.5)
+	# Le recul retombe vite, mais pas pendant l'arret sur image (delta presque nul) : le coup se lit.
+	hit_kick = hit_kick.lerp(Vector2.ZERO, 1.0 - exp(-16.0 * delta))
+	sprite.position = Vector2(round(hit_kick.x), round(sin(bob_time * 5.0) * 1.5 + hit_kick.y))
 	if auto_frames:
 		sprite.frame = int(bob_time * ANIM_FPS) % ANIM_FRAMES
 	queue_redraw()
@@ -256,10 +262,30 @@ func take_hit(damage: int = 1) -> void:
 		return
 	hp -= damage
 	hp_changed.emit(hp)
+	_show_hit(damage)
 	if hp <= 0:
 		_die()
 		return
 	Fx.flash(sprite)
+
+# Chiffre de degats et recul du sprite, a l'oppose du joueur. Coup fort : plus que l'attaque de base.
+func _show_hit(damage: int) -> void:
+	var base_damage: int = player.get("attack_damage") if player != null and player.get("attack_damage") != null else 1
+	var strong := damage > base_damage
+	DamageNumber.spawn(get_parent(), global_position + Vector2(0, -_sprite_half_height() - 22.0), damage, strong)  # au-dessus de sa barre de vie
+	if player != null:
+		hit_kick = (global_position - player.global_position).normalized() * (7.0 if strong else 4.0)
+
+# Recul physique, etale sur quelques images (au lieu d'une teleportation) ; les murs l'arretent.
+func knock(push: Vector2, duration: float = 0.14) -> void:
+	if state == State.DEAD or push == Vector2.ZERO:
+		return
+	var done := {"t": 0.0}
+	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tween.tween_method(func(t: float):
+		if state != State.DEAD:
+			move_and_collide(push * (t - done["t"]))
+		done["t"] = t, 0.0, 1.0, duration).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 func _die() -> void:
 	Sound.play("mob_die")
@@ -268,6 +294,9 @@ func _die() -> void:
 	state = State.DEAD
 	_on_death()
 	Fx.puff(get_parent(), global_position, base_color.lerp(Color.WHITE, 0.3), 20)
+	Fx.ghost(sprite, Color(1.9, 1.9, 1.9, 0.9), 0.3, 1.5)  # il eclate en blanc
+	if player != null and player.has_method("add_trauma"):
+		player.add_trauma(0.3 if is_boss else 0.18)
 	died.emit()
 	queue_free()
 

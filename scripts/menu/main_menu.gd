@@ -50,6 +50,31 @@ func _ready() -> void:
 	_add_button("Quitter", get_tree().quit)
 	buttons.get_child(0).grab_focus()
 	$UI/Hint.text = Controls.help(["move", "attack", "dash", "active", "interact", "inventory", "pause"])
+	GameHud.pill(coins_label)
+	var message_pill := GameHud.pill(message_label)
+	message_pill.visible = message_label.text != ""
+	_animate_entrance()
+
+# Le titre se pose puis flotte doucement ; les boutons arrivent l'un apres l'autre.
+func _animate_entrance() -> void:
+	var title: Label = $UI/Title
+	title.pivot_offset = title.size / 2.0
+	title.modulate.a = 0.0
+	title.scale = Vector2(1.15, 1.15)
+	var intro := title.create_tween().set_parallel()
+	intro.tween_property(title, "modulate:a", 1.0, 0.5)
+	intro.tween_property(title, "scale", Vector2.ONE, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	var rest := title.position.y
+	var float_tween := title.create_tween().set_loops().set_trans(Tween.TRANS_SINE)
+	float_tween.tween_property(title, "position:y", rest - 3.0, 1.8)
+	float_tween.tween_property(title, "position:y", rest, 1.8)
+	await get_tree().process_frame  # positions des boutons connues
+	for i in buttons.get_child_count():
+		var button: Button = buttons.get_child(i)
+		button.modulate.a = 0.0
+		var tween := button.create_tween().set_parallel()
+		tween.tween_property(button, "modulate:a", 1.0, 0.25).set_delay(0.08 * i + 0.15)
+		tween.tween_property(button, "position:x", button.position.x, 0.35).from(button.position.x - 14.0).set_delay(0.08 * i + 0.15).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 func _add_button(label: String, action: Callable) -> void:
 	var button := Button.new()

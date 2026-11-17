@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/combat/combat_arena.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/combat/arena_background.gd" id="2"]
@@ -9,19 +9,6 @@ size = Vector2(964, 32)
 
 [sub_resource type="RectangleShape2D" id="WallShapeV"]
 size = Vector2(32, 604)
-
-[sub_resource type="StyleBoxFlat" id="MessagePanel"]
-content_margin_left = 8.0
-content_margin_top = 3.0
-content_margin_right = 8.0
-content_margin_bottom = 3.0
-bg_color = Color(0.06, 0.04, 0.12, 0.85)
-border_width_bottom = 1
-border_color = Color(0.6, 0.5, 0.9, 0.8)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
 
 [node name="CombatArena" type="Node2D"]
 script = ExtResource("1")
@@ -57,57 +44,6 @@ shape = SubResource("WallShapeV")
 position = Vector2(450, 270)
 
 [node name="UI" type="CanvasLayer" parent="."]
-
-[node name="DashBarBack" type="ColorRect" parent="UI"]
-offset_left = 10.0
-offset_top = 26.0
-offset_right = 70.0
-offset_bottom = 30.0
-color = Color(0.12, 0.1, 0.16, 0.9)
-
-[node name="DashBarFill" type="ColorRect" parent="UI/DashBarBack"]
-offset_right = 60.0
-offset_bottom = 4.0
-color = Color(0.4, 0.85, 0.9, 1)
-
-[node name="MobLabel" type="Label" parent="UI"]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -120.0
-offset_top = 6.0
-offset_right = 120.0
-offset_bottom = 26.0
-theme_override_font_sizes/font_size = 15
-horizontal_alignment = 1
-text = "Ennemis : 0"
-
-[node name="ActiveLabel" type="Label" parent="UI"]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -300.0
-offset_top = 6.0
-offset_right = -10.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 12
-horizontal_alignment = 2
-text = "Aucun objet actif"
-
-[node name="ItemMessageLabel" type="Label" parent="UI"]
-visible = false
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -220.0
-offset_top = 48.0
-offset_right = 220.0
-offset_bottom = 70.0
-theme_override_font_sizes/font_size = 12
-theme_override_styles/normal = SubResource("MessagePanel")
-horizontal_alignment = 1
-vertical_alignment = 1
-text = ""
 
 [node name="Instructions" type="Label" parent="UI"]
 anchors_preset = 2

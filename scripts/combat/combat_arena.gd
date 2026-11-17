@@ -14,19 +14,17 @@ const MIN_SPAWN_DISTANCE := 220.0
 
 @onready var player: CharacterBody2D = $PlayerCombat
 @onready var background: Node2D = $Background
-@onready var dash_bar_fill: ColorRect = $UI/DashBarBack/DashBarFill
-@onready var mob_label: Label = $UI/MobLabel
-@onready var active_label: Label = $UI/ActiveLabel
-@onready var item_message_label: Label = $UI/ItemMessageLabel
+var hud := GameHud.make(true)
+var counter := PanelContainer.new()  # ennemis restants, en haut au centre
+var mob_label := Label.new()
 
 var is_boss_fight := false
 var had_elite := false
 const ELITE_LOOT_BONUS := 0.2
 var combat_over := false
-var hearts := Hearts.new()
 var boss_bar := BossBar.new()
 var extra_mobs := 0  # ennemis en plus (regle du samedi)
-var message_serial := 0
+var shown_hp := -1
 var waiting_to_leave := false
 const FLEE_CONFIRM_TIME := 2.5  # secondes pour confirmer une fuite d'un deuxieme appui
 var flee_asked_at := -100.0
@@ -35,12 +33,14 @@ var leaving := false
 func _ready() -> void:
 	player.died.connect(_on_player_died)
 	player.item_message.connect(_on_item_message)
-	hearts.position = Vector2(10, 8)
+	player.hp_changed.connect(_on_player_hp_changed)
 	# Rappel des touches au debut du combat, puis il s'efface pour ne pas cacher les ennemis.
 	$UI/Instructions.text = Controls.help(["move", "attack", "dash", "active", "interact", "inventory"])
 	$UI/Instructions.create_tween().tween_property($UI/Instructions, "modulate:a", 0.0, 1.0).set_delay(4.0)
-	$UI.add_child(hearts)
-	boss_bar.position = Vector2((640 - BossBar.SIZE.x) / 2.0, 30)
+	hud.toast.at_top = true
+	$UI.add_child(hud)
+	_build_counter()
+	boss_bar.position = Vector2(roundf((640 - BossBar.SIZE.x) / 2.0), 8)
 	boss_bar.visible = false
 	$UI.add_child(boss_bar)
 	$UI.add_child(InventoryPanel.new())
@@ -76,6 +76,27 @@ func _ready() -> void:
 		tutorial.dummy = mobs[0]
 		$UI.add_child(tutorial)
 		$UI/Instructions.visible = false
+
+# Ennemis restants : un crane et leur nombre, dans une bulle en haut au centre.
+func _build_counter() -> void:
+	counter.theme_type_variation = &"HudPanel"
+	counter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	counter.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	counter.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	counter.offset_top = 6
+	counter.offset_bottom = 6
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 5)
+	row.add_child(HudIcon.make("skull"))
+	mob_label.add_theme_font_size_override("font_size", 12)
+	row.add_child(mob_label)
+	counter.add_child(row)
+	$UI.add_child(counter)
+
+func _on_player_hp_changed(hp: int) -> void:
+	if shown_hp >= 0 and hp < shown_hp:
+		hud.flash_hurt()
+	shown_hp = hp
 
 # Ennemis du combat (pas encore dans l'arbre), tires du bestiaire de la nuit (scripts/combat/bestiary.gd).
 func _pick_mobs() -> Array:
@@ -130,13 +151,11 @@ func _alive_mobs() -> Array:
 	return get_tree().get_nodes_in_group("mobs").filter(func(m): return m.state != BaseMob.State.DEAD)
 
 func _process(_delta: float) -> void:
-	hearts.max_hp = player.max_hp
-	hearts.hp = player.hp
-
-	var dash_ratio: float = 1.0 - clampf(player.dash_cooldown_timer / player.dash_cooldown_effective, 0.0, 1.0)
-	dash_bar_fill.size.x = dash_bar_fill.get_parent().size.x * dash_ratio
-
-	active_label.text = "%s\nPassifs : %d  (%s)" % [GameState.active_summary(), GameState.passive_count(), Controls.name_of("inventory")]
+	hud.set_health(player.hp, player.max_hp)
+	if shown_hp < 0:
+		shown_hp = player.hp
+	hud.set_dash(1.0 - clampf(player.dash_cooldown_timer / player.dash_cooldown_effective, 0.0, 1.0))
+	hud.sync()
 
 	if combat_over:
 		return
@@ -145,11 +164,11 @@ func _process(_delta: float) -> void:
 		_on_victory()
 	elif is_boss_fight:
 		var boss: BaseMob = alive.filter(func(m): return m.is_boss).front() if alive.any(func(m): return m.is_boss) else alive[0]
-		mob_label.text = boss.display_name if boss.display_name != "" else "Gardien du portail"
+		counter.visible = false
 		boss_bar.visible = true
 		boss_bar.show_boss(boss)
 	else:
-		mob_label.text = "Ennemis : %d" % alive.size()
+		mob_label.text = "%d" % alive.size()
 
 # Apres la victoire, Entree / Start (ou A loin de l'objet) : continuer. Pendant le combat, menu = fuir.
 func _unhandled_input(event: InputEvent) -> void:
@@ -180,15 +199,7 @@ func _try_flee() -> void:
 
 # duration <= 0 : le message reste affiche.
 func _on_item_message(text: String, duration: float = 2.0) -> void:
-	message_serial += 1
-	var serial := message_serial
-	item_message_label.text = text
-	item_message_label.visible = true
-	if duration <= 0.0:
-		return
-	await get_tree().create_timer(duration, false).timeout
-	if serial == message_serial:
-		item_message_label.visible = false
+	hud.say(text, duration)
 
 func _on_victory() -> void:
 	GameState.end_combat()
@@ -202,13 +213,14 @@ func _on_victory() -> void:
 		GameState.current_floor()["wins"] += 1
 	GameState.coins += GameState.COINS_PER_GUARDIAN if GameState.guardian_fight else GameState.COINS_PER_WIN
 	GameState.recharge_active()
-	mob_label.text = "Gardien vaincu !" if GameState.guardian_fight else "Victoire !"
+	counter.visible = false
+	TitleBanner.show_text($UI, "Gardien vaincu !" if GameState.guardian_fight else "Victoire !", Color(1, 0.88, 0.45))
 	# Gardiens et boss : butin garanti. Combats ordinaires : au plus quelques objets par etage.
 	var dropped := false
 	if is_boss_fight:
 		dropped = _drop_item()
 	elif GameState.combat_items_left() <= 0:
-		mob_label.text += "  (plus de butin sur cet étage)"
+		_on_item_message("Plus de butin sur cet étage")
 	elif had_elite or randf() < DROP_CHANCE + GameState.mod("drop_chance"):
 		dropped = _drop_item()
 		if dropped:
@@ -257,7 +269,9 @@ func _leave() -> void:
 
 func _on_player_died() -> void:
 	combat_over = true
-	mob_label.text = "Vaincu..."
+	counter.visible = false
+	boss_bar.visible = false
+	TitleBanner.show_text($UI, "Vaincu...", Color(1, 0.45, 0.5))
 	await get_tree().create_timer(1.0, false).timeout
 	GameState.apply_combat_death()
 	SceneTransition.change_scene(GameState.MENU_PATH)

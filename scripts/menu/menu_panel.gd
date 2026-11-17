@@ -7,6 +7,7 @@ extends PanelContainer
 signal closed
 
 var box := VBoxContainer.new()
+var appeared := false
 
 # Apparence (cadre, boutons) : theme du projet, assets/ui/theme.tres.
 func _ready() -> void:
@@ -27,6 +28,9 @@ func rebuild() -> void:
 	back.custom_minimum_size.y = 22
 	await get_tree().process_frame
 	_fit()
+	if not appeared:
+		appeared = true
+		pop_in(self)
 	for child in box.find_children("*", "BaseButton", true, false):  # aussi dans les grilles
 		if not child.disabled and not child.is_queued_for_deletion():
 			child.grab_focus()
@@ -34,6 +38,15 @@ func rebuild() -> void:
 
 func build() -> void:
 	pass
+
+# Apparition d'un panneau : fondu et petit rebond depuis son centre.
+static func pop_in(panel: Control) -> void:
+	panel.pivot_offset = panel.size / 2.0
+	panel.modulate.a = 0.0
+	panel.scale = Vector2(0.94, 0.94)
+	var tween := panel.create_tween().set_parallel()
+	tween.tween_property(panel, "modulate:a", 1.0, 0.14)
+	tween.tween_property(panel, "scale", Vector2.ONE, 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 # Taille du contenu, centre a l'ecran.
 func _fit() -> void:

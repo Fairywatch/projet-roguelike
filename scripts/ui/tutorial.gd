@@ -26,6 +26,7 @@ func _ready() -> void:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(380, 0)
+	panel.theme_type_variation = &"Toast"
 	panel.add_child(label)
 	add_child(panel)
 	# L'ennemi d'entrainement : immobile, et bien trop solide pour tomber pendant la lecon.

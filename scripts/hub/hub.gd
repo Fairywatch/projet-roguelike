@@ -47,6 +47,9 @@ func _ready() -> void:
 	player.global_position = SPAWN
 	player.reset_physics_interpolation()
 	$UI/Hint.text = "Marche jusqu'à la nuit de ton choix  |  " + Controls.help(["interact", "pause"])
+	GameHud.pill($UI/Title)
+	GameHud.pill(status_label)
+	prompt_label.add_theme_stylebox_override("normal", ThemeDB.get_project_theme().get_stylebox("panel", &"Toast"))
 	player.add_child(DreamTheme.make_light(Color(1, 0.95, 0.85), 220.0, 0.8))
 	player.add_child(DreamTheme.make_ambient_particles(FloorGenerator.Family.PARADOXAL))
 	var camera: Camera2D = player.get_node("Camera2D")

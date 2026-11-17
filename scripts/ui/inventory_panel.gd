@@ -60,6 +60,7 @@ func open() -> void:
 	await get_tree().process_frame
 	panel.reset_size()
 	panel.position = ((get_viewport_rect().size - panel.size) / 2.0).max(Vector2.ZERO)
+	MenuPanel.pop_in(panel)
 
 func _items_column() -> VBoxContainer:
 	var box := VBoxContainer.new()

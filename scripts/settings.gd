@@ -11,6 +11,7 @@ const LABELS := {
 	"screen_shake": "Secousses d'écran",
 	"hitstop": "Arrêt sur image à l'impact",
 	"flashes": "Flashs lumineux",
+	"damage_numbers": "Chiffres de dégâts",
 	"ambient_particles": "Particules d'ambiance",
 	"fullscreen": "Plein écran",
 }
@@ -24,6 +25,7 @@ static var values := {
 	"screen_shake": true,
 	"hitstop": true,
 	"flashes": true,
+	"damage_numbers": true,
 	"ambient_particles": true,
 	"fullscreen": false,
 	"music_volume": 0.7,
