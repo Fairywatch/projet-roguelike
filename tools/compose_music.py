@@ -65,9 +65,10 @@ LOWEST = {"cellos": "C2", "violas": "C3", "violins": "G3", "marimba": "C2", "tro
 LOUDNESS = {"combat": -18.0, "boss": -18.0}
 DEFAULT_LOUDNESS = -20.0
 TRUE_PEAK = 0.89  # crete maximale apres reglage (-1 dB)
-# Instruments installes en Muse Sounds (les autres sonnent avec la banque de base, bien moins
-# belle) : piano, celesta, harpe, violons, altos, violoncelles, contrebasses, choeur, cors,
-# trompettes, trombones, timbales, glockenspiel, marimba, vibraphone.
+# Sons : Muse Sounds (installes via Muse Hub : Strings, Keys, Brass, Choir, Harp, Percussion).
+# Sans eux, MuseScore retombe sur sa banque de base, bien moins belle : le rendu marche mais
+# sonne "General MIDI". build() affiche le niveau de chaque piste pour reperer une piste muette.
+SILENT_DB = -70.0
 
 
 def pitch_xml(name):
@@ -304,6 +305,8 @@ def build(name, piece):
                 with open(stem_xml, "w", encoding="utf-8") as f:
                     f.write(score_xml(piece, only=i))
                 channels, rate, samples = render(stem_xml, os.path.join(tmp, f"{i}_{inst}.wav"))
+                level = stem_level(samples)
+                print(f"  {name:14s} {inst:12s} {level:6.1f} dB" + ("  MUETTE ?" if level < SILENT_DB else ""), flush=True)
                 stems.append((samples, db, pan))
             if piece.get("balance"):  # themes des nuits : volumes mesures, par role
                 samples = balance_stems([(s, pan) for s, _, pan in stems], [db for _, db, _ in stems])
@@ -371,13 +374,16 @@ def reve():
     cellos = [REST] * 4 + [held([b]) for b in bass[4:28]] + [REST] * 4
     return {
         "title": "Reverie", "tempo": 66, "fifths": -1,
-        # (instrument, mesures, volume en dB, panoramique) : le piano reste en retrait, dans le decor.
+        # (instrument, mesures, role, panoramique) : chaque piste est mesuree puis amenee au niveau
+        # de son role (night_music.ROLE_LEVELS, ou (nom, dB) pour un niveau a part). Le piano
+        # chante la melodie mais reste en retrait, dans le decor.
+        "balance": True,
         "parts": [
-            ("piano", with_dynamics(melody, {9: "p", 17: "mp", 25: "p"}), -7.0, 0.0),
-            ("celesta", with_dynamics(celesta, {5: "pp"}), 8.0, 0.35),  # tres doux a l'export
-            ("harp", with_dynamics([arpeggio(n, [0, 1, 2, 3, 4, 3, 2, 1], 1) for n in arp], {1: "pp", 9: "p", 17: "mp", 25: "p", 29: "pp"}), 0.0, -0.25),
-            ("violins", with_dynamics([held(n) for n in pad], {1: "pp", 17: "p", 25: "pp"}), -4.0, -0.15),
-            ("cellos", with_dynamics(cellos, {5: "pp", 17: "p", 25: "pp"}), -2.0, 0.2),
+            ("piano", with_dynamics(melody, {9: "p", 17: "mp", 25: "p"}), ("lead", -3.0), 0.0),
+            ("celesta", with_dynamics(celesta, {5: "pp"}), "extra", 0.35),
+            ("harp", with_dynamics([arpeggio(n, [0, 1, 2, 3, 4, 3, 2, 1], 1) for n in arp], {1: "pp", 9: "p", 17: "mp", 25: "p", 29: "pp"}), "accomp", -0.25),
+            ("violins", with_dynamics([held(n) for n in pad], {1: "pp", 17: "p", 25: "pp"}), "pad", -0.15),
+            ("cellos", with_dynamics(cellos, {5: "pp", 17: "p", 25: "pp"}), "bass", 0.2),
         ],
     }
 
@@ -412,14 +418,14 @@ def profond():
     violas = [REST] * 8 + sighs + [REST] * 16
     violins = [REST] * 16 + ["C6:8", "D6:8", "Eb6:8", "D6:8", "F6:8", "Eb6:8", "D6:8", "B5:8"] + [REST] * 8
     return {
-        "title": "Profond", "tempo": 54, "fifths": -3,
+        "title": "Profond", "tempo": 54, "fifths": -3, "balance": True,
         "parts": [
-            ("piano", with_dynamics(piano, {5: "pp", 25: "p", 29: "pp"}), -3.0, 0.1),
-            ("harp", with_dynamics([arpeggio(n, [0, 1, 2, 1], 2) for n in beat], {1: "p", 17: "mp", 25: "p"}), 0.0, -0.3),
-            ("choir", with_dynamics([REST] * 4 + [held(n) for n in choir[4:]], {5: "pp", 17: "p", 25: "pp"}), -1.0, 0.0),
-            ("violas", with_dynamics(violas, {9: "p"}), -5.0, 0.25),
-            ("violins", with_dynamics(violins, {17: "pp"}), 0.0, -0.2),
-            ("cellos", with_dynamics([held([n]) for n in bass], {1: "p", 17: "mp", 25: "p"}), -8.0, 0.15)  # bourdon : present sans couvrir,
+            ("piano", with_dynamics(piano, {5: "pp", 25: "p", 29: "pp"}), "lead", 0.1),
+            ("harp", with_dynamics([arpeggio(n, [0, 1, 2, 1], 2) for n in beat], {1: "p", 17: "mp", 25: "p"}), "accomp", -0.3),
+            ("choir", with_dynamics([REST] * 4 + [held(n) for n in choir[4:]], {5: "pp", 17: "p", 25: "pp"}), "pad", 0.0),
+            ("violas", with_dynamics(violas, {9: "p"}), ("extra", -7.0), 0.25),
+            ("violins", with_dynamics(violins, {17: "pp"}), ("extra", -7.0), -0.2),
+            ("cellos", with_dynamics([held([n]) for n in bass], {1: "p", 17: "mp", 25: "p"}), ("bass", -11.0), 0.15)  # bourdon : present sans couvrir,
         ],
     }
 
@@ -455,13 +461,13 @@ def combat():
         "G5:2 C6:2 E6:4", "F#6:4 D6:2 A5:2", "B5:4 A5:2 F#5:2", "D#5:8",
     ] + [REST] * 6 + ["B4:2 D#5:2 F#5:2 A5:2", "B5:8"]
     return {
-        "title": "Combat", "tempo": 108, "fifths": 1,
+        "title": "Combat", "tempo": 108, "fifths": 1, "balance": True,
         "parts": [
-            ("violins", with_dynamics(violins, {9: "f", 17: "ff", 31: "mf"}), 1.5, -0.2),
-            ("violas", with_dynamics(violas, {5: "mp", 17: "mf", 25: "mp"}), 12.0, 0.25),  # notes tres courtes
-            ("cellos", with_dynamics(cellos, {1: "mf", 17: "f", 25: "mf"}), 0.0, 0.1),
-            ("piano", with_dynamics(piano, {1: "mf", 17: "f", 25: "mf"}), -8.0, 0.0),
-            ("choir", with_dynamics([REST] * 16 + [held(n) for n in choir[16:24]] + [REST] * 8, {17: "f"}), -3.0, 0.0),
+            ("violins", with_dynamics(violins, {9: "f", 17: "ff", 31: "mf"}), "lead", -0.2),
+            ("violas", with_dynamics(violas, {5: "mp", 17: "mf", 25: "mp"}), ("accomp", -4.0), 0.25),  # ostinato : le moteur
+            ("cellos", with_dynamics(cellos, {1: "mf", 17: "f", 25: "mf"}), "bass", 0.1),
+            ("piano", with_dynamics(piano, {1: "mf", 17: "f", 25: "mf"}), "extra", 0.0),
+            ("choir", with_dynamics([REST] * 16 + [held(n) for n in choir[16:24]] + [REST] * 8, {17: "f"}), "pad", 0.0),
         ],
     }
 
@@ -524,15 +530,15 @@ def boss():
                + [REST] * 4 + high[:4])
     choir_part = [REST] * 16 + [held(n) for n in choir[16:24]] + [REST] * 4 + [held(n) for n in choir[28:]]
     return {
-        "title": "Cauchemar", "tempo": 112, "fifths": -3,
+        "title": "Cauchemar", "tempo": 112, "fifths": -3, "balance": True,
         "parts": [
-            ("trumpets", with_dynamics(trumpets, {17: "ff"}), 1.0, 0.15),
-            ("horns", with_dynamics(horns, {9: "f", 17: "ff", 25: "mp"}), -7.5, -0.2),
-            ("trombones", with_dynamics(trombones, {1: "mf", 9: "f", 17: "ff", 29: "f"}), -2.5, 0.25),
-            ("timpani", with_dynamics(timpani, {1: "f", 5: "mf", 17: "ff", 25: "mp", 29: "f"}), -4.5, 0.0),
-            ("violins", with_dynamics(violins, {9: "mf", 17: "f", 29: "mf"}), 4.0, -0.3),
-            ("cellos", with_dynamics(cellos, {3: "mf", 17: "f", 25: "mp", 29: "f"}), 0.0, 0.1),
-            ("choir", with_dynamics(choir_part, {17: "ff", 29: "mf"}), -1.0, 0.0),
+            ("trumpets", with_dynamics(trumpets, {17: "ff"}), "lead", 0.15),
+            ("horns", with_dynamics(horns, {9: "f", 17: "ff", 25: "mp"}), "accomp", -0.2),
+            ("trombones", with_dynamics(trombones, {1: "mf", 9: "f", 17: "ff", 29: "f"}), "bass", 0.25),
+            ("timpani", with_dynamics(timpani, {1: "f", 5: "mf", 17: "ff", 25: "mp", 29: "f"}), ("perc", -6.0), 0.0),
+            ("violins", with_dynamics(violins, {9: "mf", 17: "f", 29: "mf"}), ("lead", -2.0), -0.3),
+            ("cellos", with_dynamics(cellos, {3: "mf", 17: "f", 25: "mp", 29: "f"}), ("bass", -10.0), 0.1),
+            ("choir", with_dynamics(choir_part, {17: "ff", 29: "mf"}), "pad", 0.0),
         ],
     }
 

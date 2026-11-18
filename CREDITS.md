@@ -2,7 +2,7 @@
 
 ## Musiques originales
 
-Composées pour le jeu (partitions dans music/, jouées par MuseScore 4 : tools/compose_music.py).
+Composées pour le jeu (partitions dans music/, jouées par MuseScore 4 avec les Muse Sounds : tools/compose_music.py).
 
 - **Rêverie** (menus et étages du sommeil paradoxal)
 - **Profond** (étages du sommeil profond)
