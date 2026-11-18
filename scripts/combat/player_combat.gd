@@ -177,6 +177,7 @@ func _update_camera(delta: float) -> void:
 
 func add_trauma(amount: float) -> void:
 	trauma = clampf(trauma + amount, 0.0, 1.0)
+	Controls.rumble(amount)
 
 func _draw() -> void:
 	Fx.draw_shadow(self, PlayerFrames.SHADOW_Y, 26.0)

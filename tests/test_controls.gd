@@ -44,6 +44,43 @@ func _initialize() -> void:
 	stick.axis_value = 0.0
 	await _send(stick)
 
+	# Menus a la manette : A valide, B revient.
+	await _send(_pad(JOY_BUTTON_A))
+	assert(Input.is_action_pressed("ui_accept"))
+	await _send(_pad(JOY_BUTTON_A, false))
+	await _send(_pad(JOY_BUTTON_B))
+	assert(Input.is_action_pressed("ui_cancel"))
+	await _send(_pad(JOY_BUTTON_B, false))
+
+	# Passer du clavier a la manette reecrit les aides (signal), une fois par changement.
+	var gs = root.get_node("GameState")
+	var changes := [0]
+	gs.input_device_changed.connect(func(): changes[0] += 1)
+	await _send(_key(KEY_J))
+	await _send(_key(KEY_J, false))
+	assert(changes[0] == 1 and not Controls.using_gamepad and Controls.name_of("attack") == "J")
+	await _send(_pad(JOY_BUTTON_X))
+	await _send(_pad(JOY_BUTTON_X, false))
+	assert(changes[0] == 2 and Controls.using_gamepad)
+
+	# Noms des boutons selon la manette (Godot les numerote par position).
+	assert(Controls.style_of("PS5 Controller") == "playstation" and Controls.style_of("DualShock 4") == "playstation")
+	assert(Controls.style_of("Nintendo Switch Pro Controller") == "nintendo" and Controls.style_of("Xbox Series Controller") == "xbox")
+	Controls.pad_style = "playstation"
+	assert(Controls.name_of("attack") == "Carré" and Controls.name_of("interact") == "Croix" and Controls.name_of("special") == "R1")
+	Controls.pad_style = "nintendo"
+	assert(Controls.name_of("attack") == "Y" and Controls.name_of("interact") == "B")
+	Controls.pad_style = "xbox"
+	Controls.rumble(0.6)  # sans manette branchee : ne fait rien, sans erreur
+
+	# Manette debranchee en jouant : pause jusqu'au prochain appui.
+	assert(not paused)
+	gs.pad_watch.disconnected()
+	assert(paused and gs.pad_watch.pause_panel.visible)
+	await _send(_pad(JOY_BUTTON_A))
+	await _send(_pad(JOY_BUTTON_A, false))
+	assert(not paused and not gs.pad_watch.pause_panel.visible)
+
 	# Changer une touche dans le menu : clic sur le bouton, puis la nouvelle touche.
 	var panel := ControlsPanel.new()
 	root.add_child(panel)
@@ -72,12 +109,21 @@ func _initialize() -> void:
 	await _send(_key(KEY_J))
 	assert(not Input.is_action_pressed("attack"))
 	await _send(_key(KEY_J, false))
-	# Echap annule ; un bouton manette ne remplace pas une touche clavier.
+	# Annuler : Echap ; un bouton manette quand on attend une touche clavier (sinon, a la manette
+	# seule, on resterait coince) ; ou attendre.
 	panel.waiting_action = "dash"
 	await _send(_pad(JOY_BUTTON_Y))
-	assert(panel.waiting_action == "dash")
+	assert(panel.waiting_action == "" and Controls.keys["dash"] == KEY_K and Controls.pads["active"] == JOY_BUTTON_Y)
+	await _send(_pad(JOY_BUTTON_Y, false))
+	panel.waiting_action = "dash"
 	await _send(_key(KEY_ESCAPE))
 	assert(panel.waiting_action == "" and Controls.keys["dash"] == KEY_K)
+	await _send(_key(KEY_ESCAPE, false))
+	panel.waiting_action = "dash"
+	panel.waiting_gamepad = true
+	panel.waited = ControlsPanel.CANCEL_AFTER
+	await process_frame
+	assert(panel.waiting_action == "" and Controls.pads["dash"] == JOY_BUTTON_B)
 	# Bouton manette, sauvegarde et rechargement.
 	panel.waiting_action = "dash"
 	panel.waiting_gamepad = true

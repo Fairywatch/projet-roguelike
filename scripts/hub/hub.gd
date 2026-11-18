@@ -46,7 +46,8 @@ func _ready() -> void:
 	_add_spot("book", BOOK_POS, BookTexture, "Livre des songes", Color(0.7, 0.75, 1))
 	player.global_position = SPAWN
 	player.reset_physics_interpolation()
-	$UI/Hint.text = "Marche jusqu'à la nuit de ton choix  |  " + Controls.help(["interact", "pause"])
+	_refresh_hint()
+	GameState.input_device_changed.connect(_refresh_hint)
 	GameHud.pill($UI/Title)
 	GameHud.pill(status_label)
 	prompt_label.add_theme_stylebox_override("normal", ThemeDB.get_project_theme().get_stylebox("panel", &"Toast"))
@@ -146,6 +147,11 @@ func _add_trigger(id: String, pos: Vector2) -> void:
 func _set_near(id: String) -> void:
 	near = id
 	confirm_abandon = -1
+	_refresh_ui()
+
+# Aides : reecrites quand on passe du clavier a la manette.
+func _refresh_hint() -> void:
+	$UI/Hint.text = "Marche jusqu'à la nuit de ton choix  |  " + Controls.help(["interact", "pause"])
 	_refresh_ui()
 
 func _refresh_ui() -> void:

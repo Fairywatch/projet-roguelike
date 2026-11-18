@@ -38,6 +38,7 @@ func _ready() -> void:
 	tween.tween_property(icon, "position:y", 0.0, 0.8)
 	body_entered.connect(func(body): _set_near(body, true))
 	body_exited.connect(func(body): _set_near(body, false))
+	GameState.input_device_changed.connect(_refresh)
 	_refresh()
 
 func _set_near(body: Node2D, near: bool) -> void:

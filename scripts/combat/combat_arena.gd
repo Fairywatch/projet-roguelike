@@ -37,7 +37,8 @@ func _ready() -> void:
 	player.item_message.connect(_on_item_message)
 	player.hp_changed.connect(_on_player_hp_changed)
 	# Rappel des touches au debut du combat, puis il s'efface pour ne pas cacher les ennemis.
-	$UI/Instructions.text = Controls.help(["move", "attack", "dash", "special", "active", "interact", "inventory"])
+	_refresh_hints()
+	GameState.input_device_changed.connect(_refresh_hints)
 	$UI/Instructions.create_tween().tween_property($UI/Instructions, "modulate:a", 0.0, 1.0).set_delay(4.0)
 	hud.toast.at_top = true
 	$UI.add_child(OffscreenMarkers.new())
@@ -266,9 +267,18 @@ func _drop_item() -> bool:
 	add_child(pickup)
 	pickup.taken.connect(_on_pickup_taken)
 	waiting_to_leave = true
-	var go_on := "Start" if Controls.using_gamepad else "Entrée"
-	_on_item_message("%s : prendre l'objet   |   %s : continuer" % [Controls.name_of("interact"), go_on], 0.0)
+	_on_item_message(_leave_text(), 0.0)
 	return true
+
+func _leave_text() -> String:
+	var go_on := Controls.name_of("pause") if Controls.using_gamepad else "Entrée"
+	return "%s : prendre l'objet   |   %s : continuer" % [Controls.name_of("interact"), go_on]
+
+# Aides : reecrites quand on passe du clavier a la manette.
+func _refresh_hints() -> void:
+	$UI/Instructions.text = Controls.help(["move", "attack", "dash", "special", "active", "interact", "inventory"])
+	if waiting_to_leave and not leaving:
+		_on_item_message(_leave_text(), 0.0)
 
 func _on_pickup_taken(_pickup: ItemPickup, taken_id: String, old_id: String) -> void:
 	Sound.play("pickup")

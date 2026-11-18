@@ -37,6 +37,7 @@ func _ready() -> void:
 	last_position = player.global_position
 	player.attacked.connect(_on_attack)
 	player.special_used.connect(func(): volleyed = true)
+	GameState.input_device_changed.connect(_on_device_changed)
 	_next()
 
 func _on_attack(_at: Vector2) -> void:
@@ -61,19 +62,28 @@ func _next() -> void:
 	hits = 0
 	dashed = false
 	volleyed = false
+	if step > 4:
+		_finish()
+	else:
+		_say(_step_text())
+
+# Consigne de l'etape, avec les touches de l'appareil utilise (reecrite s'il change).
+func _step_text() -> String:
 	match step:
 		0:
-			_say("Déplace-toi : %s" % Controls.name_of("move"))
+			return "Déplace-toi : %s" % Controls.name_of("move")
 		1:
-			_say("Approche de l'ennemi et frappe-le : %s" % Controls.name_of("attack"))
+			return "Approche de l'ennemi et frappe-le : %s" % Controls.name_of("attack")
 		2:
-			_say("Enchaîne trois coups sans attendre : le troisième frappe deux fois plus fort.")
+			return "Enchaîne trois coups sans attendre : le troisième frappe deux fois plus fort."
 		3:
-			_say("Dash : %s. Tu es intouchable pendant le dash. De temps en temps, frapper juste après fait plus mal." % Controls.name_of("dash"))
-		4:
-			_say("Rafale de plumes : %s. Elle touche de loin, puis se recharge (jauge violette sous les cœurs)." % Controls.name_of("special"))
+			return "Dash : %s. Tu es intouchable pendant le dash. De temps en temps, frapper juste après fait plus mal." % Controls.name_of("dash")
 		_:
-			_finish()
+			return "Rafale de plumes : %s. Elle touche de loin, puis se recharge (jauge violette sous les cœurs)." % Controls.name_of("special")
+
+func _on_device_changed() -> void:
+	if step <= 4:
+		_say(_step_text())
 
 func _finish() -> void:
 	_say("Un « ! » et un anneau aux pieds d'un ennemi annoncent sa frappe : esquive-la. À toi !")

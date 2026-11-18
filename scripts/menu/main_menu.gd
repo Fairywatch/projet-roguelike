@@ -49,7 +49,8 @@ func _ready() -> void:
 	_add_button("Paramètres", _open_panel.bind(SettingsPanel))
 	_add_button("Quitter", get_tree().quit)
 	buttons.get_child(0).grab_focus()
-	$UI/Hint.text = Controls.help(["move", "attack", "dash", "active", "interact", "inventory", "pause"])
+	_refresh_hint()
+	GameState.input_device_changed.connect(_refresh_hint)
 	GameHud.pill(coins_label)
 	var message_pill := GameHud.pill(message_label)
 	message_pill.visible = message_label.text != ""
@@ -76,6 +77,10 @@ func _animate_entrance() -> void:
 		var tween := button.create_tween().set_parallel()
 		tween.tween_property(button, "modulate:a", 1.0, 0.25).set_delay(0.08 * i + 0.15)
 		tween.tween_property(button, "position:x", button.position.x, 0.35).from(button.position.x - 14.0).set_delay(0.08 * i + 0.15).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+# Aide des touches : reecrite quand on passe du clavier a la manette.
+func _refresh_hint() -> void:
+	$UI/Hint.text = Controls.help(["move", "attack", "dash", "active", "interact", "inventory", "pause"])
 
 func _add_button(label: String, action: Callable) -> void:
 	var button := Button.new()

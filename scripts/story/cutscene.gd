@@ -18,7 +18,8 @@ var finishing := false
 
 func _ready() -> void:
 	DreamTheme.set_family(FloorGenerator.Family.PROFOND)
-	$UI/Hint.text = "%s : continuer   |   %s : passer" % [Controls.name_of("interact"), Controls.name_of("pause")]
+	_refresh_hint()
+	GameState.input_device_changed.connect(_refresh_hint)
 	# Coupure des lignes calculee sur le texte entier : il ne se reorganise pas en s'ecrivant.
 	text_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 	if GameState.cutscene_id == "intro":
@@ -72,6 +73,9 @@ func _show() -> void:
 			text_label.text = line[2]
 		text_label.visible_characters = int((time - line[0]) * line[3])
 		text_label.modulate.a = minf(Shot.ease01((time - line[0]) / 0.3), 1.0 - Shot.ease01((time - line[1] + 0.5) / 0.5))
+
+func _refresh_hint() -> void:
+	$UI/Hint.text = "%s : continuer   |   %s : passer" % [Controls.name_of("interact"), Controls.name_of("pause")]
 
 func _line_at(t: float):
 	for line in lines:

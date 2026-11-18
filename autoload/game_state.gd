@@ -133,16 +133,45 @@ var cutscene_next: String = MENU_PATH
 var start_bag: Array = []  # passifs achetes hors partie, donnes au debut de la prochaine nuit
 var shop_offers: Array = []  # ids proposes par la boutique ; "" = deja vendu
 var best_times: Dictionary = {}  # id de tour -> meilleur temps en mode speedrun (secondes)
+var pad_watch: PadWatch
 
-# Les aides a l'ecran montrent les boutons de l'appareil utilise en dernier (clavier ou manette).
+# Les aides a l'ecran montrent les boutons de l'appareil utilise en dernier (clavier ou manette) :
+# elles se reecrivent sur ce signal. A la manette, le curseur de la souris se cache.
+signal input_device_changed
+
 func _input(event: InputEvent) -> void:
-	Controls.note_device(event)
+	if Controls.note_device(event):
+		_on_device_changed()
+	elif event is InputEventMouseMotion and event.relative.length() > 2.0:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _on_device_changed() -> void:
+	if DisplayServer.get_name() != "headless":
+		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN if Controls.using_gamepad else Input.MOUSE_MODE_VISIBLE
+	input_device_changed.emit()
+
+# Manette branchee : petit message. Debranchee en jouant : le jeu se met en pause (PadWatch).
+func _on_joy_connection_changed(device: int, connected: bool) -> void:
+	if connected:
+		pad_watch.connected(Input.get_joy_name(device))
+		return
+	if Controls.using_gamepad and device == Controls.pad_device:
+		var others := Input.get_connected_joypads()
+		if others.is_empty():
+			Controls.using_gamepad = false
+			pad_watch.disconnected()
+		else:
+			Controls._use_pad(others[0])
+		_on_device_changed()
 
 func _ready() -> void:
 	# Interpolation physique (project.godot) seulement pour le joueur et sa camera (leurs scenes la
 	# reactivent) : fluide sur les ecrans 120/144 Hz, sans risquer de trainees quand un mob se teleporte.
 	get_tree().root.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	Controls.setup()
+	pad_watch = PadWatch.new()
+	add_child(pad_watch)
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 	Settings.load_settings()
 	for field in SAVED_FIELDS + META_FIELDS:
 		_defaults[field] = _copy(get(field))
