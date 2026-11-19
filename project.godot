@@ -25,7 +25,6 @@ config/windows_native_icon="res://assets/ui/icon.ico"
 
 GameState="*res://autoload/game_state.gd"
 SceneTransition="*res://scenes/transitions/SceneTransition.tscn"
-MCPRuntime="*res://addons/godot_mcp/runtime/mcp_runtime.gd"
 
 [display]
 
@@ -34,10 +33,6 @@ window/size/viewport_height=360
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
 
 [filesystem]
 

@@ -12,9 +12,10 @@ avec "gh auth login"). Les jeux deja installes la trouvent au lancement et se me
 Produit build/windows/DreamDive.exe (un seul fichier, donnees incluses) et
 build/DreamDive-v<version>-windows.zip : l'exe, LISEZMOI.txt, les credits et les licences.
 
-Le plugin Godot MCP ajoute un autoload (MCPRuntime) qui ouvre une connexion vers l'editeur : il ne
-doit pas partir chez les joueurs. Le dossier addons/ est exclu de l'export (export_presets.cfg), et
-cet autoload est retire de project.godot le temps de l'export, puis remis.
+Outils de developpement locaux (plugin Godot MCP, absent du depot) : leur autoload ouvre une
+connexion vers l'editeur et ne doit pas partir chez les joueurs. Le dossier addons/ est exclu de
+l'export (export_presets.cfg), override.cfg (qui les active sur ce PC) est mis de cote le temps de
+l'export, et un autoload MCPRuntime reste dans project.godot en est retire, puis tout est remis.
 """
 import os
 import re
@@ -68,13 +69,19 @@ def export(godot):
     project = os.path.join(ROOT, "project.godot")
     original = open(project, encoding="utf-8", newline="").read()
     stripped = "".join(line for line in original.splitlines(keepends=True) if not line.startswith(EDITOR_ONLY_AUTOLOADS))
+    override = os.path.join(ROOT, "override.cfg")
+    override_off = override + ".export-off"
     os.makedirs(os.path.dirname(EXE), exist_ok=True)
     try:
         open(project, "w", encoding="utf-8", newline="").write(stripped)
+        if os.path.exists(override):
+            os.replace(override, override_off)
         result = subprocess.run([godot, "--headless", "--path", ROOT, "--export-release", PRESET, EXE],
                                 capture_output=True, text=True, encoding="utf-8", errors="replace")
     finally:
         open(project, "w", encoding="utf-8", newline="").write(original)
+        if os.path.exists(override_off):
+            os.replace(override_off, override)
     errors = [line for line in (result.stdout + result.stderr).splitlines() if line.startswith("ERROR")]
     if result.returncode != 0 or not os.path.exists(EXE) or errors:
         print(result.stdout[-3000:], result.stderr[-3000:])
