@@ -15,6 +15,7 @@ const LABELS := {
 	"vibration": "Vibrations de la manette",
 	"ambient_particles": "Particules d'ambiance",
 	"fullscreen": "Plein écran",
+	"check_updates": "Chercher les mises à jour au lancement",
 }
 # Volumes de 0 (coupe) a 1 : nom -> libelle du curseur dans le menu.
 const SLIDERS := {
@@ -30,6 +31,7 @@ static var values := {
 	"vibration": true,
 	"ambient_particles": true,
 	"fullscreen": false,
+	"check_updates": true,
 	"music_volume": 0.7,
 	"sfx_volume": 0.5,
 }

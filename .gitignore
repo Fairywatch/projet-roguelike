@@ -15,3 +15,6 @@ graphify-out/
 
 # Captures du plugin Godot MCP
 addons/godot_mcp/cache/
+
+# Exports du jeu (tools/export_game.py)
+/build/

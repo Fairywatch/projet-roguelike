@@ -6,6 +6,7 @@ extends CanvasLayer
 # combat continuerait sans nous). Enfant de GameState, au-dessus de tout.
 
 const NOTICE_TIME := 2.5
+const STARTUP_QUIET_MS := 2000  # manette deja branchee au lancement : pas de message
 
 var notice := PanelContainer.new()
 var notice_label := Label.new()
@@ -38,6 +39,8 @@ func _ready() -> void:
 	add_child(pause_panel)
 
 func connected(joy_name: String) -> void:
+	if Time.get_ticks_msec() < STARTUP_QUIET_MS:
+		return
 	notice_label.text = "Manette connectée" + (" : %s" % joy_name if joy_name != "" else "")
 	notice.reset_size()
 	notice.position = Vector2((_screen().x - notice.size.x) / 2.0, 6.0)

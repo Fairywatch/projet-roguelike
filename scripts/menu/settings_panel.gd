@@ -8,17 +8,24 @@ func build() -> void:
 	add_button("Touches (clavier et manette)", _open_controls)
 	for option in Settings.SLIDERS:
 		_add_slider(option)
+	# Options sur deux colonnes : en une seule, le panneau ne tient plus dans l'ecran.
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 14)
+	grid.add_theme_constant_override("v_separation", 0)
+	box.add_child(grid)
 	for option in Settings.LABELS:
 		var check := CheckButton.new()
 		check.text = Settings.LABELS[option]
 		check.button_pressed = Settings.enabled(option)
-		check.add_theme_font_size_override("font_size", 12)
+		check.add_theme_font_size_override("font_size", 11)
+		check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		check.toggled.connect(func(on): Settings.set_option(option, on))
-		box.add_child(check)
+		grid.add_child(check)
 		# Lance depuis l'editeur, le jeu est integre a l'onglet "Jeu" : pas de plein ecran possible.
 		if option == "fullscreen" and Engine.is_embedded_in_editor():
 			check.disabled = true
-			add_note("Indisponible quand le jeu tourne dans l'onglet Jeu de l'éditeur")
+			add_note("Plein écran indisponible quand le jeu tourne dans l'onglet Jeu de l'éditeur")
 
 func _open_controls() -> void:
 	var panel := ControlsPanel.new()

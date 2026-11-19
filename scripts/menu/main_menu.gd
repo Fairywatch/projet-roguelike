@@ -11,6 +11,9 @@ const Z_INTERVAL := 1.1
 @onready var buttons: VBoxContainer = $UI/Buttons
 @onready var coins_label: Label = $UI/Coins
 
+var updater: Updater
+var pending_update := false  # trouvee pendant qu'un autre panneau etait ouvert
+
 func _ready() -> void:
 	background.setup(FloorGenerator.Family.PARADOXAL, FloorGenerator.Intensity.REVE)
 	DreamTheme.set_family(FloorGenerator.Family.PROFOND)
@@ -51,6 +54,12 @@ func _ready() -> void:
 	buttons.get_child(0).grab_focus()
 	_refresh_hint()
 	GameState.input_device_changed.connect(_refresh_hint)
+	_add_version()
+	if Updater.should_check():
+		updater = Updater.new()
+		add_child(updater)
+		updater.found.connect(_on_update_found)
+		updater.check()
 	GameHud.pill(coins_label)
 	var message_pill := GameHud.pill(message_label)
 	message_pill.visible = message_label.text != ""
@@ -77,6 +86,18 @@ func _animate_entrance() -> void:
 		var tween := button.create_tween().set_parallel()
 		tween.tween_property(button, "modulate:a", 1.0, 0.25).set_delay(0.08 * i + 0.15)
 		tween.tween_property(button, "position:x", button.position.x, 0.35).from(button.position.x - 14.0).set_delay(0.08 * i + 0.15).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+# Version (Projet > Parametres > Application > Version), en bas a droite : les testeurs la citent
+# dans leurs retours.
+func _add_version() -> void:
+	var version := Label.new()
+	version.text = "v%s" % ProjectSettings.get_setting("application/config/version", "?")
+	version.add_theme_font_size_override("font_size", 9)
+	version.modulate = Color(1, 1, 1, 0.45)
+	version.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 4)
+	version.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	version.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	$UI.add_child(version)
 
 # Aide des touches : reecrite quand on passe du clavier a la manette.
 func _refresh_hint() -> void:
@@ -115,6 +136,23 @@ func _close_panel() -> void:
 	coins_label.text = _coins_text()
 	buttons.visible = true
 	buttons.get_child(0).grab_focus()
+	if pending_update:
+		_show_update.call_deferred()
+
+# Nouvelle version publiee (Updater) : proposee des que le menu est libre.
+func _on_update_found(_release: Dictionary) -> void:
+	if buttons.visible:
+		_show_update()
+	else:
+		pending_update = true
+
+func _show_update() -> void:
+	pending_update = false
+	buttons.visible = false
+	var panel := UpdatePanel.new()
+	panel.updater = updater
+	panel.closed.connect(_close_panel)
+	$UI.add_child(panel)
 
 # La toute premiere fois, l'intro raconte l'histoire avant d'arriver au hub.
 func _open_hub() -> void:
