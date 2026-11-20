@@ -47,6 +47,7 @@ func _ready() -> void:
 	boss_bar.position = Vector2(roundf((640 - BossBar.SIZE.x) / 2.0), 8)
 	boss_bar.visible = false
 	$UI.add_child(boss_bar)
+	hud.see_through.append_array([counter, boss_bar])
 	$UI.add_child(InventoryPanel.new())
 	$UI.add_child(SpeedrunTimer.new())
 
@@ -77,6 +78,8 @@ func _ready() -> void:
 	if GameState.ambush and not lesson:
 		for mob in mobs:
 			mob.stun(AMBUSH_STUN)
+		# Ceux qui arrivent juste apres (agneaux du Mouton insomniaque...) sont pris de court aussi.
+		_stun_newcomers.call_deferred()
 		_on_item_message("Embuscade ! Les cauchemars sont pris de court.", 2.5)
 	GameState.ambush = false
 	GameState.encounter_lead = ""
@@ -89,6 +92,11 @@ func _ready() -> void:
 		$UI/Instructions.visible = false
 
 # Ennemis restants : un crane et leur nombre, dans une bulle en haut au centre.
+func _stun_newcomers() -> void:
+	for mob in _alive_mobs():
+		if mob.state == BaseMob.State.CHASE:
+			mob.stun(AMBUSH_STUN)
+
 func _build_counter() -> void:
 	counter.theme_type_variation = &"HudPanel"
 	counter.mouse_filter = Control.MOUSE_FILTER_IGNORE

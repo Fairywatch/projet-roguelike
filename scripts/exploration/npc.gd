@@ -16,7 +16,8 @@ const NPCS := [
 	{"id": "marchande", "name": "Marchande de lune", "my_object": "ma poussière de lune", "object": "la poussière de lune"},
 ]
 const KINDS := ["chasse", "objet_perdu"]
-const REWARD_OFFSET := Vector2(0, 60)
+# Les deux objets au choix, de part et d'autre sous l'habitant, dans sa case (toujours praticable).
+const REWARD_OFFSETS := [Vector2(-48, 38), Vector2(48, 38)]  # assez ecartes : jamais a portee des deux a la fois
 const RADIUS := 44.0
 
 var npc: Dictionary
@@ -103,15 +104,17 @@ func talk() -> void:
 				quest["state"] = "done"
 				GameState.coins += GameState.COINS_PER_QUEST
 				Sound.play("victory")
-				var entry := GameState.roll_drop(GameState.QUEST_LOOT_BONUS)
-				if entry.is_empty():
+				var rewards := GameState.roll_quest_rewards()
+				if rewards.is_empty():
 					_say("%s Je n'ai que ces pièces... (+%d pièces)" % [thanks(), GameState.COINS_PER_QUEST])
 					return
-				entry["pos"] = position + REWARD_OFFSET
-				GameState.current_floor()["ground_items"].append(entry)
-				rewarded.emit(entry)
-				var shown: String = Items.MYSTERY["id"] if entry["hidden"] else entry["id"]
-				_say("%s Prends ceci : %s. (+%d pièces)" % [thanks(), Items.find(shown)["name"], GameState.COINS_PER_QUEST])
+				# Deux objets au choix : en prendre un fait disparaitre l'autre (Map).
+				var choice := "quete_%d_%d" % [GameState.floor_index, quest["npc"]]
+				for i in rewards.size():
+					var entry := {"id": rewards[i], "hidden": false, "choice": choice, "pos": position + REWARD_OFFSETS[i % REWARD_OFFSETS.size()]}
+					GameState.current_floor()["ground_items"].append(entry)
+					rewarded.emit(entry)
+				_say("%s Choisis l'un de ces trésors : %s ou %s. (+%d pièces)" % [thanks(), Items.find(rewards[0])["name"], Items.find(rewards[-1])["name"], GameState.COINS_PER_QUEST])
 			elif quest["kind"] == "chasse":
 				var left: int = quest["target"] - (GameState.current_floor()["wins"] - quest["start_wins"])
 				_say("Encore %d combat(s) à gagner." % left)

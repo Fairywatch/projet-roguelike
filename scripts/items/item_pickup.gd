@@ -11,6 +11,7 @@ const RADIUS := 36.0
 var item_id := ""
 var charges := -1  # actif deja entame (repose au sol) ; -1 = neuf
 var mystery := false  # objet mystere : on ne sait ce que c'est (objet ou malediction) qu'en le prenant
+var choice := ""  # recompense au choix (quete) : prendre l'un fait disparaitre les autres (Map)
 var player_near := false
 var icon := Sprite2D.new()
 var label := Label.new()
@@ -45,6 +46,16 @@ func _set_near(body: Node2D, near: bool) -> void:
 	if body.is_in_group("player"):
 		player_near = near
 		_refresh()
+		_sync_choice_labels()
+
+# Objets au choix : pres de l'un, on cache le nom de l'autre (sa description le recouvrirait).
+func _sync_choice_labels() -> void:
+	if choice == "" or not is_inside_tree():
+		return
+	var siblings := get_parent().get_children().filter(func(n): return n is ItemPickup and n.choice == choice and not n.is_queued_for_deletion())
+	var someone_near := siblings.any(func(p): return p.player_near)
+	for pickup in siblings:
+		pickup.label.visible = pickup.player_near or not someone_near
 
 func _refresh() -> void:
 	var shown: String = Items.MYSTERY["id"] if mystery else item_id
@@ -58,8 +69,18 @@ func _refresh() -> void:
 	elif player_near:
 		var rarity_name: String = Items.RARITY_NAMES[item["rarity"]]
 		label.text = "%s : prendre %s  [%s]  (%s)\n%s" % [Controls.name_of("interact"), item["name"], Items.tier(shown), rarity_name, item["desc"]]
+		if choice != "":
+			label.text += "  ·  au choix"
 	else:
 		label.text = item["name"]
+
+# Objet au choix laisse de cote : il s'evanouit.
+func vanish() -> void:
+	set_process_unhandled_input(false)
+	Fx.puff(get_parent(), global_position, Items.rarity_color(item_id), 14)
+	var tween := create_tween()
+	tween.tween_property(self, "modulate:a", 0.0, 0.35)
+	tween.tween_callback(queue_free)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not player_near or not event.is_action_pressed("interact"):

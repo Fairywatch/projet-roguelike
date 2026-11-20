@@ -8,6 +8,12 @@ extends Control
 # Tout se lit dans GameState ; la scene appelle refresh() quand quelque chose change.
 
 const ACTIVE_ICON := 22.0
+# Un ennemi (ou le joueur) qui passe sous un panneau du haut le rend presque transparent : rien
+# ne se cache sous le HUD, meme dans les coins de l'arene.
+const SEE_THROUGH := 0.25
+const SEE_THROUGH_MARGIN := 22.0  # demi-taille d'un sprite, environ
+const SEE_THROUGH_SPEED := 6.0
+const SEE_THROUGH_GROUPS := ["mobs", "wanderers", "player"]
 
 var hearts := Hearts.new()
 var dash_gauge: DashGauge  # seulement en combat
@@ -29,6 +35,7 @@ var passives_label := Label.new()
 var coins_label := Label.new()
 var coins_shown := -1
 var shown_state := ""
+var see_through: Array[Control] = []  # panneaux qui s'effacent quand quelqu'un passe dessous (voir _process)
 
 static func make(with_dash: bool) -> GameHud:
 	var hud := GameHud.new()
@@ -91,7 +98,29 @@ func _ready() -> void:
 
 	toast.top_y = 62.0
 	add_child(toast)
+	see_through.append_array([left_panel, right_panel])
 	refresh()
+
+func _process(delta: float) -> void:
+	var bodies: Array[Rect2] = []
+	for group in SEE_THROUGH_GROUPS:
+		for node in get_tree().get_nodes_in_group(group):
+			if node is CanvasItem and node.is_visible_in_tree():
+				bodies.append(_screen_rect(node))
+	for panel in see_through:
+		if not is_instance_valid(panel) or not panel.visible:
+			continue
+		var rect := panel.get_global_rect()
+		var covered := bodies.any(func(body: Rect2): return rect.intersects(body))
+		panel.modulate.a = move_toward(panel.modulate.a, SEE_THROUGH if covered else 1.0, delta * SEE_THROUGH_SPEED)
+
+# Place occupee a l'ecran : le sprite entier (les boss sont grands), sinon un carre autour du centre.
+func _screen_rect(node: CanvasItem) -> Rect2:
+	var sprite: Variant = node.get("sprite")
+	if sprite is Sprite2D and is_instance_valid(sprite):
+		return sprite.get_global_transform_with_canvas() * sprite.get_rect()
+	var origin := node.get_global_transform_with_canvas().origin
+	return Rect2(origin - Vector2.ONE * SEE_THROUGH_MARGIN, Vector2.ONE * SEE_THROUGH_MARGIN * 2.0)
 
 func _active_block() -> HBoxContainer:
 	var block := HBoxContainer.new()

@@ -1,10 +1,15 @@
 extends BaseMob
 
 # La Porte des Voix : boss de fin du lundi (l'enfant qui ecoute les disputes derriere la porte).
-#   Phase 1 : la porte tremble, des mots-ombres la traversent en salves.
+#   Phase 1 : la porte tremble, des mots-ombres la traversent. Trois attaques en boucle : une
+#             salve en eventail, deux salves rapprochees (la seconde vise ou l'on a fui), puis un
+#             cri (rayon droit sur le joueur) et une couronne de mots ; la porte claque alors et
+#             se rouvre ailleurs dans la piece.
 #   Phase 2 : elle s'entrouvre ; le noir aspire le joueur et repand un brouillard qui ralentit.
-#             Elle n'est vulnerable que quand elle grince (fenetres courtes, annoncees).
-#   Phase 3 : les voix se taisent une a une ; patterns plus lents mais plus larges.
+#             Elle n'est vulnerable que quand elle grince (fenetres courtes, annoncees). Une
+#             attaque sur deux, la dispute balaie la piece de mots (bras qui oscille).
+#   Phase 3 : les voix se taisent une a une ; couronne et anneau a trous, en alternance avec un
+#             cri suivi d'une salve. La porte change de place toutes les deux attaques.
 
 const WORDS := ["CHUT", "PLUS TARD", "TAIS-TOI", "VA DORMIR", "PAS MAINTENANT"]
 const WORD_COLOR := Color(0.95, 0.85, 1.0)
@@ -16,6 +21,7 @@ const CREAK_WARNING := 0.6
 const CREAK_OPEN := 2.2
 
 var phase := 1
+var cycle := 0
 var creak_timer := CREAK_EVERY
 var open_timer := 0.0
 
@@ -90,16 +96,49 @@ func _physics_process(delta: float) -> void:
 		p.add_external_velocity((global_position - p.global_position).normalized() * PULL_SPEED)
 
 func _on_attack_begin() -> void:
+	cycle += 1
 	var direction := player.global_position - global_position
 	match phase:
 		1:
-			Hazards.fan(self, direction, 4, 60.0, 150.0, WORD_COLOR, WORDS)
+			match cycle % 3:
+				1:
+					Hazards.fan(self, direction, 5, 60.0, 160.0, WORD_COLOR, WORDS)
+				2:
+					_double_salvo()
+				0:
+					_shout(direction)
+					Hazards.radial(self, 8, 95.0, WORD_COLOR, randf() * TAU, WORDS)
+					_slam_elsewhere()
 		2:
 			Hazards.fan(self, direction, 3, 40.0, 150.0, WORD_COLOR, WORDS)
 			for i in 2:
 				var pos := Hazards.clamp_to_arena(player.global_position + Vector2.from_angle(randf() * TAU) * randf_range(60, 150))
 				Hazards.zone(pos, 70.0, "slow", 0.6, 4.0, FOG_COLOR)
+			if cycle % 2 == 0:  # la dispute : un bras de mots qui balaie de part et d'autre du joueur
+				Hazards.sweep(global_position, direction.angle(), 2.2, 520.0, 20.0, 0.8, 2.0, WORD_COLOR, 0.9)
 		3:
-			Hazards.radial(self, 14, 90.0, WORD_COLOR, randf() * TAU, WORDS)
-			var gap := randf() * TAU
-			Hazards.ring(global_position, 110.0, [[gap, 0.7], [gap + PI, 0.7]], WORD_COLOR)
+			if cycle % 2 == 0:
+				Hazards.radial(self, 14, 90.0, WORD_COLOR, randf() * TAU, WORDS)
+				var gap := randf() * TAU
+				Hazards.ring(global_position, 110.0, [[gap, 0.7], [gap + PI, 0.7]], WORD_COLOR)
+				_slam_elsewhere()
+			else:
+				_shout(direction)
+				if await pause(0.6):
+					Hazards.fan(self, player.global_position - global_position, 5, 70.0, 150.0, WORD_COLOR, WORDS)
+
+# Deux salves rapprochees : la seconde vise la ou le joueur s'est refugie.
+func _double_salvo() -> void:
+	Hazards.fan(self, player.global_position - global_position, 3, 36.0, 165.0, WORD_COLOR, WORDS)
+	if await pause(0.4):
+		Hazards.fan(self, player.global_position - global_position, 3, 36.0, 165.0, WORD_COLOR, WORDS)
+
+# Le cri : un rayon droit sur le joueur, annonce par un trait qui clignote.
+func _shout(direction: Vector2) -> void:
+	Hazards.beam(global_position, direction, 34.0, 0.7, 0.3, WORD_COLOR)
+
+# La porte claque et se rouvre ailleurs (pas en phase 2 : elle aspire le joueur vers elle).
+func _slam_elsewhere() -> void:
+	if await pause(0.9) and phase != 2:
+		Sound.play("portal")
+		vanish_to()

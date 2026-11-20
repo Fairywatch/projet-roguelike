@@ -106,6 +106,51 @@ func flee_direction(threat: Vector2) -> Vector2:
 		away = (away + to_center * (1.0 - edge / FLEE_EDGE) * 1.6).normalized()
 	return away
 
+# Boss qui ne marchent pas : glisse vers un autre point de l'arene, loin du joueur (far_spot).
+const RELOCATE_MARGIN := 70.0
+const HUD_CORNER := Vector2(230, 90)  # coins du haut, sous les panneaux du HUD : on n'y va pas
+
+func relocate(duration: float = 0.5, min_distance: float = 220.0) -> void:
+	if state == State.DEAD or not is_inside_tree():
+		return
+	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tween.tween_property(self, "global_position", far_spot(min_distance), duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+# Disparait en fondu et reapparait ailleurs (porte qui claque, page qui tourne...).
+func vanish_to(min_distance: float = 220.0, fade: float = 0.22) -> void:
+	if state == State.DEAD or not is_inside_tree():
+		return
+	var spot := far_spot(min_distance)
+	var tween := create_tween()
+	tween.tween_property(sprite, "self_modulate:a", 0.0, fade)
+	tween.tween_callback(func():
+		if state != State.DEAD:
+			global_position = spot
+			Fx.puff(get_parent(), spot, base_color.lerp(Color.WHITE, 0.4), 10))
+	tween.tween_property(sprite, "self_modulate:a", 1.0, fade)
+
+# Point de l'arene a distance du joueur, hors des bords et des coins du haut (caches par le HUD).
+func far_spot(min_distance: float) -> Vector2:
+	var area := Rect2(Hazards.ARENA.position + Vector2.ONE * RELOCATE_MARGIN, Hazards.ARENA.size - Vector2.ONE * RELOCATE_MARGIN * 2.0)
+	var threat := player.global_position if player else global_position
+	var best := area.get_center()
+	var best_distance := -1.0
+	for i in 16:
+		var spot := Vector2(randf_range(area.position.x, area.end.x), randf_range(area.position.y, area.end.y))
+		if in_hud_corner(spot) or spot.distance_to(global_position) < 100.0:
+			continue
+		var distance := spot.distance_to(threat)
+		if distance >= min_distance:
+			return spot
+		if distance > best_distance:
+			best = spot
+			best_distance = distance
+	return best
+
+static func in_hud_corner(spot: Vector2) -> bool:
+	var top := spot.y < Hazards.ARENA.position.y + HUD_CORNER.y
+	return top and (spot.x < Hazards.ARENA.position.x + HUD_CORNER.x or spot.x > Hazards.ARENA.end.x - HUD_CORNER.x)
+
 # Nombre d'ennemis vivants portant ce nom (pour limiter les invocations).
 func alive_count(mob_name: String) -> int:
 	return get_tree().get_nodes_in_group("mobs").filter(func(m): return m.display_name == mob_name and m.state != State.DEAD).size()

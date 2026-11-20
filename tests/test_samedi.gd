@@ -9,6 +9,25 @@ func _zones_near(at: Vector2) -> int:
 	return current_scene.get_children().filter(func(n): return n.get("kind") == "damage" and n.global_position.distance_to(at) < 5.0).size()
 
 func check_specific(a: Node) -> void:
+	# Silhouette : serree de pres (apres un coup, on est forcement pres d'elle), elle fuit un temps,
+	# puis se retourne et attaque quand meme (avant, elle fuyait sans fin et n'attaquait plus).
+	var shadow = spawn(a, "samedi/silhouette")
+	await process_frame
+	shadow.global_position = Vector2(70, 270)  # contre le mur de gauche
+	a.player.global_position = Vector2(120, 270)
+	a.player.invincible = true
+	shadow.take_hit(1)
+	var attacked := false
+	for i in 120:  # 2 s
+		await physics_frame
+		a.player.global_position = shadow.global_position + Vector2(50, 0)
+		if shadow.state == shadow.State.TELEGRAPH or shadow.state == shadow.State.ATTACK:
+			attacked = true
+			break
+	assert(attacked)
+	a.player.invincible = false
+	await clear_mobs()
+
 	# Echo : repete l'attaque du joueur la ou il a frappe.
 	var echo = spawn(a, "samedi/echo")
 	await process_frame

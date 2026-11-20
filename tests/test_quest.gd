@@ -36,8 +36,25 @@ func _initialize() -> void:
 	assert(quest["state"] == "active" and quest["start_wins"] == 1 and not npc.is_complete())
 	gs.current_floor()["wins"] = 3
 	assert(npc.is_complete())
+	var coins: int = gs.coins
 	npc.talk()
-	assert(quest["state"] == "done" and gs.current_floor()["ground_items"].size() == 1)
+	assert(quest["state"] == "done" and gs.coins == coins + gs.COINS_PER_QUEST)
+	# Recompense : deux passifs au choix, differents, au moins rares, ni maudits ni mysteres.
+	var rewards: Array = gs.current_floor()["ground_items"]
+	assert(rewards.size() == gs.QUEST_CHOICES and rewards[0]["id"] != rewards[1]["id"])
+	for entry in rewards:
+		var item: Dictionary = Items.find_passive(entry["id"])
+		assert(not item.is_empty() and item["rarity"] >= Items.RARE and item["rarity"] != Items.MAUDIT)
+		assert(not entry["hidden"] and entry["choice"] == rewards[0]["choice"])
+	# Sur beaucoup de tirages : jamais de commun, et des legendaires de temps en temps.
+	var legendaries := 0
+	for i in 200:
+		for id in gs.roll_quest_rewards():
+			var rarity: int = Items.find_passive(id)["rarity"]
+			assert(rarity == Items.RARE or rarity == Items.LEGENDAIRE)
+			legendaries += 1 if rarity == Items.LEGENDAIRE else 0
+		gs.legendaries_seen.clear()
+	assert(legendaries > 20)
 
 	# Objet perdu : termine des que l'objet est porte.
 	var lost := {"npc": 1, "kind": "objet_perdu", "target": 2, "state": "active", "start_wins": 0, "carried": false}

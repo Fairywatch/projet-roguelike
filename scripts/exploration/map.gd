@@ -245,6 +245,7 @@ func _spawn_pickup(entry: Dictionary) -> void:
 	pickup.charges = entry.get("charges", -1)
 	pickup.mystery = entry.get("hidden", false)
 	pickup.position = entry["pos"]
+	pickup.choice = entry.get("choice", "")
 	pickup.taken.connect(func(p, taken_id, old_id): _on_ground_item_taken(entry, taken_id, old_id, p.charges))
 	generated_root.add_child(pickup)
 
@@ -259,7 +260,19 @@ func _on_ground_item_taken(entry: Dictionary, taken_id: String, old_id: String, 
 		entry["charges"] = old_charges
 		entry["hidden"] = false
 		text += " et laisses %s au sol" % Items.find(old_id)["name"]
+	if entry.has("choice"):
+		_drop_other_choices(entry)
 	_show_message(text + ".")
+
+# Recompense au choix (quete) : les autres objets du meme choix s'evanouissent.
+func _drop_other_choices(entry: Dictionary) -> void:
+	var ground: Array = GameState.current_floor()["ground_items"]
+	for other in ground.filter(func(e): return e != entry and e.get("choice", "") == entry["choice"]):
+		ground.erase(other)
+		GameState.forget_legendary(other["id"])
+	for pickup in generated_root.get_children():
+		if pickup is ItemPickup and pickup.choice == entry["choice"] and pickup.item_id != entry.get("id", "") and not pickup.is_queued_for_deletion():
+			pickup.vanish()
 
 # Decors places a partir de la graine de l'etage pour rester identiques entre deux combats.
 func _spawn_decor(floor_data, floor_seed: int) -> void:

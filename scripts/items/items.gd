@@ -9,7 +9,10 @@ extends RefCounted
 #   (chances) ; iframes (secondes) ; extra_lives, shield, thorns, active_recharge (entiers) ;
 #   slow_on_hit, dash_trail (drapeaux) ; enemy_hp, enemy_speed, enemy_cooldown, telegraph,
 #   drop_chance, encounter_rate (fractions) ; feathers (plumes en plus a la rafale),
-#   special_cooldown (fraction), feather_pierce, finisher_volley (drapeaux).
+#   special_cooldown (fraction), feather_pierce, finisher_volley (drapeaux) ; dash_hits (drapeau),
+#   guard_sheep (nombre de moutons).
+# Styles d'attaque : un passif avec "style" remplace le coup de base (estoc, toupie, fronde,
+# maillet ; voir PlayerStats.STYLES). Un seul style a la fois : le dernier pris.
 # Ensembles : Plumier + Plume de paon = Tempete de plumes (voir PlayerStats.STORM_SET).
 # Chaque objet a aussi un tier (S, A, B, C : sa puissance) et une icone (tools/gen_items.py).
 enum { COMMUN, RARE, LEGENDAIRE, MAUDIT }
@@ -46,7 +49,7 @@ const PASSIVES := [
 	{"id": "couverture_lestee", "name": "Couverture lestée", "desc": "Invincibilité plus longue après un coup", "mods": {"iframes": 0.4}, "rarity": COMMUN, "tier": "B"},
 	{"id": "marchand_de_sable", "name": "Marchand de sable", "desc": "Ennemis 15 % moins résistants", "mods": {"enemy_hp": -0.15}, "rarity": LEGENDAIRE, "tier": "A"},
 	{"id": "berceuse_inversee", "name": "Berceuse inversée", "desc": "Ennemis 10 % plus lents", "mods": {"enemy_speed": -0.1}, "rarity": RARE, "tier": "B"},
-	{"id": "reve_lucide", "name": "Rêve lucide", "desc": "25 % de chance de soin en tuant", "mods": {"heal_on_kill": 0.25}, "rarity": RARE, "tier": "A"},
+	{"id": "reve_lucide", "name": "Rêve lucide", "desc": "15 % de chance de soin en tuant", "mods": {"heal_on_kill": 0.15}, "rarity": RARE, "tier": "A"},
 	{"id": "cauchemar_apprivoise", "name": "Cauchemar apprivoisé", "desc": "+1 dégât, ennemis 10 % plus rapides", "mods": {"damage": 1, "enemy_speed": 0.1}, "rarity": RARE, "tier": "A"},
 	{"id": "pile_rechargeable", "name": "Pile rechargeable", "desc": "L'objet actif regagne une charge de plus", "mods": {"active_recharge": 1}, "rarity": RARE, "tier": "B"},
 	{"id": "tisane_de_camomille", "name": "Tisane de camomille", "desc": "+1 PV max, 5 % de soin en frappant", "mods": {"max_hp": 1, "heal_on_hit": 0.05}, "rarity": COMMUN, "tier": "A"},
@@ -66,12 +69,21 @@ const PASSIVES := [
 	{"id": "plume_de_paon", "name": "Plume de paon", "desc": "Les plumes traversent les ennemis (ensemble avec le Plumier)", "mods": {"feather_pierce": 1}, "rarity": RARE, "tier": "A"},
 	{"id": "oreiller_eventre", "name": "Oreiller éventré", "desc": "La rafale recharge 35 % plus vite", "mods": {"special_cooldown": -0.35}, "rarity": COMMUN, "tier": "C"},
 	{"id": "bouquet_final", "name": "Bouquet final", "desc": "Le 3e coup de l'enchaînement lance aussi une rafale", "mods": {"finisher_volley": 1}, "rarity": LEGENDAIRE, "tier": "S"},
+	# Styles d'attaque : une autre facon de se battre (un seul a la fois, le dernier pris). Leur
+	# lenteur est dans PlayerStats.STYLES : elle ne compte que pour le style actif.
+	{"id": "aiguille_a_tricoter", "name": "Aiguille à tricoter", "desc": "Style estoc : coups longs et droits qui transpercent toute une ligne (un peu plus lents)", "mods": {}, "style": "estoc", "rarity": RARE, "tier": "A"},
+	{"id": "toupie", "name": "Toupie", "desc": "Style toupie : l'attaque tourne tout autour de toi, plus courte et plus lente", "mods": {}, "style": "toupie", "rarity": RARE, "tier": "B"},
+	{"id": "lance_pierre", "name": "Lance-pierre", "desc": "Style fronde : l'attaque tire une bille de loin, le 3e coup trois billes (plus lent, pas de corps à corps)", "mods": {}, "style": "fronde", "rarity": RARE, "tier": "A"},
+	{"id": "maillet_de_morphee", "name": "Maillet de Morphée", "desc": "Style maillet : un seul coup lourd et large, double dégâts, assomme (bien plus lent, pas d'enchaînement)", "mods": {}, "style": "maillet", "rarity": RARE, "tier": "B"},
+	# Deplacement et defense autrement.
+	{"id": "pantoufles_fusees", "name": "Pantoufles-fusées", "desc": "Le dash blesse les ennemis qu'il touche, et toucher le recharge (recharge de base 25 % plus lente)", "mods": {"dash_hits": 1, "dash_cooldown": 0.25}, "rarity": RARE, "tier": "A"},
+	{"id": "moutons_gardiens", "name": "Moutons gardiens", "desc": "Deux moutons tournent autour de toi : ils mordent et arrêtent un tir (puis restent étourdis)", "mods": {"guard_sheep": 2}, "rarity": RARE, "tier": "A"},
 ]
 
 # Objets actifs : un seul a la fois, utilise en combat (touche de l'objet actif).
 const ACTIVES := [
 	{"id": "sept_ans_de_malheur", "name": "Sept Ans de Malheur", "desc": "Invincibilité brève + leurre", "rarity": RARE, "tier": "B"},
-	{"id": "mouchoir_usage", "name": "Mouchoir usagé", "desc": "Soigne 1 PV", "rarity": COMMUN, "tier": "B"},
+	{"id": "mouchoir_usage", "name": "Mouchoir usagé", "desc": "Soigne 1 PV", "rarity": RARE, "tier": "A"},  # rare : se soigner a volonte est tres fort
 	{"id": "reveil_strident", "name": "Réveil strident", "desc": "Étourdit les ennemis proches", "rarity": COMMUN, "tier": "B"},
 	{"id": "oreiller_volant", "name": "Oreiller volant", "desc": "Double coup à tous les ennemis proches", "rarity": RARE, "tier": "A"},
 	{"id": "tasse_de_cafe", "name": "Tasse de café", "desc": "Dash recharge et +50 % de vitesse 4 s", "rarity": COMMUN, "tier": "C"},

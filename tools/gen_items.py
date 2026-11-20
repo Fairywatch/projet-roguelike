@@ -136,6 +136,26 @@ ICONS = {
     "bouquet_final": ([
         "y..W..y", ".y.W.y.", "..WWW..", "WWWYWWW", "..WWW..", ".y.W.y.", "y..W..y",
     ], {"W": WHITE, "Y": GOLD, "y": GOLD_D}),
+    # Styles d'attaque et objets qui changent la facon de jouer
+    "aiguille_a_tricoter": ([
+        ".........W", "........Wg", ".......Wg.", "......Wg..", ".....Wg...", "..RRWg....",
+        ".RRRRr....", "RRrRRr....", "RRRRRr....", ".rrrr.....",
+    ], {"W": WHITE, "g": GREY, "R": rgba(226, 110, 150), "r": rgba(170, 70, 110)}),
+    "toupie": ([
+        "....k....", "...RRR...", "..RYYYR..", ".RRRRRRR.", "BBBBBBBBB", ".BBBBBBB.", "..BBBBB..", "...BBB...", "....k....",
+    ], {"k": DARK, "R": RED, "Y": GOLD, "B": BLUE}),
+    "lance_pierre": ([
+        "B.......B", "Bb.....bB", ".Bb...bB.", "..BbWbB..", "...BBB...", "....B....", "....B....", "....B....", "...BBB...",
+    ], {"B": BROWN, "b": rgba(206, 156, 104), "W": WHITE}),
+    "maillet_de_morphee": ([
+        "PPPPPPP..", "PpPPPPP..", "PPPPPPP..", "PPPPPPP..", "...B.....", "...B.....", "...B.....", "...B.....", "...B.....",
+    ], {"P": LILAC, "p": WHITE, "B": BROWN}),
+    "pantoufles_fusees": ([
+        "......PPP.", ".....PPPPP", "y...PPWPPP", "yY.PPPPPPP", "YyPPPPPPPP", "yYpppppppp", "y.........",
+    ], {"P": PURPLE, "p": rgba(96, 56, 150), "W": WHITE, "Y": GOLD, "y": rgba(255, 140, 70)}),
+    "moutons_gardiens": ([
+        ".WWW......", "WWWWW.WWW.", "WkWWWWWWWW", ".WWWWWkWWW", ".k.k.WWWWW", "......k.k.",
+    ], {"W": WHITE, "k": DARK}),
     # Objets actifs
     "sept_ans_de_malheur": ([
         ".MMMMM..", "MMWMMk..", "MMMMk.M.", "MMMk.MMM", "MMk.MMWM", ".k.MMMM.",

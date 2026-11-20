@@ -1,11 +1,15 @@
 extends BaseMob
 
 # Le Nid (boss du vendredi) : une mere-oiseau qui protege sa nichee. Elle pond des oeufs autour
-# d'elle (a casser avant qu'ils n'eclosent en Soignants) et lance des plumes.
+# d'elle (a casser avant qu'ils n'eclosent en Soignants), lance des plumes en eventail, et fait
+# pleuvoir un duvet coupant autour du joueur (zones annoncees). Elle change de nid toutes les
+# trois attaques.
 # Variante : les oeufs eclosent en Sangsues. Cauchemar : un oeuf de plus par ponte.
 
 const FEATHER := Color(0.75, 0.65, 0.9)
 const MAX_EGGS := 4
+const DOWN_SPOTS := 5     # zones de duvet par averse
+const DOWN_SPREAD := 110.0
 
 var cycle := 0
 
@@ -31,4 +35,10 @@ func _on_attack_begin() -> void:
 			var spot := position + Vector2.from_angle(TAU * i / 3.0 + randf()) * 110.0
 			spawn_ally("vendredi/oeuf", spot, {"hatch": hatch})
 		return
+	if cycle % 3 == 2:  # averse de duvet : des zones annoncees autour du joueur
+		for i in DOWN_SPOTS:
+			var spot := player.global_position + Vector2.from_angle(TAU * i / DOWN_SPOTS + randf()) * randf_range(0.0, DOWN_SPREAD)
+			Hazards.zone(Hazards.clamp_to_arena(spot), 34.0, "damage", 0.8, 0.3, FEATHER)
+		return
 	Hazards.fan(self, player.global_position - global_position, 5, 70.0, 160.0, FEATHER)
+	relocate(0.8)  # elle s'envole vers un autre perchoir

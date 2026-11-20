@@ -2,6 +2,8 @@ extends BaseMob
 
 # Le Choeur des Baillements (boss du lundi) : trois tetes qui aspirent le joueur chacune a son
 # tour ; la tete active s'illumine pendant le telegraphe, et sa bouche mord pendant l'aspiration.
+# Une aspiration sur deux, les tetes actives relachent ensuite un baillement : une onde qui
+# s'elargit, avec deux trous ou passer.
 # Variante : deux tetes aspirent en meme temps. Cauchemar : aspiration plus forte.
 
 # Position des bouches par rapport au centre (le sprite fait 3 tetes cote a cote, affiche x2).
@@ -11,6 +13,8 @@ const PULL_SPEED := 130.0
 const BITE_RANGE := 30.0
 
 var active: Array = []
+var cycle := 0
+const YAWN_COLOR := Color(1, 0.85, 0.55)
 
 func _texture_path() -> String:
 	return "res://assets/sprites/mobs/lundi/choeur_baillements.png"
@@ -29,6 +33,16 @@ func _on_telegraph_begin() -> void:
 	var heads := [0, 1, 2]
 	heads.shuffle()
 	active = heads.slice(0, 2 if alt else 1)
+
+# Apres l'aspiration, une fois sur deux : le baillement part de chaque bouche active.
+func _on_attack_end() -> void:
+	cycle += 1
+	if cycle % 2 != 0 or player == null:
+		return
+	for head in active:
+		var mouth: Vector2 = global_position + MOUTHS[head]
+		var gap := (player.global_position - mouth).angle() + PI * 0.5
+		Hazards.ring(mouth, 115.0, [[gap, 0.6], [gap + PI, 0.6]], YAWN_COLOR)
 
 func _physics_process(delta: float) -> void:
 	super(delta)

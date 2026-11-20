@@ -50,12 +50,12 @@
 **Boss tirés au hasard**
 - **La Grande Couette** : une couette géante qui rampe et **recouvre des zones** de l'arène (à éviter), et libère des Bâilleurs.
 - **Le Réveil Grincheux** : un réveil qui sonne des **anneaux d'onde de choc** avec des trous pour passer ; il fait « snooze » régulièrement (fenêtre d'attaque).
-- **Le Chœur des Bâillements** : trois têtes qui **aspirent à tour de rôle**, dans des directions différentes.
+- **Le Chœur des Bâillements** : trois têtes qui **aspirent à tour de rôle**, dans des directions différentes ; une aspiration sur deux, les têtes relâchent un **bâillement** (onde à deux trous).
 
 **Boss de fin : La Porte des Voix** *(l'enfant qui écoute les disputes)*
-1. La porte tremble ; des **mots-ombres** (« CHUT », « PLUS TARD ») la traversent en salves de projectiles.
-2. Elle s'entrouvre : un **noir qui aspire** le joueur et répand un brouillard qui ralentit. On ne la blesse que quand elle grince (fenêtres courtes).
-3. Les voix se taisent une à une : patterns plus lents mais plus larges, jusqu'au silence.
+1. La porte tremble ; des **mots-ombres** (« CHUT », « PLUS TARD ») la traversent. Trois attaques en boucle : une salve en éventail, **deux salves rapprochées** (la seconde vise là où l'on a fui), puis un **cri** (rayon annoncé droit sur le joueur) et une couronne de mots ; la porte **claque et se rouvre ailleurs** dans la pièce.
+2. Elle s'entrouvre : un **noir qui aspire** le joueur et répand un brouillard qui ralentit. On ne la blesse que quand elle grince (fenêtres courtes). Une attaque sur deux, la **dispute balaie** la pièce (bras de mots qui oscille).
+3. Les voix se taisent une à une : couronne et anneau à trous, en alternance avec un cri suivi d'une salve ; la porte change de place toutes les deux attaques.
 
 ---
 
@@ -76,9 +76,10 @@
 - **La Cloche** : sonne des **anneaux concentriques** à franchir au bon moment et appelle des Trotteuses.
 
 **Boss de fin : L'Examen** *(la peur de décevoir)*
-1. Une copie géante avec un œil : les **questions** tombent en projectiles en forme de lettres.
-2. Le **compte à rebours** : l'arène rétrécit tant qu'on ne lui inflige pas assez de dégâts.
-3. **La note** : une pluie d'encre rouge en motifs denses, puis un dernier coup de tampon.
+Une copie géante avec un œil, qui **tourne ses pages** : elle change de place toutes les trois attaques.
+1. Les **questions** tombent : salve de lettres, puis le **QCM** (la salle coupée en quatre couloirs A B C D, trois sont frappés, un seul est la bonne réponse), puis une couronne de lettres.
+2. Le **compte à rebours** : l'arène rétrécit tant qu'on ne lui inflige pas assez de dégâts ; salves et couronnes alternent.
+3. **La note** : une pluie d'encre rouge, une salve visée, et toutes les trois attaques un grand coup de tampon.
 
 ---
 
@@ -94,7 +95,7 @@
 | **Masque** | Masque flottant | **Change de visage** toutes les quelques secondes : joyeux (charge), triste (larmes en projectiles), vide (invisible) | Porte deux masques et change deux fois plus vite |
 
 **Boss tirés au hasard**
-- **Le Miroir Brisé** : se divise en éclats qui reflètent tous le boss ; seul le **vrai** reflet prend des dégâts.
+- **Le Miroir Brisé** : se divise en éclats qui reflètent tous le boss ; seul le **vrai** reflet prend des dégâts. Toutes les trois attaques, le vrai miroir se fend : une onde à trous part de lui (et le trahit).
 - **Le Labyrinthe** : fait surgir des **murs** dans l'arène et attaque depuis les couloirs.
 - **Les Deux Voies** : un boss jumeau ; frapper le mauvais **soigne l'autre**, il faut trouver lequel attaquer.
 
@@ -141,10 +142,11 @@
 
 **Boss tirés au hasard**
 - **Atlas** : un géant qui porte un monde, **frappe le sol** et fait rouler sa sphère dans l'arène.
-- **Le Nid** : une mère-oiseau qui protège ses **œufs**, d'où éclosent des Soignants.
+- **Le Nid** : une mère-oiseau qui protège ses **œufs**, d'où éclosent des Soignants ; plumes en éventail, **averse de duvet** autour du joueur, et elle change de perchoir.
 - **Le Balancier** : un énorme pendule qui **balaie** l'arène de plus en plus large.
 
 **Boss de fin : Le Poids du Monde** *(porter les autres jusqu'à ne plus tenir)*
+Il écrase le sol sous le joueur puis **frappe une seconde fois là où il fuyait** ; toutes les trois attaques, ses **fardeaux roulent** (rochers qui rebondissent).
 1. Fait de tous ceux qu'il porte : **protégé par des Soignants** qu'il faut faire tomber d'abord.
 2. Il **lâche son fardeau** : une vague d'ennemis tombe dans l'arène.
 3. Seul et épuisé : très lent, mais chaque coup est **lourd et rare**, et couvre une large zone.
@@ -157,7 +159,7 @@
 
 | Créature | Apparence | Comportement | Variante |
 |---|---|---|---|
-| **Silhouette** | Ombre de quelqu'un qu'on a connu | **Fuit quand on approche** et lance des souvenirs de loin | Disparaît puis **réapparaît derrière** le joueur |
+| **Silhouette** | Ombre de quelqu'un qu'on a connu | **Fuit quand on approche** et lance des souvenirs de loin ; serrée de trop près (ou acculée), elle se retourne et tire quand même | Disparaît puis **réapparaît derrière** le joueur |
 | **Écho** | Forme floue, contours tremblants | **Répète la dernière attaque du joueur** une seconde plus tard, en zone blessante | Double écho, encore décalé |
 | **Chaise vide** | Chaise qui glisse toute seule | **Charge** en glissant à travers l'arène et tourne sur elle-même | Une rangée de chaises qui avancent **en formation** |
 | **Lettre sans réponse** | Enveloppe qui vole | Lance des **avions de papier** qui suivent lentement le joueur | Se **divise** en 3 avions quand on la frappe |
@@ -187,7 +189,7 @@
 
 **Boss tirés au hasard**
 - **Le Dimanche Soir** : une bête crépusculaire ; les **bords de l'arène s'assombrissent** et la réduisent.
-- **La Liste du Lendemain** : un parchemin de tâches qui **pleut** en motifs serrés ; toutes les trois attaques, une autre liste **déferle de côté**.
+- **La Liste du Lendemain** : un parchemin de tâches qui **pleut** en motifs serrés ; toutes les trois attaques, une autre liste **déferle de côté** ; une attaque sur deux, trois taches visent le joueur (on ne peut pas camper dans le trou).
 - **Le Cœur qui Bat** : un cœur géant dont les **battements accélèrent** en ondes de choc ; tous les trois battements, il projette des **globules** vers le joueur.
 
 **Boss de fin : La Dernière Nuit** *(la peur de la fin, le dernier boss du jeu)*

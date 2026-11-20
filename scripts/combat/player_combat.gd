@@ -34,6 +34,17 @@ const OREILLER_DAMAGE := 2
 const THORNS_RADIUS := 90.0
 const CAFE_DURATION := 4.0
 const CAFE_SPEED_MULT := 1.5
+# Styles d'attaque (PlayerStats.STYLES) : formes du coup.
+const THRUST_WIDTH := 16.0      # estoc : largeur de la lance
+const SPIN_EXTRA := 12.0        # toupie : rayon = portee + SPIN_EXTRA, tout autour
+const MALLET_SCALE := 1.7       # maillet : zone du coup agrandie
+const MALLET_STUN := 0.45       # maillet : assomme les ennemis ordinaires (pas les boss)
+const MALLET_PUSH := 30.0
+const PELLET_RANGE := 300.0     # fronde : portee de la bille (+3 px par point de portee en plus)
+const PELLET_SPREAD := 0.26     # fronde : ecart des trois billes du 3e coup
+# Pantoufles-fusees : le dash blesse ; un ennemi touche ramene la recharge a cette part au plus.
+const DASH_HIT_RADIUS := 44.0  # demi-taille du joueur + celle d'un ennemi moyen : il bute contre eux
+const DASH_HIT_REFUND := 0.35
 # Appuis memorises : une attaque (ou un dash) demandee juste avant la fin de la recharge part des
 # qu'elle est prete, au lieu d'etre perdue. Les enchainements deviennent fluides.
 const ATTACK_BUFFER := 0.18
@@ -113,12 +124,20 @@ var knockback := 0.0
 var thorns := 0
 var extra_lives := 0
 var shield := 0
+var style := ""            # style d'attaque (PlayerStats.style) : "" coup de base, estoc, toupie, fronde, maillet
+var style_reach := 1.0
+var dash_hits := false     # Pantoufles-fusees
+var dash_hit_ids := {}     # ennemis deja touches pendant ce dash
+var box_shape: Shape2D     # forme d'origine du coup (rectangle), remise apres un estoc ou une toupie
+var thrust_shape := RectangleShape2D.new()
+var spin_shape := CircleShape2D.new()
 
 func _ready() -> void:
 	add_to_group("player")
 	sprite.sprite_frames = PlayerFrames.make()
 	sprite.material = Fx.make_flash_material()
 	attack_shape.disabled = true
+	box_shape = attack_shape.shape
 	attack_hitbox.area_entered.connect(_on_attack_area_entered)
 	apply_items()
 	hp = GameState.current_hp()  # les PV perdus aux combats precedents le restent
@@ -144,7 +163,25 @@ func apply_items() -> void:
 	extra_lives = PlayerStats.extra_lives()
 	shield = PlayerStats.shield()
 	special_cooldown_effective = PlayerStats.special_cooldown()
+	style = PlayerStats.style()
+	style_reach = PlayerStats.style_reach()
+	dash_hits = PlayerStats.dash_hits()
+	_sync_sheep()
 	hp = clampi(max_hp - lost, 1, max_hp)  # un +PV max arrive plein
+
+# Moutons gardiens : autant de moutons que l'objet en donne, repartis sur le cercle.
+func _sync_sheep() -> void:
+	var wanted := PlayerStats.guard_sheep()
+	var flock: Array = get_children().filter(func(n): return n is GuardSheep)
+	while flock.size() > wanted:
+		flock.pop_back().queue_free()
+	while flock.size() < wanted:
+		var sheep := GuardSheep.new()
+		add_child(sheep)
+		flock.append(sheep)
+	for i in flock.size():
+		flock[i].index = i
+		flock[i].count = flock.size()
 
 func _process(delta: float) -> void:
 	slash_timer = max(0.0, slash_timer - delta)
@@ -183,6 +220,7 @@ func _draw() -> void:
 	Fx.draw_shadow(self, PlayerFrames.SHADOW_Y, 26.0)
 	if slash_timer > 0.0:
 		_draw_slash()
+		_draw_combo()
 
 # Le coup balaie son arc (vite au debut, puis il ralentit) et laisse une trainee qui s'eteint.
 func _draw_slash() -> void:
@@ -190,6 +228,27 @@ func _draw_slash() -> void:
 	var sweep := 1.0 - pow(1.0 - minf(t * 1.6, 1.0), 3.0)
 	var fade := 1.0 - maxf(0.0, t - 0.45) / 0.55
 	var angle := facing.angle()
+	if style == "fronde":  # eclair au depart de la bille
+		draw_circle(facing * 16.0, 7.0 * fade, Color(1, 1, 0.9, fade))
+		return
+	if style == "toupie":  # le coup fait le tour du joueur
+		var radius := strike_reach + SPIN_EXTRA
+		var turn := TAU * sweep * swing_side
+		draw_arc(Vector2.ZERO, radius, angle, angle + turn, 32, Color(0.8, 0.9, 1, fade * 0.6), 7.0)
+		draw_arc(Vector2.ZERO, radius, angle + turn * 0.6, angle + turn, 16, Color(1, 1, 1, fade), 4.0)
+		if strike_kind == "finisher":
+			draw_arc(Vector2.ZERO, radius + 8.0, 0.0, TAU, 40, Color(1, 0.88, 0.45, fade * 0.7), 4.0)
+		return
+	if style == "estoc":  # longue lance droite devant soi
+		var length := lerpf(strike_reach * 0.6, strike_reach * 2.0, sweep)
+		var gold := strike_kind == "finisher"
+		draw_line(facing * 8.0, facing * length, Color(1, 0.88, 0.45, fade) if gold else Color(0.7, 0.9, 1, fade), 9.0 if gold else 6.0)
+		draw_line(facing * 12.0, facing * (length + 4.0), Color(1, 1, 1, fade), 3.0)
+		return
+	if strike_kind == "heavy":  # maillet : grand arc lourd et onde d'impact
+		draw_arc(Vector2.ZERO, strike_reach + 14.0, angle - 1.2, angle - 1.2 + 2.4 * sweep, 18, Color(1, 0.75, 0.45, fade * 0.85), 12.0)
+		draw_arc(facing * strike_reach, 26.0 * MALLET_SCALE * sweep, 0.0, TAU, 28, Color(1, 0.95, 0.8, fade * 0.7), 3.0)
+		return
 	if strike_kind == "dash":  # estoc : un trait qui file dans le sens du dash
 		var tip := facing * lerpf(strike_reach, strike_reach + 26.0, sweep)
 		draw_line(facing * 6.0, tip, Color(0.7, 0.9, 1, fade), 7.0)
@@ -217,7 +276,9 @@ func _draw_slash() -> void:
 		draw_arc(Vector2.ZERO, strike_reach - 2.0, from, to, 12, Color(0.7, 0.85, 1, fade * 0.6), 3.0)
 	# Pointe de la lame, au bout du balayage.
 	draw_circle(Vector2.from_angle(end) * (strike_reach + 6.0), 3.5 if finisher else 2.5, Color(1, 1, 1, fade))
-	# Enchainement en cours : un point par coup place, au-dessus de la tete.
+
+# Enchainement en cours (un point par coup place, au-dessus de la tete) et onde de l'objet actif.
+func _draw_combo() -> void:
 	if combo > 0 and combo_timer > 0.0:
 		for i in COMBO_FINISHER - 1:
 			var at := Vector2(-5.0 + i * 10.0, -40.0)
@@ -264,6 +325,8 @@ func _physics_process(delta: float) -> void:
 		if dash_ghost_timer <= 0.0:
 			dash_ghost_timer = DASH_GHOST_EVERY
 			Fx.ghost(sprite, Color(0.6, 0.8, 1, 0.55), 0.22)
+		if dash_hits:
+			_dash_hit()
 		if has_dash_trail:
 			dash_trail_timer -= delta
 			if dash_trail_timer <= 0.0:
@@ -326,8 +389,20 @@ func _start_dash() -> void:
 	dash_cooldown_timer = dash_cooldown_effective
 	dash_trail_timer = 0.0
 	dash_ghost_timer = 0.0
+	dash_hit_ids.clear()
 	modulate.a = 0.5
 	_squash(Vector2(1.3, 0.75), 0.12)  # il s'etire dans l'elan
+
+# Pantoufles-fusees : chaque ennemi touche pendant le dash prend un coup (une fois par dash),
+# et le dash se recharge presque aussitot.
+func _dash_hit() -> void:
+	for mob in _mobs_within(DASH_HIT_RADIUS):
+		var hurtbox: Node = mob.get_node_or_null("Hurtbox")
+		if hurtbox == null or dash_hit_ids.has(mob.get_instance_id()):
+			continue
+		dash_hit_ids[mob.get_instance_id()] = true
+		apply_hit(hurtbox, attack_damage, false, facing)
+		dash_cooldown_timer = minf(dash_cooldown_timer, dash_cooldown_effective * DASH_HIT_REFUND)
 
 # Etirement / ecrasement du sprite (visuel seulement), qui revient a sa taille en rebondissant.
 func _squash(amount: Vector2, duration: float) -> void:
@@ -345,17 +420,18 @@ func _spawn_dash_trail() -> void:
 func _try_attack() -> void:
 	if attack_cooldown_timer > 0.0:
 		return
-	combo = combo + 1 if combo_timer > 0.0 else 1
-	var finisher := combo >= COMBO_FINISHER
+	var mallet := style == "maillet"  # pas d'enchainement : chaque coup est lourd
+	combo = 1 if mallet else (combo + 1 if combo_timer > 0.0 else 1)
+	var finisher := not mallet and combo >= COMBO_FINISHER
 	var dash_strike := dash_strike_timer <= 0.0 and (dashing or since_dash <= DASH_STRIKE_WINDOW)
 	if dash_strike:
 		dash_strike_timer = DASH_STRIKE_COOLDOWN
-	strike_kind = "finisher" if finisher else ("dash" if dash_strike else "")
-	strike_damage = attack_damage * (2 if finisher else 1) + (1 if dash_strike else 0)
-	strike_reach = reach + (FINISHER_REACH if finisher else 0.0) + (DASH_STRIKE_REACH if dash_strike else 0.0)
+	strike_kind = "heavy" if mallet else ("finisher" if finisher else ("dash" if dash_strike else ""))
+	strike_damage = attack_damage * (2 if finisher or mallet else 1) + (1 if dash_strike else 0)
+	strike_reach = (reach + (FINISHER_REACH if finisher else 0.0) + (DASH_STRIKE_REACH if dash_strike else 0.0)) * style_reach
 	attack_cooldown_timer = attack_cooldown_effective * (FINISHER_RECOVERY if finisher else 1.0)
-	combo_timer = 0.0 if finisher else attack_cooldown_effective + COMBO_WINDOW
-	if finisher:
+	combo_timer = 0.0 if finisher or mallet else attack_cooldown_effective + COMBO_WINDOW
+	if finisher or mallet:
 		combo = 0
 	swing_side = 1.0 if finisher else -swing_side
 	if finisher and GameState.mod("finisher_volley") > 0.0:
@@ -363,13 +439,51 @@ func _try_attack() -> void:
 	_squash(Vector2(1.12, 0.9) if finisher else Vector2(1.06, 0.95), 0.12)
 	Sound.play("slash")
 	slash_timer = ATTACK_DURATION
-	attack_hitbox.position = facing * strike_reach
-	attack_hitbox.scale = Vector2.ONE * (1.45 if finisher else (1.2 if dash_strike else 1.0))
 	last_attack_time = Time.get_ticks_msec() / 1000.0
+	if style == "fronde":  # pas de coup au corps a corps : une bille (trois au 3e coup)
+		_shoot_pellets(finisher)
+		attacked.emit(global_position + facing * strike_reach)
+		return
+	_shape_strike(finisher, dash_strike)
 	attacked.emit(attack_hitbox.global_position)
 	attack_shape.disabled = false
 	await get_tree().create_timer(ATTACK_DURATION, false).timeout
 	attack_shape.disabled = true
+
+# Forme et place de la zone de frappe selon le style.
+func _shape_strike(finisher: bool, dash_strike: bool) -> void:
+	attack_hitbox.rotation = 0.0
+	match style:
+		"estoc":  # une lance : un long rectangle dans l'axe du coup
+			thrust_shape.size = Vector2(strike_reach * 2.0, THRUST_WIDTH * (1.4 if finisher else 1.0))
+			attack_shape.shape = thrust_shape
+			attack_hitbox.position = facing * strike_reach
+			attack_hitbox.rotation = facing.angle()
+			attack_hitbox.scale = Vector2.ONE
+		"toupie":  # un disque autour du joueur
+			spin_shape.radius = strike_reach + SPIN_EXTRA + (10.0 if finisher else 0.0)
+			attack_shape.shape = spin_shape
+			attack_hitbox.position = Vector2.ZERO
+			attack_hitbox.scale = Vector2.ONE
+		_:
+			attack_shape.shape = box_shape
+			attack_hitbox.position = facing * strike_reach
+			var size := MALLET_SCALE if style == "maillet" else (1.45 if finisher else (1.2 if dash_strike else 1.0))
+			attack_hitbox.scale = Vector2.ONE * size
+
+# Fronde : la bille part devant ; au 3e coup, trois billes en eventail.
+func _shoot_pellets(finisher: bool) -> void:
+	var shot := {}
+	for offset in ([-PELLET_SPREAD, 0.0, PELLET_SPREAD] if finisher else [0.0]):
+		var pellet := Pellet.new()
+		pellet.direction = facing.rotated(offset)
+		pellet.damage = strike_damage
+		pellet.heavy = finisher
+		pellet.reach = PELLET_RANGE + (reach - ATTACK_REACH) * 3.0
+		pellet.shooter = self
+		pellet.shot = shot
+		pellet.position = global_position + pellet.direction * 16.0
+		get_parent().add_child(pellet)
 
 # Rafale de plumes : l'attaque speciale, a distance. En eventail devant soi, ou tout autour avec
 # la Tempete de plumes (ensemble Plumier + Plume de paon).
@@ -475,23 +589,34 @@ func _heal(amount: int) -> void:
 	Fx.flash(sprite, Color(0.5, 1.0, 0.6), 0.3)
 
 func _on_attack_area_entered(area: Area2D) -> void:
-	if area.has_method("register_hit"):
-		var crit := randf() < crit_chance
-		var heavy := crit or strike_kind == "finisher"
-		area.register_hit(strike_damage * (2 if crit else 1))
-		Sound.play("crit" if heavy else "hit")
-		add_trauma(0.32 if heavy else 0.16)
-		kick = facing * (4.0 if heavy else 2.0)
-		Fx.hitstop(get_tree(), 0.075 if heavy else 0.035)
-		var target := area.get_parent()
-		if knockback > 0.0 and is_instance_valid(target) and target is CharacterBody2D:
-			var push: Vector2 = (target.global_position - global_position).normalized() * knockback
-			if target.has_method("knock"):
-				target.knock(push)
-			else:
-				target.move_and_collide(push)
-	if has_slow_on_hit and area.get_parent() and area.get_parent().has_method("apply_slow"):
-		area.get_parent().apply_slow(1.0, 0.5)
+	apply_hit(area, strike_damage, strike_kind == "finisher" or strike_kind == "heavy", facing)
+
+# Un coup du joueur (corps a corps, bille, dash) : critique, son, secousse, recul, ralentissement,
+# soin. heavy : coup fort (3e coup, maillet).
+func apply_hit(area: Node, damage: int, heavy: bool, direction: Vector2) -> void:
+	if not area.has_method("register_hit"):
+		return
+	var crit := randf() < crit_chance
+	var strong := crit or heavy
+	area.register_hit(damage * (2 if crit else 1))
+	Sound.play("crit" if strong else "hit")
+	add_trauma(0.32 if strong else 0.16)
+	kick = direction * (4.0 if strong else 2.0)
+	Fx.hitstop(get_tree(), 0.075 if strong else 0.035)
+	var target := area.get_parent()
+	var mallet := heavy and style == "maillet"
+	var push_force := knockback + (MALLET_PUSH if mallet else 0.0)
+	if push_force > 0.0 and is_instance_valid(target) and target is CharacterBody2D:
+		var push: Vector2 = (target.global_position - global_position).normalized() * push_force
+		if target.has_method("knock"):
+			target.knock(push)
+		else:
+			target.move_and_collide(push)
+	var mob := target as BaseMob
+	if mallet and mob != null and not mob.is_boss and mob.state != BaseMob.State.DEAD:
+		mob.stun(MALLET_STUN)
+	if has_slow_on_hit and is_instance_valid(target) and target.has_method("apply_slow"):
+		target.apply_slow(1.0, 0.5)
 	if heal_on_hit_chance > 0.0 and hp < max_hp and randf() < heal_on_hit_chance:
 		_heal(1)
 

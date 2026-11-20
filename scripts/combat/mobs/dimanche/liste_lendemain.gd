@@ -2,7 +2,9 @@ extends BaseMob
 
 # La Liste du Lendemain (boss du dimanche) : un parchemin de taches qui fait pleuvoir ses mots
 # du haut de l'arene, en rangs serres avec des trous ou se glisser. Variante : la pluie tombe en
-# diagonale. Toutes les trois attaques, une autre liste deferle de cote, avec son propre trou.
+# diagonale. Toutes les trois attaques, une autre liste deferle de cote, avec son propre trou ;
+# une attaque sur deux, elle lance aussi trois taches droit sur le joueur (on ne peut pas camper
+# dans le trou).
 # Cauchemar : rangs plus serres.
 
 const WORDS := ["LUNDI", "RÉUNION", "FACTURES", "RÉVEIL", "À FAIRE", "EN RETARD"]
@@ -38,6 +40,8 @@ func _on_attack_begin() -> void:
 			word.global_position = Vector2(x - (200.0 if alt else 0.0), 40.0)
 		x += spacing
 		i += 1
+	if cycle % 2 == 0:  # trois taches visees : rester dans le trou ne suffit pas
+		Hazards.fan(self, player.global_position - global_position, 3, 30.0, 150.0, INK, WORDS)
 	if cycle % 3 == 0:  # la liste d'a cote : des mots qui traversent l'arene de gauche a droite
 		var row_gap := randf_range(110.0, 430.0)
 		var y := 80.0

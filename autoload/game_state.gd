@@ -26,12 +26,16 @@ const DIFFICULTY_PER_FLOOR := 0.08
 const LOOT_WINS_CAP := 4
 const BOSS_LOOT_BONUS := 0.3
 const SEALED_CHEST_LOOT_BONUS := 0.25
-const QUEST_LOOT_BONUS := 0.3
+# Recompense de quete (on y passe du temps) : deux passifs au choix, au moins rares, jamais
+# maudits ni mysteres, si possible pas deja possedes ; legendaire plus probable qu'ailleurs.
+const QUEST_CHOICES := 2
+const QUEST_LEGENDARY_BASE := 0.15
+const QUEST_LEGENDARY_PER_QUALITY := 0.3
 const PROFOND_DIFFICULTY_BONUS := 0.15
 # Meta-progression (GDD section 7) : pieces gagnees pendant les nuits, gardees a la mort.
 const COINS_PER_WIN := 1
 const COINS_PER_GUARDIAN := 3
-const COINS_PER_QUEST := 2
+const COINS_PER_QUEST := 5
 const SHOP_SIZE := 3
 const SHOP_PRICES := [15, 35, 80]  # commun, rare, legendaire
 const SHOP_QUALITY := 0.5
@@ -611,6 +615,29 @@ func roll_drop(quality_bonus: float = 0.0) -> Dictionary:
 		return {"id": Items.CURSES.pick_random()["id"], "hidden": true}
 	return {"id": roll_item_id(quality_bonus + MYSTERY_QUALITY_BONUS), "hidden": true}
 
+# Deux passifs differents (voir QUEST_CHOICES) ; [] sous "Poches trouees".
+func roll_quest_rewards() -> Array:
+	if mod("no_loot") > 0.0:
+		return []
+	var legendary_chance := QUEST_LEGENDARY_BASE + loot_quality() * QUEST_LEGENDARY_PER_QUALITY
+	var picks := []
+	for i in QUEST_CHOICES:
+		var rarity := Items.LEGENDAIRE if randf() < legendary_chance else Items.RARE
+		var pool: Array = []
+		while pool.is_empty() and rarity >= Items.RARE:  # legendaires epuises : un rare
+			pool = Items.PASSIVES.filter(func(item): return item["rarity"] == rarity and item["id"] not in legendaries_seen and item["id"] not in picks)
+			rarity -= 1
+		var fresh := pool.filter(func(item): return item["id"] not in passive_items)
+		var id: String = (fresh if not fresh.is_empty() else pool).pick_random()["id"]
+		picks.append(id)
+		_note_legendary(id)
+	return picks
+
+# Un legendaire laisse de cote (choix de quete) peut retomber plus tard dans la nuit.
+func forget_legendary(id: String) -> void:
+	if id not in passive_items:
+		legendaries_seen.erase(id)
+
 func _note_legendary(id: String) -> void:
 	if Items.find(id).get("rarity", Items.COMMUN) == Items.LEGENDAIRE and id not in legendaries_seen:
 		legendaries_seen.append(id)
@@ -629,7 +656,10 @@ func mod(stat: String) -> float:
 	return mods.get(stat, 0.0)
 
 func add_passive_item(id: String) -> void:
-	passive_items[id] = passive_items.get(id, 0) + 1
+	var count: int = passive_items.get(id, 0)
+	if Items.find_passive(id).has("style"):
+		passive_items.erase(id)  # remis a la fin : le dernier style pris est le style actif
+	passive_items[id] = count + 1
 	_recompute_mods()
 
 func _recompute_mods() -> void:

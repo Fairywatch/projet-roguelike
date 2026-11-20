@@ -1,10 +1,13 @@
 extends BaseMob
 
 # Le Poids du Monde : boss de fin du vendredi (porter les autres jusqu'a ne plus tenir).
+#   Il ecrase le sol sous le joueur, puis frappe une seconde fois la ou celui-ci fuyait ; toutes
+#   les trois attaques, ses fardeaux roulent vers le joueur (rochers qui rebondissent).
 #   Phase 1 : fait de tous ceux qu'il porte ; des Soignants le protegent : il est invulnerable
 #             tant qu'il en reste un.
 #   Phase 2 : il lache son fardeau ; une vague d'ennemis tombe dans l'arene.
-#   Phase 3 : seul et epuise ; tres lent, mais chaque coup est lourd, rare et tres large.
+#   Phase 3 : seul et epuise ; tres lent, mais chaque coup est lourd, rare et tres large, suivi
+#             d'une onde a trous ; les fardeaux roulent une attaque sur deux, par trois.
 
 const SLAM := Color(0.6, 0.55, 0.75)
 const PHASE_THRESHOLDS := [0.66, 0.33]
@@ -12,6 +15,7 @@ const GUARDS := 2
 const BURDEN := ["vendredi/fardeau", "vendredi/sangsue", "vendredi/passager"]
 
 var phase := 1
+var cycle := 0
 
 func _texture_path() -> String:
 	return "res://assets/sprites/mobs/vendredi/poids_du_monde.png"
@@ -59,9 +63,24 @@ func take_hit(damage: int = 1) -> void:
 			telegraph_duration = 1.1
 
 func _on_attack_begin() -> void:
+	cycle += 1
 	var spot := player.global_position
 	var radius := 150.0 if phase == 3 else 90.0
 	Hazards.zone(spot, radius, "damage", 0.9 if phase < 3 else 1.3, 0.25, SLAM)
-	if phase == 3 and await pause(1.3):
-		var gap := randf() * TAU
-		Hazards.ring(spot, 140.0, [[gap, 0.7], [gap + PI, 0.7]], SLAM)
+	if cycle % (2 if phase == 3 else 3) == 0:
+		_roll_burdens()
+	if phase == 3:
+		if await pause(1.3):
+			var gap := randf() * TAU
+			Hazards.ring(spot, 140.0, [[gap, 0.7], [gap + PI, 0.7]], SLAM)
+	elif await pause(0.55) and player:
+		# Le second coup tombe la ou le joueur fuyait.
+		var moving: Variant = player.get("velocity")
+		var ahead: Vector2 = player.global_position + (moving if moving is Vector2 else Vector2.ZERO) * 0.45
+		Hazards.zone(Hazards.clamp_to_arena(ahead), 70.0, "damage", 0.75, 0.25, SLAM)
+
+# Les fardeaux roulent : des rochers qui partent vers le joueur et rebondissent sur les murs.
+func _roll_burdens() -> void:
+	var aim := player.global_position - global_position
+	for offset in ([-0.35, 0.35] if phase < 3 else [-0.5, 0.0, 0.5]):
+		Hazards.boulder(global_position, aim.rotated(offset), 150.0, 22.0, 5.0, SLAM)

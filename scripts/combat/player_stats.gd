@@ -17,12 +17,26 @@ const FEATHERS := 3
 const SPECIAL_COOLDOWN := 3.0
 # Ensemble : Plumier + Plume de paon = Tempete de plumes (la rafale part dans toutes les directions).
 const STORM_SET := ["plumier", "plume_de_paon"]
+# Styles d'attaque (objets avec "style", voir Items) : un seul a la fois, le dernier pris.
+#   cooldown : multiplie le temps entre deux attaques ; reach : multiplie la portee.
+# Equilibrage, sur une cible (coup de base : enchainement 1 + 1 + 2 degats en ~1,3 s, ~3,1 / s) :
+#   estoc ~2,7 / s mais deux fois plus loin et a travers toute une ligne ; toupie ~2,5 / s mais
+#   tout autour ; fronde ~2,3 / s mais de loin ; maillet ~2,6 / s en coups lourds qui assomment.
+const STYLES := {
+	"estoc": {"name": "Estoc", "cooldown": 1.15, "reach": 1.9},
+	"toupie": {"name": "Toupie", "cooldown": 1.25, "reach": 0.9},
+	"fronde": {"name": "Fronde", "cooldown": 1.35, "reach": 1.0},
+	"maillet": {"name": "Maillet", "cooldown": 2.2, "reach": 1.25},
+}
+const MAX_GUARD_SHEEP := 4
 # Plafonds : un empilement d'objets ne doit pas rendre intouchable.
 const MIN_COOLDOWN_MULT := 0.3
 const MIN_SPEED_MULT := 0.5
 const MAX_EVASION := 0.5
-const MAX_HEAL_ON_HIT := 0.3
-const MAX_HEAL_ON_KILL := 0.5
+# Soin en frappant / en tuant : 15 % au plus chacun, quels que soient les objets cumules (au-dela,
+# se soigner devient trop facile).
+const MAX_HEAL_ON_HIT := 0.15
+const MAX_HEAL_ON_KILL := 0.15
 const MAX_SHIELD := 3
 const MAX_EXTRA_LIVES := 2
 
@@ -36,7 +50,29 @@ static func dash_cooldown() -> float:
 	return DASH_COOLDOWN * maxf(MIN_COOLDOWN_MULT, 1.0 + GameState.mod("dash_cooldown"))
 
 static func attack_cooldown() -> float:
-	return ATTACK_COOLDOWN * maxf(MIN_COOLDOWN_MULT, 1.0 + GameState.mod("attack_cooldown"))
+	return ATTACK_COOLDOWN * maxf(MIN_COOLDOWN_MULT, 1.0 + GameState.mod("attack_cooldown")) * _style_value("cooldown")
+
+# Style d'attaque actif ("" : le coup de base) : le dernier objet de style pris.
+static func style() -> String:
+	var ids: Array = GameState.passive_items.keys()
+	for i in range(ids.size() - 1, -1, -1):
+		var item := Items.find_passive(ids[i])
+		if item.has("style"):
+			return item["style"]
+	return ""
+
+static func _style_value(key: String) -> float:
+	var current := style()
+	return STYLES[current][key] if current != "" else 1.0
+
+static func style_reach() -> float:
+	return _style_value("reach")
+
+static func dash_hits() -> bool:
+	return GameState.mod("dash_hits") > 0.0
+
+static func guard_sheep() -> int:
+	return mini(MAX_GUARD_SHEEP, int(GameState.mod("guard_sheep")))
 
 static func dash_duration() -> float:
 	return DASH_DURATION * (1.0 + GameState.mod("dash_length"))
@@ -87,13 +123,19 @@ static func feather_storm() -> bool:
 static func lines() -> Array:
 	var out := [
 		["PV", "%d / %d  (max %d)" % [GameState.current_hp(), GameState.max_hp(), GameState.MAX_HP_CAP]],
-		["Dégâts", "%d  (3e coup : %d)" % [damage(), damage() * 2]],
+		["Dégâts", ("%d  (chaque coup : %d)" if style() == "maillet" else "%d  (3e coup : %d)") % [damage(), damage() * 2]],
 		["Attaques / s", "%.1f" % (1.0 / attack_cooldown())],
-		["Portée", "%d" % roundi(reach())],
+		["Portée", "%d" % roundi(reach() * style_reach())],
 		["Vitesse", _percent(move_speed() / SPEED - 1.0, true)],
 		["Dash", "recharge %.2f s" % dash_cooldown()],
 		["Rafale", "%d plumes, recharge %.1f s" % [feathers(), special_cooldown()]],
 	]
+	if style() != "":
+		out.insert(1, ["Style", STYLES[style()]["name"]])
+	if dash_hits():
+		out.append(["Dash", "blesse les ennemis touchés"])
+	if guard_sheep() > 0:
+		out.append(["Moutons gardiens", "%d" % guard_sheep()])
 	if feather_pierce():
 		out.append(["Plumes", "traversent les ennemis"])
 	if feather_storm():

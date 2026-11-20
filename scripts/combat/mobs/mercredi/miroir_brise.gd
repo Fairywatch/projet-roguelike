@@ -2,7 +2,9 @@ extends BaseMob
 
 # Le Miroir Brise (boss du mercredi) : se divise en eclats qui le refletent tous ; tous tirent,
 # mais seuls les tirs du vrai miroir blessent, et seul le vrai prend des degats. Toutes les deux
-# attaques, les reflets changent de place. Variante : les eclats tirent en couronne.
+# attaques, les reflets changent de place. Toutes les trois attaques, le vrai miroir se fend : une
+# onde a trous part de lui (et le trahit, pour qui regarde bien).
+# Variante : les eclats tirent en couronne.
 # Cauchemar : un reflet de plus.
 
 const SHARD := Color(0.75, 0.88, 1, 0.95)
@@ -59,6 +61,9 @@ func _on_attack_begin() -> void:
 				shots.append(_shard(source, aim.rotated((i - 1) * 0.2), color))
 		for shot in shots:
 			shot.harmless = not real
+	if cycle % 3 == 0:
+		var gap := randf() * TAU
+		Hazards.ring(global_position, 120.0, [[gap, 0.65], [gap + PI, 0.65]], SHARD)
 	if cycle % 2 == 0:
 		_shuffle()
 

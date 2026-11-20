@@ -1,12 +1,17 @@
 extends BaseMob
 
 # Silhouette (samedi, Solitude) : l'ombre de quelqu'un qu'on a connu. Elle fuit quand on
-# s'approche et lance des souvenirs de loin. Variante : disparait puis reapparait derriere le
-# joueur avant de tirer. Cauchemar : plus de souvenirs.
+# s'approche et lance des souvenirs de loin. Si on la serre de trop pres (elle fuit depuis
+# FLEE_MAX secondes, ou elle est acculee), elle se retourne et tire quand meme, de pres.
+# Variante : disparait puis reapparait derriere le joueur avant de tirer. Cauchemar : plus de souvenirs.
 
 const KEEP_AWAY := 200.0
 const FLEE_SPEED := 85.0
 const MEMORY := Color(0.8, 0.82, 1.0, 0.9)
+const FLEE_MAX := 1.2      # secondes de fuite avant de se retourner pour tirer
+const CORNERED := 12.0     # px parcourus par image en dessous desquels elle est acculee
+
+var flee_time := 0.0
 
 func _texture_path() -> String:
 	return "res://assets/sprites/mobs/samedi/silhouette.png"
@@ -21,10 +26,20 @@ func _on_ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if state == State.CHASE and player and global_position.distance_to(player.global_position) < KEEP_AWAY:
+		flee_time += delta
+		var before := global_position
 		velocity = flee_direction(player.global_position) * FLEE_SPEED
 		move_and_slide()
 		global_position = Hazards.clamp_to_arena(global_position)
+		var stuck := before.distance_to(global_position) < CORNERED * delta
+		if flee_time < FLEE_MAX and not stuck:
+			return
+		# Serree de trop pres : elle se retourne et tire.
+		flee_time = 0.0
+		velocity = Vector2.ZERO
+		_start_telegraph()
 		return
+	flee_time = 0.0
 	super(delta)
 
 func _on_telegraph_begin() -> void:

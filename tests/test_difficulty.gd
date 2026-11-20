@@ -94,10 +94,13 @@ func _initialize() -> void:
 	var known := ["max_hp", "damage", "speed", "dash_cooldown", "attack_cooldown", "dash_length", "reach",
 		"knockback", "heal_on_hit", "heal_on_kill", "crit", "evasion", "iframes", "extra_lives", "shield",
 		"thorns", "active_recharge", "slow_on_hit", "dash_trail", "enemy_hp", "enemy_speed", "enemy_cooldown",
-		"telegraph", "drop_chance", "encounter_rate", "feathers", "special_cooldown", "feather_pierce", "finisher_volley"]
+		"telegraph", "drop_chance", "encounter_rate", "feathers", "special_cooldown", "feather_pierce", "finisher_volley",
+		"dash_hits", "guard_sheep"]
+	var styles: Dictionary = load("res://scripts/combat/player_stats.gd").STYLES
 	for item in Items.PASSIVES:
 		for stat in item["mods"]:
 			assert(stat in known)
+		assert(not item.has("style") or styles.has(item["style"]))  # chaque style a ses reglages
 	gs.reset_run_items()
 
 	# Chaque portail est garde : l'etage ne change qu'apres la victoire sur le gardien.
@@ -282,6 +285,15 @@ func _initialize() -> void:
 	arena.free()
 	gs.nightmare_mode = false
 	gs.floor_index = 0
+
+	# Soin en frappant / en tuant : 15 % au plus, meme en cumulant les objets.
+	gs.new_run(0)
+	for id in ["larme_de_crocodile", "tisane_de_camomille", "reve_lucide"]:
+		gs.take_item(id)
+	var stats = load("res://scripts/combat/player_stats.gd")  # charge a l'execution : il lit GameState
+	assert(is_equal_approx(stats.heal_on_hit(), 0.15) and is_equal_approx(stats.heal_on_kill(), 0.15))
+	# Le Mouchoir usage (se soigner a volonte) est un objet rare.
+	assert(Items.find_active("mouchoir_usage")["rarity"] == Items.RARE)
 
 	print("test_difficulty OK")
 	quit()

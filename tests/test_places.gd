@@ -127,5 +127,21 @@ func _initialize() -> void:
 		await process_frame
 	assert(current_scene.get_node("UI").get_child(0) is ColorRect)
 
+	# Recompense de quete au choix : prendre un objet fait disparaitre l'autre (y compris de la sauvegarde).
+	map = await _open_map(gs, 0)
+	var ground: Array = gs.current_floor()["ground_items"]
+	var first := {"id": "coup_de_foudre", "hidden": false, "choice": "test", "pos": map.player.global_position + Vector2(200, 0)}
+	var second := {"id": "cafe_serre", "hidden": false, "choice": "test", "pos": map.player.global_position + Vector2(300, 0)}
+	for entry in [first, second]:
+		ground.append(entry)
+		map._spawn_pickup(entry)
+	var pickups: Array = map.generated_root.get_children().filter(func(n): return n.get("choice") == "test")
+	assert(pickups.size() == 2)
+	gs.take_item("coup_de_foudre")
+	map._on_ground_item_taken(first, "coup_de_foudre", "", -1)
+	assert(first not in ground and second not in ground)
+	await create_timer(0.5).timeout
+	assert(map.generated_root.get_children().filter(func(n): return n.get("choice") == "test" and n.item_id == "cafe_serre").is_empty())
+
 	print("test_places OK")
 	quit()
