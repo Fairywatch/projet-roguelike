@@ -5,7 +5,7 @@ extends Control
 # passifs), crane (ennemis restants), et les pastilles de charges de l'objet actif.
 
 const PIXEL := 2.0
-const OUTLINE := Color(0.08, 0.03, 0.08)
+const OUTLINE := Color(0.17, 0.13, 0.25)
 const SHAPES := {
 	"coin": [
 		".OOOO.",
@@ -39,8 +39,8 @@ const COLORS := {
 	"gem": {"V": Color(0.66, 0.55, 1), "W": Color(0.92, 0.9, 1), "D": Color(0.42, 0.32, 0.8)},
 	"skull": {"W": Color(0.93, 0.9, 0.98), "E": Color(0.3, 0.12, 0.32)},
 }
-const PIP := Color(1, 0.85, 0.4)
-const PIP_EMPTY := Color(1, 1, 1, 0.2)
+const PIP := Color(0.92, 0.66, 0.2)
+const PIP_EMPTY := Color(0.86, 0.8, 0.68)
 
 var kind := "coin"
 # Pastilles ("pips") : charges restantes / maximum.
@@ -65,17 +65,17 @@ func _ready() -> void:
 
 func _resize() -> void:
 	if kind == "pips":
-		custom_minimum_size = Vector2(maxi(max_value, 0) * 7.0, 6.0)
+		custom_minimum_size = Vector2(maxi(max_value, 0) * 10.0, 8.0)
 	else:
 		custom_minimum_size = Vector2(SHAPES[kind][0].length(), SHAPES[kind].size()) * PIXEL
 	queue_redraw()
 
 func _draw() -> void:
 	if kind == "pips":
-		for i in max_value:
-			var at := Vector2(3.0 + i * 7.0, 3.0)
-			draw_circle(at, 3.0, OUTLINE)
-			draw_circle(at, 2.0, PIP if i < value else PIP_EMPTY)
+		for i in max_value:  # carres de 8 : cerne d'encre, rempli au crayon si la charge reste
+			var at := Vector2(i * 10.0, 0.0)
+			draw_rect(Rect2(at, Vector2(8, 8)), OUTLINE)
+			draw_rect(Rect2(at + Vector2(2, 2), Vector2(4, 4)), PIP if i < value else PIP_EMPTY)
 		return
 	var shape: Array = SHAPES[kind]
 	var colors: Dictionary = COLORS[kind]

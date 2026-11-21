@@ -11,6 +11,7 @@ var appeared := false
 
 # Apparence (cadre, boutons) : theme du projet, assets/ui/theme.tres.
 func _ready() -> void:
+	Paper.apply(self)
 	box.add_theme_constant_override("separation", 5)
 	add_child(box)
 	# Un texte a la ligne se mesure d'abord sans sa largeur, puis rapetisse : on suit le contenu.
@@ -58,14 +59,14 @@ func add_title(text: String) -> void:
 	title.text = text
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.theme_type_variation = &"PixelTitle"
-	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_font_size_override("font_size", 20)
 	box.add_child(title)
 
 func add_note(text: String, color: Color = Color(1, 1, 1, 0.65)) -> void:
 	var note := Label.new()
 	note.text = text
 	note.modulate = color
-	note.add_theme_font_size_override("font_size", 10)
+	note.add_theme_font_size_override("font_size", 15)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.custom_minimum_size.x = 360
 	box.add_child(note)

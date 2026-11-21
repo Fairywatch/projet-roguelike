@@ -22,7 +22,7 @@ func _on_ready() -> void:
 	chase_speed = 50.0
 	attack_range = 0.0  # son seul danger : l'explosion
 	count = START - (2 if nightmare else 0)
-	number.add_theme_font_size_override("font_size", 14)
+	number.add_theme_font_size_override("font_size", 15)
 	number.add_theme_color_override("font_color", Color(0.15, 0.1, 0.15))
 	number.position = Vector2(-5, -11)
 	add_child(number)

@@ -14,6 +14,7 @@ size = Vector2(32, 604)
 script = ExtResource("1")
 
 [node name="Background" type="Node2D" parent="."]
+z_index = -10
 script = ExtResource("2")
 
 [node name="WallTop" type="StaticBody2D" parent="."]
@@ -53,6 +54,6 @@ offset_left = 10.0
 offset_top = -20.0
 offset_right = 630.0
 offset_bottom = -4.0
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 15
 modulate = Color(1, 1, 1, 0.7)
 text = "ZQSD : déplacement  |  J : attaque  |  K : dash  |  L : objet actif  |  E : prendre  |  Tab : objets passifs"

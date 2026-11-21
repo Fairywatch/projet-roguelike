@@ -1,0 +1,7 @@
+[gd_resource type="Theme" format=3]
+
+[resource]
+Label/colors/font_color = Color(0.17, 0.13, 0.25, 1)
+Label/colors/font_outline_color = Color(0, 0, 0, 0)
+Label/constants/outline_size = 0
+RichTextLabel/colors/default_color = Color(0.17, 0.13, 0.25, 1)

@@ -58,19 +58,29 @@ static func shoot(source: Node2D, direction: Vector2, speed: float = 170.0, colo
 		sprite.modulate.a = color.a  # les leurres restent translucides
 		projectile.add_child(sprite)
 		projectile.sprite = sprite
+		# Bande d'images carrees (tools/gen_projectiles.py) : le projectile s'anime.
+		var side := texture.get_height()
+		if texture.get_width() > side and texture.get_width() % side == 0:
+			sprite.hframes = texture.get_width() / side
+			projectile.frames = sprite.hframes
 		projectile.look = LOOKS.get(texture.resource_path.get_file().get_basename(), "aim")
 		if projectile.look == "aim":
 			sprite.rotation = projectile.direction.angle()
 	if text != "":
+		# Mot lance : ecrit a l'encre (teinte de l'attaque) sur un bout de papier dechire.
 		visual.visible = false
+		var paper := PanelContainer.new()
+		Paper.apply(paper)
+		paper.theme_type_variation = &"WordPaper"
+		paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var label := Label.new()
 		label.text = text
-		label.add_theme_font_size_override("font_size", 9)
-		label.add_theme_color_override("font_color", color)
-		label.add_theme_color_override("font_outline_color", Color(0.05, 0.02, 0.06))
-		label.add_theme_constant_override("outline_size", 4)
-		label.position = Vector2(-label.get_minimum_size().x / 2.0, -8)
-		projectile.add_child(label)
+		label.add_theme_font_size_override("font_size", 15)
+		label.add_theme_color_override("font_color", Color(color, 1.0).darkened(0.62))
+		paper.add_child(label)
+		projectile.add_child(paper)
+		paper.reset_size()
+		paper.position = (-paper.size / 2.0).round()
 	return projectile
 
 # Projectile dessine du mob : res://assets/sprites/projectiles/<nuit>/<mob>.png, d'apres le

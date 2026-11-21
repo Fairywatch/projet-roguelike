@@ -24,6 +24,7 @@ func _on_ready() -> void:
 	cooldown_duration = 1.6
 	set_display_scale(2.4)
 	mark.text = "!"
+	mark.theme_type_variation = &"PixelTitle"
 	mark.add_theme_font_size_override("font_size", 20)
 	mark.add_theme_color_override("font_color", Color(1, 0.9, 0.3))
 	mark.position = Vector2(-5, -62)

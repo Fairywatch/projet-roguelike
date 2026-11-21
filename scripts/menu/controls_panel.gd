@@ -21,7 +21,7 @@ func build() -> void:
 		var label := Label.new()
 		label.text = Controls.ACTIONS[action][0]
 		label.custom_minimum_size.x = 76
-		label.add_theme_font_size_override("font_size", 10)
+		label.add_theme_font_size_override("font_size", 15)
 		grid.add_child(label)
 		grid.add_child(_bind_button(action, false))
 		grid.add_child(_bind_button(action, true))
@@ -32,7 +32,7 @@ func build() -> void:
 func _bind_button(action: String, gamepad: bool) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size.x = 74
-	button.add_theme_font_size_override("font_size", 10)  # 10 lignes : doit tenir dans l'ecran
+	button.add_theme_font_size_override("font_size", 15)  # 10 lignes : doit tenir dans l'ecran
 	button.text = Controls.pad_name(action) if gamepad else Controls.key_name(action)
 	if action == waiting_action and gamepad == waiting_gamepad:
 		button.text = "Appuie..."

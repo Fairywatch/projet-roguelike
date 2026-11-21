@@ -26,7 +26,7 @@ func _on_ready() -> void:
 	attack_duration = 0.2
 	cooldown_duration = 1.2
 	zzz.text = "Zzz"
-	zzz.add_theme_font_size_override("font_size", 14)
+	zzz.add_theme_font_size_override("font_size", 15)
 	zzz.position = Vector2(14, -54)
 	zzz.visible = false
 	add_child(zzz)

@@ -119,17 +119,16 @@ class Dive extends Shot:
 		sparkles = dots(title, 16, Color("FFF0C0"))
 		sleeper = layer(title, "intro/titre_reveur")
 		var font := FontVariation.new()
-		font.base_font = preload("res://assets/fonts/Nunito.ttf")
-		font.variation_embolden = 1.2
+		font.base_font = preload("res://assets/fonts/Jersey10.ttf")
 		for ch in TITLE:
-			var letter := text(title, ch, 112, Color("F6F2FF"))
+			var letter := text(title, ch, 120, Color("F6F2FF"))
 			letter.add_theme_font_override("font", font)
 			letter.add_theme_color_override("font_shadow_color", Color("2A2460"))
 			letter.add_theme_constant_override("shadow_offset_x", 0)
 			letter.add_theme_constant_override("shadow_offset_y", 5)
 			letters.append(letter)
-		subtitle = _centered(text(title, "Plonge dans ton propre sommeil", 26, Color("E4DEFA")), 262)
-		prompt = _centered(text(title, "Appuie sur une touche", 20, Color("FFF3C8")), 720 - 48 - 28)
+		subtitle = _centered(text(title, "Plonge dans ton propre sommeil", 30, Color("E4DEFA")), 262)
+		prompt = _centered(text(title, "Appuie sur une touche", 30, Color("FFF3C8")), 720 - 48 - 28)
 		flash = rect(self, Vector2.ZERO, SIZE, Color.WHITE)
 
 	func _centered(label: Label, y: float) -> Label:

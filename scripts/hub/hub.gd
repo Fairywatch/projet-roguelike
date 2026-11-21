@@ -51,6 +51,8 @@ func _ready() -> void:
 	GameHud.pill($UI/Title)
 	GameHud.pill(status_label)
 	prompt_label.add_theme_stylebox_override("normal", ThemeDB.get_project_theme().get_stylebox("panel", &"Toast"))
+	prompt_label.add_theme_color_override("font_color", Paper.INK)  # sur papier : a l'encre
+	prompt_label.add_theme_constant_override("outline_size", 0)
 	player.add_child(DreamTheme.make_light(Color(1, 0.95, 0.85), 220.0, 0.8))
 	player.add_child(DreamTheme.make_ambient_particles(FloorGenerator.Family.PARADOXAL))
 	var camera: Camera2D = player.get_node("Camera2D")
@@ -124,7 +126,7 @@ func _add_icon(texture: Texture2D, pos: Vector2) -> void:
 func _world_label(text: String, pos: Vector2, font_size: int) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_font_size_override("font_size", 15)  # Jersey 15 : nette a sa taille native
 	label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.1))
 	label.add_theme_constant_override("outline_size", 4)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

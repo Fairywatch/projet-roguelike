@@ -23,10 +23,11 @@ var label := Label.new()
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_font_size_override("font_size", 15)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(380, 0)
+	Paper.apply(panel)
 	panel.theme_type_variation = &"Toast"
 	panel.add_child(label)
 	add_child(panel)

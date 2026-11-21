@@ -15,5 +15,5 @@ Composées pour le jeu (partitions dans music/, jouées par MuseScore 4 avec les
 
 ## Polices (licence OFL)
 
-- **Nunito** par The Nunito Project Authors, licence SIL Open Font License 1.1 (assets/fonts/OFL.txt) : https://github.com/googlefonts/nunito
-- **Pixelify Sans** par The Pixelify Sans Project Authors, licence SIL Open Font License 1.1 (assets/fonts/PixelifySans-OFL.txt), pour les titres et les chiffres : https://github.com/eifetx/Pixelify-Sans
+- **Jersey 10** et **Jersey 15** par The Soft Type Project Authors, licence SIL Open Font License 1.1 (assets/fonts/Jersey-OFL.txt), polices pixel de tout le jeu : https://github.com/scfried/soft-type-jersey
+- **Nunito** par The Nunito Project Authors, licence SIL Open Font License 1.1 (assets/fonts/OFL.txt), pour les textes dessines dans les images des cinematiques : https://github.com/googlefonts/nunito

@@ -92,7 +92,7 @@ func _animate_entrance() -> void:
 func _add_version() -> void:
 	var version := Label.new()
 	version.text = "v%s" % ProjectSettings.get_setting("application/config/version", "?")
-	version.add_theme_font_size_override("font_size", 9)
+	version.add_theme_font_size_override("font_size", 15)
 	version.modulate = Color(1, 1, 1, 0.45)
 	version.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 4)
 	version.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -101,20 +101,20 @@ func _add_version() -> void:
 
 # Aide des touches : reecrite quand on passe du clavier a la manette.
 func _refresh_hint() -> void:
-	$UI/Hint.text = Controls.help(["move", "attack", "dash", "active", "interact", "inventory", "pause"])
+	$UI/Hint.text = Controls.help(["move", "attack", "dash", "special", "interact"])
 
 func _add_button(label: String, action: Callable) -> void:
 	var button := Button.new()
 	button.text = label
 	button.custom_minimum_size = Vector2(240, 22)
-	button.add_theme_font_size_override("font_size", 13)
+	button.add_theme_font_size_override("font_size", 15)
 	button.pressed.connect(func(): Sound.play("ui_select"); action.call())
 	buttons.add_child(button)
 
 func _spawn_z() -> void:
 	var z := Label.new()
 	z.text = "z"
-	z.add_theme_font_size_override("font_size", randi_range(10, 16))
+	z.add_theme_font_size_override("font_size", [15, 15, 30].pick_random())
 	z.modulate = Color(0.9, 0.9, 1, 0.9)
 	z.position = DREAMER_POS + Vector2(14, -30)
 	add_child(z)

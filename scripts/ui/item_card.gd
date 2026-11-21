@@ -21,25 +21,29 @@ static func make(id: String, big: bool = false, suffix: String = "") -> HBoxCont
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var name_label := Label.new()
 	name_label.text = item["name"] + suffix
-	name_label.add_theme_font_size_override("font_size", 17 if big else 12)
-	name_label.add_theme_color_override("font_color", Items.rarity_color(id))
+	name_label.add_theme_font_size_override("font_size", 20 if big else 15)
+	if big:
+		name_label.theme_type_variation = &"PixelTitle"
+	name_label.add_theme_color_override("font_color", Items.rarity_ink(id))
 	text.add_child(name_label)
 	var desc := Label.new()
 	desc.text = "%s  ·  %s" % [item["desc"], Items.RARITY_NAMES[item["rarity"]]]
-	desc.add_theme_font_size_override("font_size", 11 if big else 9)
-	desc.modulate = Color(1, 1, 1, 0.8)
+	desc.add_theme_font_size_override("font_size", 15)
+	desc.add_theme_color_override("font_color", Paper.INK_SOFT)
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART  # la police pixel est plus large : on passe a la ligne
+	desc.custom_minimum_size.x = 300 if big else 0
 	text.add_child(desc)
 	row.add_child(text)
 	return row
 
-# Pastille carree avec la lettre du tier, a sa couleur.
+# Pastille carree avec la lettre du tier : colorie au crayon de sa couleur, cerne d'encre.
 static func tier_badge(id: String, big: bool = false) -> PanelContainer:
 	var color := Items.tier_color(id)
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(color, 0.22)
-	style.border_color = color
-	style.set_border_width_all(2 if big else 1)
-	style.set_corner_radius_all(4)
+	style.bg_color = color
+	style.border_color = Paper.INK
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(0)
 	style.content_margin_left = 6 if big else 4
 	style.content_margin_right = style.content_margin_left
 	var badge := PanelContainer.new()
@@ -48,7 +52,8 @@ static func tier_badge(id: String, big: bool = false) -> PanelContainer:
 	var letter := Label.new()
 	letter.text = Items.tier(id)
 	letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	letter.add_theme_font_size_override("font_size", 16 if big else 11)
-	letter.add_theme_color_override("font_color", color)
+	letter.add_theme_font_size_override("font_size", 20 if big else 15)
+	letter.add_theme_color_override("font_color", Paper.INK)
+	letter.add_theme_constant_override("outline_size", 0)
 	badge.add_child(letter)
 	return badge

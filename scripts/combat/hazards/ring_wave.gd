@@ -12,6 +12,20 @@ var gaps: Array = []
 var color := Color(1, 0.85, 0.5)
 var radius := 10.0
 var hit := false
+var art: ShaderMaterial
+
+func _ready() -> void:
+	z_index = -1  # au sol : sous les ennemis, le joueur et les projectiles (le fond est a -10)
+	art = PixelFx.material(PixelFx.RING, color)
+	art.set_shader_parameter("thickness", THICKNESS)
+	var packed := PackedVector2Array()
+	for gap in gaps.slice(0, 4):
+		packed.append(Vector2(gap[0], gap[1]))
+	while packed.size() < 4:
+		packed.append(Vector2.ZERO)
+	art.set_shader_parameter("gaps", packed)
+	art.set_shader_parameter("gap_count", mini(gaps.size(), 4))
+	material = art
 
 func _physics_process(delta: float) -> void:
 	radius += speed * delta
@@ -33,31 +47,8 @@ func in_gap(angle: float) -> bool:
 	return false
 
 func _draw() -> void:
-	# Chaque troncon plein de l'anneau : contour sombre, couleur, rehaut clair cote interieur, et
-	# un echo pale derriere lui. Les bords des trous sont marques d'un point clair : on voit ou passer.
-	var dark := HazardArt.outline(color, 0.8)
-	var bright := HazardArt.light(color, 0.9)
-	var run := PackedVector2Array()
-	var inner := PackedVector2Array()
-	var echo := PackedVector2Array()
-	for i in SEGMENTS + 1:
-		var a := TAU * i / SEGMENTS
-		var open := i == SEGMENTS or in_gap(a)
-		if not open:
-			var dir := Vector2.from_angle(a)
-			run.append(dir * radius)
-			inner.append(dir * (radius - THICKNESS * 0.25))
-			echo.append(dir * maxf(radius - 16.0, 0.0))
-		if open or i == SEGMENTS - 1:
-			if run.size() >= 2:
-				if radius > 20.0:
-					draw_polyline(echo, Color(color, 0.22), 4.0)
-				draw_polyline(run, dark, THICKNESS + 4.0)
-				draw_polyline(run, Color(color, 0.95), THICKNESS)
-				draw_polyline(inner, bright, 3.0)
-				if not gaps.is_empty():
-					draw_circle(run[0], THICKNESS * 0.55, bright)
-					draw_circle(run[run.size() - 1], THICKNESS * 0.55, bright)
-			run = PackedVector2Array()
-			inner = PackedVector2Array()
-			echo = PackedVector2Array()
+	# Pixel art (assets/shaders/pixel_ring.gdshader) : bande de trois tons, echo, trous marques.
+	art.set_shader_parameter("radius", radius)
+	art.set_shader_parameter("time", Time.get_ticks_msec() / 1000.0)
+	var reach := radius + THICKNESS + 8.0
+	draw_rect(Rect2(-reach, -reach, reach * 2.0, reach * 2.0), Color.WHITE)

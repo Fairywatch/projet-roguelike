@@ -15,9 +15,16 @@ var color := Color(1, 0.85, 0.5)
 var t := 0.0
 var start_angle := 0.0
 var previous_angle := 0.0  # angle a l'image precedente : la trainee suit le mouvement
+var art: ShaderMaterial
 
 func _ready() -> void:
 	start_angle = angle
+	z_index = -1  # au sol : sous les ennemis, le joueur et les projectiles (le fond est a -10)
+	art = PixelFx.material(PixelFx.BEAM, color)
+	art.set_shader_parameter("width", width)
+	art.set_shader_parameter("beam_length", length)
+	art.set_shader_parameter("taper", 0.55)
+	material = art
 
 func _physics_process(delta: float) -> void:
 	t += delta
@@ -36,24 +43,20 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	var half := width / 2.0
+	# Pixel art (assets/shaders/pixel_beam.gdshader) : une lame qui s'affine, avec sa trainee.
+	var half := width * 0.9 + 10.0
+	art.set_shader_parameter("time", t)
 	if t < telegraph:
-		# Annonce : la lame en transparence, la ou elle va partir, et des tirets.
-		var p := t / maxf(telegraph, 0.01)
+		art.set_shader_parameter("mode", 0)
+		art.set_shader_parameter("progress", t / maxf(telegraph, 0.01))
 		draw_set_transform(Vector2.ZERO, start_angle)
-		draw_colored_polygon(HazardArt.blade(length, half + 2.0, half * 0.5), Color(color, 0.08 + 0.14 * p))
-		HazardArt.dashed_line(self, length, Color(color, 0.85) if int(t * 14.0) % 2 == 0 or p < 0.75 else HazardArt.light(color), 2.0, 12.0, 9.0, t * 200.0)
-		draw_circle(Vector2.ZERO, half + 2.0, Color(color, 0.5))
+		draw_rect(Rect2(-half, -half, length + half, half * 2.0), Color.WHITE)
 		return
-	# Frappe : la lame, avec la trainee de son mouvement derriere elle.
+	art.set_shader_parameter("mode", 1)
+	art.set_shader_parameter("progress", 1.0)
 	var motion := angle - previous_angle
-	for k in [3, 2, 1]:
+	for k in [3, 2, 1]:  # trainee : la lame aux positions d'avant, de plus en plus pale
 		draw_set_transform(Vector2.ZERO, angle - motion * k * 2.2)
-		draw_colored_polygon(HazardArt.blade(length, half, half * 0.45), Color(color, 0.07 * (4 - k)))
+		draw_rect(Rect2(-half, -half, length + half, half * 2.0), Color(1, 1, 1, 0.12 * (4 - k)))
 	draw_set_transform(Vector2.ZERO, angle)
-	draw_colored_polygon(HazardArt.blade(length + 2.0, half + 2.5, half * 0.45 + 2.0), HazardArt.outline(color))
-	draw_colored_polygon(HazardArt.blade(length, half, half * 0.45), Color(color, 0.95))
-	draw_line(Vector2(half, 0), Vector2(length * 0.9, 0), HazardArt.light(color, 0.9), 2.0)
-	draw_circle(Vector2.ZERO, half + 4.0, HazardArt.outline(color))
-	draw_circle(Vector2.ZERO, half + 2.0, color)
-	draw_circle(Vector2.ZERO, half * 0.5, HazardArt.light(color))
+	draw_rect(Rect2(-half, -half, length + half, half * 2.0), Color.WHITE)

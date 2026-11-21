@@ -16,7 +16,7 @@ func build() -> void:
 		# Une ligne par offre (tier, nom, effet, prix) : avec les ameliorations, le panneau doit tenir a l'ecran.
 		var button := add_button("[%s]  %s : %s  -  %d pièces" % [Items.tier(item["id"]), item["name"], item["desc"], price], _buy.bind(slot))
 		button.add_theme_color_override("font_color", Items.rarity_color(id))
-		button.add_theme_font_size_override("font_size", 10)
+		button.add_theme_font_size_override("font_size", 15)
 		button.custom_minimum_size.y = 20
 		button.disabled = GameState.coins < price
 	var where := "rejoignent ta nuit en cours" if GameState.run_started else "t'attendront au début de ta prochaine nuit"
@@ -32,7 +32,7 @@ func build() -> void:
 		# Une ligne par amelioration (nom, effet, prix) : le panneau doit tenir a l'ecran.
 		var label := "%s%s : %s  -  %s" % [upgrade["name"], rank, upgrade["desc"], "%d pièces" % price if price >= 0 else "au maximum"]
 		var upgrade_button := add_button(label, _buy_upgrade.bind(id))
-		upgrade_button.add_theme_font_size_override("font_size", 10)
+		upgrade_button.add_theme_font_size_override("font_size", 15)
 		upgrade_button.custom_minimum_size.y = 20
 		upgrade_button.disabled = price < 0 or GameState.coins < price
 

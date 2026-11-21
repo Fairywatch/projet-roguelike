@@ -1,12 +1,15 @@
 class_name DashGauge
 extends Control
 
-# Jauge de recharge du dash, sous les coeurs. Elle brille un instant quand le dash est pret.
+# Jauge de recharge du dash (et de la rafale), sous les coeurs : un cadre d'encre sur le papier,
+# rempli au crayon de couleur (hachures). Elle s'eclaire un instant quand elle est pleine.
+# Tout tombe sur la grille des pixels d'art (2 pixels du jeu).
 
-const SIZE := Vector2(54, 5)
-const BACK := Color(0.1, 0.07, 0.18, 0.9)
-var fill := Color(0.5, 0.82, 1)
-var charging := Color(0.35, 0.5, 0.75)
+const SIZE := Vector2(54, 6)
+const BACK := Color(0.86, 0.8, 0.68)
+const INK := Color(0.17, 0.13, 0.25)
+var fill := Color(0.32, 0.5, 0.82)
+var charging := Color(0.55, 0.62, 0.75)
 
 var ratio := 1.0:
 	set(v):
@@ -26,9 +29,16 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2(-1, -1), SIZE + Vector2(2, 2)), Color(0.05, 0.02, 0.08))
+	draw_rect(Rect2(Vector2(-2, -2), SIZE + Vector2(4, 4)), INK)
 	draw_rect(Rect2(Vector2.ZERO, SIZE), BACK)
 	var color := fill if ratio >= 1.0 else charging
 	color = color.lerp(Color.WHITE, ready_flash / 0.3)
-	draw_rect(Rect2(0, 0, SIZE.x * ratio, SIZE.y), color)
-	draw_rect(Rect2(0, 0, SIZE.x * ratio, 1), Color(1, 1, 1, 0.35))
+	var width := floorf(SIZE.x * ratio / 2.0) * 2.0
+	draw_rect(Rect2(0, 0, width, SIZE.y), color)
+	var x := 0.0
+	while x < width:  # hachures : un trait plus fonce tous les 6 pixels, en biais
+		for row in 3:
+			var hx := x + row * 2.0
+			if hx < width:
+				draw_rect(Rect2(hx, SIZE.y - 2.0 - row * 2.0, 2, 2), color.darkened(0.25))
+		x += 6.0

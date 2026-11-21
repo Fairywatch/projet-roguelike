@@ -47,6 +47,7 @@ func open() -> void:
 	add_child(shade)
 
 	var panel := PanelContainer.new()
+	Paper.apply(panel)
 	var columns := HBoxContainer.new()
 	columns.add_theme_constant_override("separation", 14)
 	panel.add_child(columns)
@@ -135,7 +136,9 @@ func close() -> void:
 func _title(text: String, font_size: int, alpha: float = 1.0) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", font_size)
+	if font_size >= 16:  # titres : police pixel de titre
+		label.theme_type_variation = &"PixelTitle"
+	label.add_theme_font_size_override("font_size", 20 if font_size >= 16 else 15)
 	label.modulate.a = alpha
 	return label
 

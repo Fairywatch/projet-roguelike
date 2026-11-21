@@ -116,6 +116,12 @@ static func rarity(id: String) -> int:
 static func rarity_color(id: String) -> Color:
 	return RARITY_COLORS[rarity(id)]
 
+# Meme rarete, a l'encre : lisible sur le papier du carnet (fiches, inventaire, banniere).
+const RARITY_INKS := [Color(0.3, 0.27, 0.4), Color(0.2, 0.38, 0.72), Color(0.68, 0.42, 0.05), Color(0.62, 0.14, 0.22)]
+
+static func rarity_ink(id: String) -> Color:
+	return RARITY_INKS[rarity(id)]
+
 static func tier(id: String) -> String:
 	return find(id).get("tier", "C")
 

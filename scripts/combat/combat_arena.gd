@@ -44,7 +44,7 @@ func _ready() -> void:
 	$UI.add_child(OffscreenMarkers.new())
 	$UI.add_child(hud)
 	_build_counter()
-	boss_bar.position = Vector2(roundf((640 - BossBar.SIZE.x) / 2.0), 8)
+	boss_bar.position = Vector2(roundf((640 - BossBar.SIZE.x) / 2.0), 16)  # le scotch du papier reste visible
 	boss_bar.visible = false
 	$UI.add_child(boss_bar)
 	hud.see_through.append_array([counter, boss_bar])
@@ -98,6 +98,7 @@ func _stun_newcomers() -> void:
 			mob.stun(AMBUSH_STUN)
 
 func _build_counter() -> void:
+	Paper.apply(counter)
 	counter.theme_type_variation = &"HudPanel"
 	counter.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	counter.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -107,7 +108,7 @@ func _build_counter() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 5)
 	row.add_child(HudIcon.make("skull"))
-	mob_label.add_theme_font_size_override("font_size", 12)
+	mob_label.add_theme_font_size_override("font_size", 15)
 	row.add_child(mob_label)
 	counter.add_child(row)
 	$UI.add_child(counter)

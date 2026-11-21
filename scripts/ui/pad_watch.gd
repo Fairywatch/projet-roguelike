@@ -18,10 +18,11 @@ var waiting := false
 func _ready() -> void:
 	layer = 120
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	Paper.apply(notice)
 	notice.theme_type_variation = &"Toast"
 	notice.visible = false
 	notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	notice_label.add_theme_font_size_override("font_size", 11)
+	notice_label.add_theme_font_size_override("font_size", 15)
 	notice.add_child(notice_label)
 	add_child(notice)
 
@@ -29,12 +30,13 @@ func _ready() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.visible = false
 	add_child(dim)
+	Paper.apply(pause_panel)
 	pause_panel.theme_type_variation = &"Toast"
 	pause_panel.visible = false
 	var label := Label.new()
 	label.text = "Manette déconnectée\nRebranche-la, puis appuie sur un bouton (ou une touche) pour reprendre."
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_font_size_override("font_size", 15)
 	pause_panel.add_child(label)
 	add_child(pause_panel)
 

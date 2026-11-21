@@ -42,8 +42,8 @@ static func make(with_dash: bool) -> GameHud:
 	if with_dash:
 		hud.dash_gauge = DashGauge.new()
 		hud.special_gauge = DashGauge.new()
-		hud.special_gauge.fill = Color(0.82, 0.72, 1)
-		hud.special_gauge.charging = Color(0.5, 0.42, 0.72)
+		hud.special_gauge.fill = Color(0.58, 0.42, 0.8)  # crayon violet : la rafale
+		hud.special_gauge.charging = Color(0.7, 0.64, 0.8)
 	return hud
 
 func _ready() -> void:
@@ -57,6 +57,7 @@ func _ready() -> void:
 	add_child(hurt_overlay)
 
 	# Gauche : coeurs, jauge de dash, lieu.
+	Paper.apply(left_panel)
 	left_panel.theme_type_variation = &"HudPanel"
 	left_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	left_panel.position = Vector2(6, 5)
@@ -66,15 +67,16 @@ func _ready() -> void:
 	if dash_gauge:
 		left.add_child(dash_gauge)
 		left.add_child(special_gauge)
-	place_label.add_theme_font_size_override("font_size", 10)
+	place_label.add_theme_font_size_override("font_size", 15)
 	place_label.add_theme_constant_override("line_spacing", -2)
-	place_label.modulate = Color(0.88, 0.85, 1)
+	place_label.modulate = Color(1, 1, 1, 0.85)
 	place_label.visible = false
 	left.add_child(place_label)
 	left_panel.add_child(left)
 	add_child(left_panel)
 
 	# Droite : objet actif | passifs et pieces.
+	Paper.apply(right_panel)
 	right_panel.theme_type_variation = &"HudPanel"
 	right_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	right_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -125,9 +127,10 @@ func _screen_rect(node: CanvasItem) -> Rect2:
 func _active_block() -> HBoxContainer:
 	var block := HBoxContainer.new()
 	block.add_theme_constant_override("separation", 5)
-	active_style.bg_color = Color(0.02, 0.01, 0.05, 0.75)
-	active_style.set_border_width_all(1)
-	active_style.set_corner_radius_all(4)
+	# Case de l'objet actif : un cadre d'encre sur le papier, coins nets.
+	active_style.bg_color = Color(0.86, 0.8, 0.68)
+	active_style.set_border_width_all(2)
+	active_style.set_corner_radius_all(0)
 	active_style.set_content_margin_all(2)
 	active_frame.add_theme_stylebox_override("panel", active_style)
 	active_frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -140,14 +143,14 @@ func _active_block() -> HBoxContainer:
 	var text := VBoxContainer.new()
 	text.add_theme_constant_override("separation", 1)
 	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	active_name.add_theme_font_size_override("font_size", 10)
+	active_name.add_theme_font_size_override("font_size", 15)
 	text.add_child(active_name)
 	var keys := HBoxContainer.new()
 	keys.add_theme_constant_override("separation", 4)
 	key_badge.theme_type_variation = &"KeyBadge"
 	key_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	key_label.add_theme_font_size_override("font_size", 8)
-	key_label.add_theme_color_override("font_color", Color(0.12, 0.08, 0.22))
+	key_label.add_theme_font_size_override("font_size", 15)
+	key_label.add_theme_color_override("font_color", Paper.INK)
 	key_label.add_theme_constant_override("outline_size", 0)
 	key_badge.add_child(key_label)
 	keys.add_child(key_badge)
@@ -161,7 +164,7 @@ func _counter(icon_kind: String, label: Label) -> HBoxContainer:
 	row.add_theme_constant_override("separation", 4)
 	row.alignment = BoxContainer.ALIGNMENT_END
 	row.add_child(HudIcon.make(icon_kind))
-	label.add_theme_font_size_override("font_size", 11)  # Nunito : la police pixel deforme les petits chiffres
+	label.add_theme_font_size_override("font_size", 15)
 	label.custom_minimum_size.x = 18
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	row.add_child(label)
@@ -180,15 +183,15 @@ func refresh() -> void:
 		active_icon.texture = Items.icon(id)
 		active_icon.modulate = Color.WHITE if charged else Color(1, 1, 1, 0.35)
 		active_name.text = Items.find_active(id)["name"]
-		active_name.add_theme_color_override("font_color", Items.rarity_color(id))
-		active_style.border_color = Color(Items.rarity_color(id), 0.9 if charged else 0.35)
+		active_name.add_theme_color_override("font_color", Items.rarity_ink(id))
+		active_style.border_color = Paper.INK if charged else Paper.INK_SOFT
 		pips.max_value = GameState.ACTIVE_MAX_CHARGES
 		pips.value = GameState.active_charges
 	else:
 		active_icon.texture = null
 		active_name.text = "Aucun objet actif"
-		active_name.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
-		active_style.border_color = Color(1, 1, 1, 0.2)
+		active_name.add_theme_color_override("font_color", Paper.INK_SOFT)
+		active_style.border_color = Paper.INK_SOFT
 		pips.max_value = 0
 	key_label.text = Controls.name_of("active")
 	key_badge.visible = has_active
@@ -235,6 +238,7 @@ func _pop(control: Control) -> void:
 # Met une etiquette d'une scene dans une bulle du HUD, au meme endroit (menu, hub).
 static func pill(label: Label) -> PanelContainer:
 	var panel := PanelContainer.new()
+	Paper.apply(panel)
 	panel.theme_type_variation = &"HudPanel"
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var width := label.offset_right - label.offset_left
@@ -244,6 +248,9 @@ static func pill(label: Label) -> PanelContainer:
 	parent.add_child(panel)
 	parent.move_child(panel, label.get_index())
 	label.reparent(panel, false)
+	# Sur le papier : a l'encre (les couleurs prevues pour le fond sombre ne se liraient pas).
+	label.remove_theme_color_override("font_color")
+	label.remove_theme_color_override("font_outline_color")
 	if label.autowrap_mode != TextServer.AUTOWRAP_OFF:
 		label.custom_minimum_size.x = width
 	if where >= 1.0:

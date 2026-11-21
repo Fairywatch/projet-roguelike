@@ -17,7 +17,7 @@ static func show_text(layer: Node, text: String, color: Color, hold: float = HOL
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	theme_type_variation = &"PixelTitle"
-	add_theme_font_size_override("font_size", 32)
+	add_theme_font_size_override("font_size", 40)
 	add_theme_constant_override("outline_size", 9)
 	add_theme_color_override("font_outline_color", Color(0.08, 0.03, 0.14))
 	horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

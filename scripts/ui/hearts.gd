@@ -17,10 +17,13 @@ const SHAPE := [
 	"...ORO...",
 	"....O....",
 ]
-const OUTLINE := Color(0.08, 0.03, 0.08)
-const FULL := Color(0.93, 0.22, 0.32)
-const SHINE := Color(1, 0.75, 0.78)
-const EMPTY := Color(0.22, 0.14, 0.24, 0.85)
+# Carnet : cerne d'encre, colorie au crayon rouge (une diagonale sur trois plus appuyee), reflet
+# laisse en blanc du papier ; un coeur vide est juste dessine, pas colorie.
+const OUTLINE := Color(0.17, 0.13, 0.25)
+const FULL := Color(0.86, 0.3, 0.34)
+const HATCH := Color(0.7, 0.18, 0.26)
+const SHINE := Color(0.98, 0.95, 0.88)
+const EMPTY := Color(0.86, 0.8, 0.68)
 const LOST_TIME := 0.4
 const GAIN_TIME := 0.3
 
@@ -82,7 +85,7 @@ func _draw() -> void:
 				var c: String = SHAPE[y][x]
 				if c == ".":
 					continue
-				var color := OUTLINE if c == "O" else (EMPTY if not full else (SHINE if c == "H" else FULL))
+				var color := OUTLINE if c == "O" else (EMPTY if not full else (SHINE if c == "H" else (HATCH if (x + y) % 3 == 0 else FULL)))
 				if c != "O" and whiten > 0.0:
 					color = color.lerp(Color.WHITE, whiten)
 				draw_rect(Rect2(Vector2(x, y) * PIXEL - center, Vector2(PIXEL, PIXEL)), color)

@@ -26,7 +26,7 @@ func _ready() -> void:
 	add_child(icon)
 	glow = DreamTheme.make_light(Color.WHITE, 60.0, 0.9)
 	add_child(glow)
-	label.add_theme_font_size_override("font_size", 9)
+	label.add_theme_font_size_override("font_size", 15)
 	label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.1))
 	label.add_theme_constant_override("outline_size", 4)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

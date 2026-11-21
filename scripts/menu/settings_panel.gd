@@ -18,7 +18,7 @@ func build() -> void:
 		var check := CheckButton.new()
 		check.text = Settings.LABELS[option]
 		check.button_pressed = Settings.enabled(option)
-		check.add_theme_font_size_override("font_size", 11)
+		check.add_theme_font_size_override("font_size", 15)
 		check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		check.toggled.connect(func(on): Settings.set_option(option, on))
 		grid.add_child(check)
@@ -42,7 +42,7 @@ func _add_slider(option: String) -> void:
 	var label := Label.new()
 	label.text = Settings.SLIDERS[option]
 	label.custom_minimum_size.x = 120
-	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_font_size_override("font_size", 15)
 	var slider := HSlider.new()
 	slider.min_value = 0.0
 	slider.max_value = 1.0
@@ -53,7 +53,7 @@ func _add_slider(option: String) -> void:
 	var percent := Label.new()
 	percent.custom_minimum_size.x = 44
 	percent.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	percent.add_theme_font_size_override("font_size", 12)
+	percent.add_theme_font_size_override("font_size", 15)
 	percent.text = "%d %%" % roundi(slider.value * 100)
 	slider.value_changed.connect(func(value: float):
 		percent.text = "%d %%" % roundi(value * 100)

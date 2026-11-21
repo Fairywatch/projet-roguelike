@@ -14,9 +14,10 @@ var serial := 0
 var tween: Tween
 
 func _ready() -> void:
+	Paper.apply(self)
 	theme_type_variation = &"Toast"
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_font_size_override("font_size", 15)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

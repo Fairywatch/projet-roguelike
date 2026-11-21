@@ -156,4 +156,4 @@ func _draw() -> void:
 		draw_set_transform(Vector2.ZERO)
 	elif mode == Mode.SLEEP:
 		var z := Vector2(10, -half - 10.0 - fmod(bob * 8.0, 10.0))
-		draw_string(ThemeDB.fallback_font, z, "z", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.85, 0.85, 1, 0.8))
+		draw_string(ThemeDB.get_project_theme().default_font, z, "z", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(0.85, 0.85, 1, 0.8))

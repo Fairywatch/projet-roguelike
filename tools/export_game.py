@@ -28,7 +28,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PRESET = "Windows Desktop"
 EXE = os.path.join(ROOT, "build", "windows", "DreamDive.exe")
 EDITOR_ONLY_AUTOLOADS = ("MCPRuntime=",)
-LICENSES = ["assets/fonts/OFL.txt", "assets/fonts/PixelifySans-OFL.txt", "assets/audio/sfx/LICENSE_Kenney.txt"]
+LICENSES = ["assets/fonts/Jersey-OFL.txt", "assets/fonts/OFL.txt", "assets/audio/sfx/LICENSE_Kenney.txt"]
 
 README = """Dream Dive v{version}
 =====================

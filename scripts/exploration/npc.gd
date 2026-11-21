@@ -46,7 +46,8 @@ func _ready() -> void:
 	shape.shape = CircleShape2D.new()
 	shape.shape.radius = RADIUS
 	add_child(shape)
-	marker.add_theme_font_size_override("font_size", 16)
+	marker.theme_type_variation = &"PixelTitle"
+	marker.add_theme_font_size_override("font_size", 20)
 	marker.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.1))
 	marker.add_theme_constant_override("outline_size", 4)
 	marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

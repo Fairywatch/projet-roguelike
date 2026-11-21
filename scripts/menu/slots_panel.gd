@@ -14,12 +14,12 @@ func build() -> void:
 		var current := i == GameState.slot
 		var label := "%d  -  %s%s" % [i + 1, summary if summary != "" else "Vide : nouvelle partie", "   (en cours)" if current else ""]
 		var choose := add_button(label, _select.bind(i))
-		choose.add_theme_font_size_override("font_size", 11)
+		choose.add_theme_font_size_override("font_size", 15)
 		if current:
 			choose.add_theme_color_override("font_color", Color(1, 0.9, 0.55))
 		var erase_label := "Appuie encore pour effacer la sauvegarde %d" % (i + 1) if confirm_erase == i else "Effacer la sauvegarde %d" % (i + 1)
 		var erase := add_button(erase_label, _erase.bind(i))
-		erase.add_theme_font_size_override("font_size", 9)
+		erase.add_theme_font_size_override("font_size", 15)
 		erase.custom_minimum_size.y = 16
 		erase.disabled = summary == ""
 		if confirm_erase == i:

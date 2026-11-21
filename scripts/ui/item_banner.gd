@@ -22,6 +22,7 @@ static func show_item(id: String) -> void:
 func _ready() -> void:
 	add_to_group("item_banner")
 	layer = 50
+	Paper.apply(panel)
 	panel.add_child(ItemCard.make(item_id, true))
 	panel.modulate.a = 0.0
 	add_child(panel)
