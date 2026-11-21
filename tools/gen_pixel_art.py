@@ -1975,3 +1975,12 @@ def main():
 if __name__ == "__main__":
     import sys
     projectiles() if sys.argv[1:] == ["projectiles"] else main()
+    # Les creatures et les projectiles redessines (modeles, animes) remplacent ceux d'ici.
+    import gen_projectiles
+    import mob_art
+    import night_projectiles
+    mob_art.main()
+    gen_projectiles.SETS.update(night_projectiles.SETS)
+    for night, makers in gen_projectiles.SETS.items():
+        for name, make in makers.items():
+            make().save(os.path.join(gen_projectiles.OUT, night, name + ".png"))

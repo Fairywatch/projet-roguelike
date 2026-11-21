@@ -6,7 +6,6 @@ signal hp_changed(hp: int)
 
 const HP_BAR_WIDTH := 30.0
 const STUN_COLOR := Color(0.55, 0.6, 1.0, 1)
-const ANIM_FRAMES := 2
 const ANIM_FPS := 3.0
 const HurtboxScript := preload("res://scripts/combat/hurtbox.gd")
 # Variantes (docs/bestiaire.md) : cauchemar sur les etages cauchemar, elite rare.
@@ -45,19 +44,21 @@ var elite := false      # variante elite : plus grosse, aura, plus de PV, meille
 var alt := false        # variante de comportement : autre attaque (voir chaque creature)
 var invulnerable := false
 var auto_frames := true  # false : le script choisit lui-meme l'image (ex. paupiere ouverte/fermee)
+var frames := MobFrames.DEFAULT  # images de la bande du sprite (MobFrames : 4 pour les creatures redessinees)
 
 # Les creatures du bestiaire n'ont pas de scene : on construit sprite, collision et hurtbox ici.
 func _enter_tree() -> void:
 	if has_node("Sprite"):
 		return
 	var texture: Texture2D = load(_texture_path())
+	frames = MobFrames.count(_texture_path())
 	var sprite_node := Sprite2D.new()
 	sprite_node.name = "Sprite"
 	sprite_node.texture = texture
 	sprite_node.scale = Vector2(2, 2)
 	add_child(sprite_node)
 	var shape := RectangleShape2D.new()
-	shape.size = Vector2(texture.get_width() / ANIM_FRAMES, texture.get_height()) * 2.0 * 0.8
+	shape.size = Vector2(texture.get_width() / frames, texture.get_height()) * 2.0 * 0.8
 	var body := CollisionShape2D.new()
 	body.name = "CollisionShape2D"
 	body.shape = shape
@@ -89,7 +90,7 @@ func spawn_ally(path: String, pos: Vector2, props: Dictionary = {}) -> BaseMob:
 func set_display_scale(factor: float) -> void:
 	sprite.scale = Vector2.ONE * factor
 	var shape := RectangleShape2D.new()
-	shape.size = Vector2(sprite.texture.get_width() / ANIM_FRAMES, sprite.texture.get_height()) * factor * 0.8
+	shape.size = Vector2(sprite.texture.get_width() / frames, sprite.texture.get_height()) * factor * 0.8
 	$CollisionShape2D.shape = shape
 	$Hurtbox/CollisionShape2D.shape = shape
 
@@ -160,7 +161,7 @@ func _ready() -> void:
 	# Vue de dessus : sinon Godot traite le joueur comme un sol et le mob pose dessus le suit.
 	motion_mode = MOTION_MODE_FLOATING
 	base_color = sprite.modulate
-	sprite.hframes = ANIM_FRAMES
+	sprite.hframes = frames
 	sprite.material = Fx.make_flash_material()
 	player = get_tree().get_first_node_in_group("player")
 	_on_ready()
@@ -203,12 +204,12 @@ func _process(delta: float) -> void:
 	hit_kick = hit_kick.lerp(Vector2.ZERO, 1.0 - exp(-16.0 * delta))
 	sprite.position = Vector2(round(hit_kick.x), round(sin(bob_time * 5.0) * 1.5 + hit_kick.y))
 	if auto_frames:
-		sprite.frame = int(bob_time * ANIM_FPS) % ANIM_FRAMES
+		sprite.frame = int(bob_time * MobFrames.fps(frames)) % frames
 	queue_redraw()
 
 func _draw() -> void:
 	var half := _sprite_half_height()
-	var body_width := sprite.texture.get_width() / ANIM_FRAMES * sprite.scale.x * 0.8
+	var body_width := sprite.texture.get_width() / frames * sprite.scale.x * 0.8
 	Fx.draw_shadow(self, half, body_width)
 	if state == State.TELEGRAPH:
 		_draw_telegraph(half, body_width)

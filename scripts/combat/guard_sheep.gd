@@ -28,7 +28,7 @@ func _ready() -> void:
 	shape.shape.radius = 11.0
 	add_child(shape)
 	sprite.texture = SheepTexture
-	sprite.hframes = BaseMob.ANIM_FRAMES
+	sprite.hframes = MobFrames.count(SheepTexture.resource_path)
 	sprite.scale = Vector2(1.1, 1.1)
 	sprite.modulate = Color(1, 0.98, 0.9)
 	add_child(sprite)
@@ -65,7 +65,7 @@ func _physics_process(delta: float) -> void:
 
 func _process(_delta: float) -> void:
 	if dizzy <= 0.0:
-		sprite.frame = int(Time.get_ticks_msec() / 300) % BaseMob.ANIM_FRAMES
+		sprite.frame = int(Time.get_ticks_msec() / 160) % sprite.hframes
 
 # Tir ennemi (projectile qui peut blesser) ; pas les plumes ni les billes du joueur.
 static func _is_enemy_shot(area: Area2D) -> bool:

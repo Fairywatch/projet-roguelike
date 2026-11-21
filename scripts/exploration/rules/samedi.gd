@@ -37,7 +37,7 @@ func _spawn_silhouettes() -> void:
 			return
 		var figure := Sprite2D.new()
 		figure.texture = SilhouetteTexture
-		figure.hframes = 2
+		figure.hframes = MobFrames.count(SilhouetteTexture.resource_path)
 		figure.scale = Vector2(2, 2)
 		figure.modulate = Color(0.15, 0.15, 0.25, 0.55)
 		figure.position = map._cell_to_world(cells.pop_at(rng.randi() % cells.size()))

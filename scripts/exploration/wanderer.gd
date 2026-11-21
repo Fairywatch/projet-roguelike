@@ -37,6 +37,7 @@ var grace := GRACE
 var alert := 0.0  # le "!" qui surgit quand il te repere
 var bob := randf() * TAU
 var done := false
+var frames := MobFrames.DEFAULT
 
 func _ready() -> void:
 	add_to_group("wanderers")
@@ -49,8 +50,9 @@ func _ready() -> void:
 	add_child(shape)
 	var mob := Bestiary.make(path)
 	sprite.texture = load(mob._texture_path())
+	frames = MobFrames.count(mob._texture_path())
 	mob.free()
-	sprite.hframes = BaseMob.ANIM_FRAMES
+	sprite.hframes = frames
 	sprite.scale = Vector2(2, 2)
 	sprite.modulate = TINT
 	add_child(sprite)
@@ -131,7 +133,7 @@ func _pick_target() -> void:
 
 func _process(delta: float) -> void:
 	bob += delta
-	sprite.frame = int(bob * BaseMob.ANIM_FPS) % BaseMob.ANIM_FRAMES
+	sprite.frame = int(bob * MobFrames.fps(frames)) % frames
 	sprite.position.y = round(sin(bob * 4.0) * 2.0) - 4.0
 	sprite.flip_h = facing.x < 0.0
 	queue_redraw()

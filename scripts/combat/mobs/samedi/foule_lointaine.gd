@@ -28,7 +28,7 @@ func _on_ready() -> void:
 	for i in 10 if nightmare else 7:
 		var someone := Sprite2D.new()
 		someone.texture = sprite.texture
-		someone.hframes = ANIM_FRAMES
+		someone.hframes = frames
 		someone.scale = sprite.scale
 		crowd.append(someone)
 		get_parent().add_child.call_deferred(someone)
@@ -46,6 +46,9 @@ func _mingle() -> void:
 
 func _process(delta: float) -> void:
 	super(delta)
+	for i in crowd.size():  # la foule s'anime aussi, chacun a son rythme : le vrai ne se distingue pas
+		if is_instance_valid(crowd[i]):
+			crowd[i].frame = (sprite.frame + i + 1) % frames
 	var p := Hazards.player()
 	if p == null or state == State.DEAD:
 		return

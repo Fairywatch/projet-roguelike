@@ -28,7 +28,7 @@ func _on_ready() -> void:
 	for i in 3 if nightmare else 2:
 		var copy := Sprite2D.new()
 		copy.texture = sprite.texture
-		copy.hframes = ANIM_FRAMES
+		copy.hframes = frames
 		copy.frame = 1
 		copy.scale = sprite.scale
 		reflections.append(copy)

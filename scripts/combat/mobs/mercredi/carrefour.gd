@@ -26,7 +26,7 @@ func _on_ready() -> void:
 		for i in 2:
 			var decoy := Sprite2D.new()
 			decoy.texture = sprite.texture
-			decoy.hframes = ANIM_FRAMES
+			decoy.hframes = frames
 			decoy.scale = sprite.scale
 			decoy.position = Hazards.clamp_to_arena(position + Vector2.from_angle(TAU * (i + 1) / 3.0) * 180.0)
 			decoys.append(decoy)
@@ -55,6 +55,13 @@ func _on_attack_end() -> void:
 	for i in decoys.size():
 		if is_instance_valid(decoys[i]):
 			decoys[i].global_position = spots[i + 1]
+
+# Les leurres s'animent avec le vrai : seul le tir les distingue.
+func _process(delta: float) -> void:
+	super(delta)
+	for decoy in decoys:
+		if is_instance_valid(decoy):
+			decoy.frame = sprite.frame
 
 func _on_death() -> void:
 	for decoy in decoys:
