@@ -30,7 +30,7 @@ static func night() -> String:
 	var state: Node = (Engine.get_main_loop() as SceneTree).root.get_node_or_null("GameState")
 	if state == null or not state.run_started:
 		return ""
-	return str(state.tower().get("id", ""))
+	return str(state.night())
 
 static func pattern() -> int:
 	return PATTERNS.get(night(), 0)

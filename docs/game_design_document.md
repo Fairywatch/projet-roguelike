@@ -54,7 +54,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, cauchema
 - **Styles d'attaque** : certains passifs remplacent le coup de base par une autre façon de se battre. **Un seul style à la fois** : le dernier pris (les autres restent dans l'inventaire). Leur lenteur ne compte que pour le style actif (`PlayerStats.STYLES`). Équilibrés sur le coup de base (enchaînement 1 + 1 + 2 dégâts en ~1,3 s, soit ~3,1 dégâts/s sur une cible) :
   - **Aiguille à tricoter** (estoc) : coups longs et droits, deux fois plus loin, qui transpercent toute une ligne ; un peu plus lents (~2,7/s).
   - **Toupie** : l'attaque fait le tour du joueur, plus courte et plus lente (~2,5/s) ; contre les groupes.
-  - **Lance-pierre** (fronde) : l'attaque tire une bille (portée 300), le 3e coup trois billes ; plus de corps à corps, le plus lent (~2,3/s) en échange de la sécurité. Critiques, soin et ralentissement marchent comme au corps à corps.
+  - **Lance-pierre** (fronde) : l'attaque lance un petit oreiller qui tournoie et crève en plumes (portée 300), le 3e coup trois oreillers ; plus de corps à corps, le plus lent (~2,3/s) en échange de la sécurité. Critiques, soin et ralentissement marchent comme au corps à corps.
   - **Maillet de Morphée** : plus d'enchaînement ; chaque coup est lourd (double dégâts), large, repousse et **assomme** les ennemis ordinaires (pas les boss) ; bien plus lent (~2,6/s).
 - **Autres façons de jouer** : **Pantoufles-fusées** (le dash blesse les ennemis qu'il touche, une fois chacun, et toucher le recharge presque aussitôt ; recharge de base 25 % plus lente) ; **Moutons gardiens** (deux moutons tournent autour du joueur, mordent les ennemis touchés et arrêtent un tir ennemi, puis restent étourdis 3,5 s ; 4 au plus).
 - **Tutoriel** : le tout premier combat du jeu (lundi, étage 0) oppose un seul ennemi d'entraînement, immobile, et demande les gestes un par un (se déplacer, frapper, enchaîner trois coups, dasher, lancer une rafale) ; il se réveille ensuite pour un vrai combat. `scripts/ui/tutorial.gd`.
@@ -74,7 +74,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, cauchema
 
 ## 5. Structure des tours & difficulté
 
-- Chaque tour est indépendante des autres (nuit différente = tour différente) et possède un **nombre limité d'étages** : narrativement, la tour se termine quand le personnage se réveille — pas de tour infinie.
+- Chaque tour est indépendante des autres (nuit différente = tour différente) et possède un **nombre limité d'étages** : narrativement, la tour se termine quand le personnage se réveille. Seule exception, après la première semaine : la **Tour sans fin** (section 6).
 - **Ordre des étages aléatoire** à chaque run, alternant sommeil paradoxal / sommeil profond.
 - **Taille des étages** : petits au début (16×10 cases), de plus en plus grands jusqu'au dernier étage (34×20).
 - **Courbe de difficulté** : +8 % par étage atteint, +15 % en sommeil profond (modificateur de type), plus le bonus propre à la nuit.
@@ -89,7 +89,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, cauchema
 
 - **Menu principal** : Continuer (partie sauvegardée), Choisir une nuit (hub), Sauvegardes, Paramètres.
 - **Trois sauvegardes** indépendantes : chacune garde sa partie en cours et sa méta-progression (pièces, nuits terminées, améliorations, semaine). Le panneau Sauvegardes montre le résumé de chacune ; on en choisit une pour y jouer (le jeu la retient au prochain lancement), ou on l'efface, en deux appuis, pour y commencer une nouvelle partie. Les paramètres et les touches sont communs aux trois.
-- **Hub de la semaine** : un lieu où l'on marche, comme un menu vivant. Les 7 tours y sont alignées du lundi au dimanche, de plus en plus sombres et tordues. On y trouve aussi la Marchande de lune (boutique) et l'horloge du réveil (mode speedrun). Entrer dans une autre nuit que celle en cours demande une confirmation (la partie en cours est abandonnée).
+- **Hub de la semaine** : un lieu où l'on marche, comme un menu vivant. Les 7 tours y sont alignées du lundi au dimanche, de plus en plus sombres et tordues. On y trouve aussi la Marchande de lune (boutique) et l'horloge du réveil (mode speedrun). En contrebas, à l'écart, se dresse la **Tour sans fin**, plus grande, faite d'un morceau de chaque nuit empilé de travers. Entrer dans une autre nuit que celle en cours demande une confirmation (la partie en cours est abandonnée).
 - **Déblocage progressif** : on ne peut entrer dans une nuit qu'après avoir terminé celle de la veille. Les nuits terminées portent une étoile.
 - **Les 7 nuits** (données dans `scripts/towers.gd`) :
 
@@ -108,6 +108,7 @@ Le jeu mêle exploration façon *Pokémon* (déplacement sur une carte, cauchema
 - Chaque nuit a son **bestiaire** (`docs/bestiaire.md`) et ses **deux lieux** (un pour le sommeil paradoxal, un pour le profond), avec tuiles, décors, lumière et une **règle d'étage** qui monte au fil de la nuit (`docs/nuits.md`, produits nuit par nuit).
 - **Normal ou Cauchemar** : en entrant dans une tour, le joueur choisit son mode (`scripts/hub/mode_panel.gd`, gardé dans la sauvegarde). **Normal** : un ennemi de moins par combat (jamais plus de 3), des boss à 80 % de leurs PV qui attaquent 15 % moins souvent, et certains ennemis plus lents à tirer (la Veilleuse fatiguée prévient plus longtemps et ne tire pas juste après s'être rallumée près du joueur). **Cauchemar** : la difficulté d'origine. À ne pas confondre avec les **étages** cauchemar, tirés selon la nuit, qui donnent la variante cauchemar des ennemis.
 - **Mode Speedrun** : un **chrono unique pour toute la nuit** (75 s par étage), qui ne tourne qu'en jeu. À zéro, **le réveil sonne** : la nuit s'arrête, sans récompense. La mort garde sa règle habituelle, et le chrono continue de tourner. Meilleur temps enregistré par nuit.
+- **Tour sans fin** (après la première semaine, quand les sept nuits sont terminées) : un mode de jeu de plus pour qui a fini l'histoire. Pas de dernier étage. Chaque étage prend le lieu d'une nuit tirée au hasard (jamais deux fois de suite la même), avec sa règle d'étage, et des **créatures de toutes les nuits mélangées**. Sur les 9 premiers étages, elle monte comme une nuit (taille des étages, règle, butin) ; ensuite la difficulté continue de grimper (+30 % au départ, +8 % par étage, moitié moins après l'étage 18 ; pas de bonus de semaine), et la part d'étages cauchemar passe de 30 % à 95 %. Un boss de portail tous les 3 étages (de n'importe quelle nuit), le **boss final** d'une nuit tous les 9. Pas de plongée vers les profondeurs ni de speedrun. **La mort met fin à la partie** : 3 pièces par étage atteint, et le **record d'étage** est gardé (montré au hub et sur la carte). `GameState.is_endless()`, `Towers.ENDLESS`.
 
 ---
 

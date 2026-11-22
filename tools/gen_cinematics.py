@@ -739,6 +739,85 @@ HUB_SCALE = 0.7  # les tours du hub, un peu plus petites que dans la cinematique
 DAY_IDS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
 
+ENDLESS_SIZE = (110, 260)
+# Morceau de chaque nuit, du lundi (en bas) au dimanche (en haut) : mur, cote eclaire, fenetre.
+ENDLESS_FLOORS = [
+    ((150, 136, 214), (172, 160, 230), (255, 214, 140)),
+    ((176, 130, 70), (200, 154, 90), (255, 214, 140)),
+    ((150, 186, 220), (200, 224, 244), (220, 236, 255)),
+    ((118, 120, 132), (146, 148, 160), (255, 170, 80)),
+    ((196, 152, 98), (226, 196, 136), (255, 214, 140)),
+    ((226, 220, 206), (240, 236, 226), (150, 160, 220)),
+    ((40, 22, 40), (60, 36, 58), (255, 70, 80)),
+]
+
+
+def endless_tower():
+    """Tour sans fin : plus grande, faite d'un morceau de chaque nuit empile de travers, un escalier
+    d'or qui s'enroule autour, et un sommet qui se defait en eclats jusque dans les etoiles."""
+    L = Layer(size=ENDLESS_SIZE)
+    cx, foot = 55, 254
+    L.soft(lambda d: d.ellipse(S(cx - 50, 40, cx + 50, foot + 4), fill=(140, 100, 220, 70)), 12)  # aura
+    L.soft(lambda d: d.ellipse(S(cx - 44, foot - 14, cx + 44, foot + 4), fill=(90, 80, 150, 200)), 3)  # nuage
+    seg_h = 25
+    shifts = [0, 4, -3, 5, -4, 3, -2]
+    y = foot - 6
+    tops = []
+    for i, (wall, lit, glow) in enumerate(ENDLESS_FLOORS):
+        w = 30 - i * 2.2
+        x = cx + shifts[i]
+        tilt = (-1.5, 1.5)[i % 2]  # chaque nuit penche un peu, de l'autre cote que la precedente
+        y1 = y - seg_h
+        body = [(x - w + tilt, y1), (x + w + tilt, y1), (x + w, y), (x - w, y)]
+        if i == 0:  # lundi : doux comme un oreiller
+            L.rect((x - w, y1, x + w, y), wall, r=7)
+            L.rect((x - w, y1, x - w + 9, y), lit, r=6)
+        else:
+            L.poly(body, wall)
+            L.poly([(x - w + tilt, y1), (x - w + 8 + tilt, y1), (x - w + 8, y), (x - w, y)], lit)
+        if i == 3:  # jeudi : la bande de braise de l'usine
+            L.rect((x - w + 0.5, y - 9, x + w - 0.5, y - 6), (226, 132, 48))
+        if i == 4:  # vendredi : le scotch du carton
+            L.rect((x - 2, y1, x + 2, y), (232, 206, 150))
+        # l'escalier d'or s'enroule devant, d'un bord a l'autre (sous les fenetres)
+        a, b = ((x - w, y - 3), (x + w + tilt, y1 + 4)) if i % 2 == 0 else ((x + w, y - 3), (x - w + tilt, y1 + 4))
+        L.line([a, b], (120, 84, 40), 3.2)
+        L.line([a, b], (240, 200, 110), 1.8)
+        for t in (0.2, 0.4, 0.6, 0.8):
+            px, py = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+            L.line([(px, py - 2), (px, py + 1)], (255, 236, 170), 0.8)
+        L.rect((x - w - 2 + tilt, y1 - 2, x + w + 2 + tilt, y1 + 1), (30, 24, 48))  # corniche
+        wx = x + (7 if i % 2 else -7)
+        if i == 0:  # la porte, en arc, au pied de la tour
+            L.rect((x - 8, y - 19, x + 8, y), (24, 18, 40), r=7)
+            L.rect((x - 6, y - 17, x + 6, y), (255, 200, 120), r=6)
+        elif i == 1:  # mardi : un cadran d'horloge
+            L.ellipse((wx - 7, y1 + 5, wx + 7, y1 + 19), (60, 40, 30))
+            L.ellipse((wx - 6, y1 + 6, wx + 6, y1 + 18), (240, 230, 206))
+            L.line([(wx, y1 + 12), (wx, y1 + 8)], (60, 40, 30), 1.2)
+            L.line([(wx, y1 + 12), (wx + 3, y1 + 13)], (60, 40, 30), 1.2)
+        elif i == 5:  # samedi : une fenetre en arc, eteinte
+            L.rect((wx - 4, y1 + 5, wx + 4, y1 + 19), glow, r=4)
+        else:
+            L.rect((wx - 4, y1 + 7, wx + 4, y1 + 17), glow, r=2)
+        tops.append((x + tilt, y1, w))
+        y = y1 - 2
+    # Le sommet ne finit pas : des morceaux de nuits s'en detachent et montent, de plus en plus petits.
+    tx, ty, tw = tops[-1]
+    shards = [(tx - 4, ty - 12, 11, 7, 4, 220), (tx + 9, ty - 26, 8, 6, 1, 190), (tx - 10, ty - 40, 7, 5, 2, 160),
+              (tx + 4, ty - 54, 5, 4, 5, 130), (tx - 3, ty - 66, 4, 3, 0, 100)]
+    for sx, sy, sw, sh, day, alpha in shards:
+        wall, lit, _ = ENDLESS_FLOORS[day]
+        L.rect((sx - sw / 2, sy - sh / 2, sx + sw / 2, sy + sh / 2), wall + (alpha,), r=1)
+        L.rect((sx - sw / 2, sy - sh / 2, sx - sw / 2 + 2, sy + sh / 2), lit + (alpha,))
+    rng = random.Random(77)
+    for _ in range(22):
+        sx, sy = rng.uniform(cx - 40, cx + 40), rng.uniform(4, ty - 10)
+        r = rng.choice([0.5, 0.7, 1.0])
+        L.ellipse((sx - r, sy - r, sx + r, sy + r), (230, 220, 255, rng.randint(120, 255)))
+    return L.done()
+
+
 def hub_towers():
     """Les tours du hub reprennent celles de la cinematique (meme dessin, recadre)."""
     for day, night in enumerate(DAY_IDS):
@@ -746,6 +825,8 @@ def hub_towers():
         draw_tower(L, day, True, k=HUB_SCALE)  # redessinee a la bonne taille : reste nette
         img = L.done()
         img.crop(img.getbbox()).save(os.path.join(HUB_DIR, "tower_%s.png" % night))
+    img = endless_tower()
+    img.crop(img.getbbox()).save(os.path.join(HUB_DIR, "tower_sans_fin.png"))
 
 
 def horizon():

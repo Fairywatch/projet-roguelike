@@ -40,8 +40,8 @@ const SPIN_EXTRA := 12.0        # toupie : rayon = portee + SPIN_EXTRA, tout aut
 const MALLET_SCALE := 1.7       # maillet : zone du coup agrandie
 const MALLET_STUN := 0.45       # maillet : assomme les ennemis ordinaires (pas les boss)
 const MALLET_PUSH := 30.0
-const PELLET_RANGE := 300.0     # fronde : portee de la bille (+3 px par point de portee en plus)
-const PELLET_SPREAD := 0.26     # fronde : ecart des trois billes du 3e coup
+const PELLET_RANGE := 300.0     # fronde : portee de l'oreiller (+3 px par point de portee en plus)
+const PELLET_SPREAD := 0.26     # fronde : ecart des trois oreillers du 3e coup
 # Pantoufles-fusees : le dash blesse ; un ennemi touche ramene la recharge a cette part au plus.
 const DASH_HIT_RADIUS := 44.0  # demi-taille du joueur + celle d'un ennemi moyen : il bute contre eux
 const DASH_HIT_REFUND := 0.35
@@ -228,7 +228,7 @@ func _draw_slash() -> void:
 	var sweep := 1.0 - pow(1.0 - minf(t * 1.6, 1.0), 3.0)
 	var fade := 1.0 - maxf(0.0, t - 0.45) / 0.55
 	var angle := facing.angle()
-	if style == "fronde":  # eclair au depart de la bille
+	if style == "fronde":  # eclair au depart de l'oreiller
 		draw_circle(facing * 16.0, 7.0 * fade, Color(1, 1, 0.9, fade))
 		return
 	if style == "toupie":  # le coup fait le tour du joueur
@@ -440,7 +440,7 @@ func _try_attack() -> void:
 	Sound.play("slash")
 	slash_timer = ATTACK_DURATION
 	last_attack_time = Time.get_ticks_msec() / 1000.0
-	if style == "fronde":  # pas de coup au corps a corps : une bille (trois au 3e coup)
+	if style == "fronde":  # pas de coup au corps a corps : un oreiller (trois au 3e coup)
 		_shoot_pellets(finisher)
 		attacked.emit(global_position + facing * strike_reach)
 		return
@@ -471,7 +471,7 @@ func _shape_strike(finisher: bool, dash_strike: bool) -> void:
 			var size := MALLET_SCALE if style == "maillet" else (1.45 if finisher else (1.2 if dash_strike else 1.0))
 			attack_hitbox.scale = Vector2.ONE * size
 
-# Fronde : la bille part devant ; au 3e coup, trois billes en eventail.
+# Fronde : l'oreiller part devant ; au 3e coup, trois oreillers en eventail.
 func _shoot_pellets(finisher: bool) -> void:
 	var shot := {}
 	for offset in ([-PELLET_SPREAD, 0.0, PELLET_SPREAD] if finisher else [0.0]):
@@ -591,7 +591,7 @@ func _heal(amount: int) -> void:
 func _on_attack_area_entered(area: Area2D) -> void:
 	apply_hit(area, strike_damage, strike_kind == "finisher" or strike_kind == "heavy", facing)
 
-# Un coup du joueur (corps a corps, bille, dash) : critique, son, secousse, recul, ralentissement,
+# Un coup du joueur (corps a corps, oreiller, dash) : critique, son, secousse, recul, ralentissement,
 # soin. heavy : coup fort (3e coup, maillet).
 func apply_hit(area: Node, damage: int, heavy: bool, direction: Vector2) -> void:
 	if not area.has_method("register_hit"):

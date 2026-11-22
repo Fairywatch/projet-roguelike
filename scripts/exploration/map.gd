@@ -51,12 +51,12 @@ func _ready() -> void:
 	$UI.add_child(hud)
 	message_label = hud.toast.label
 	var floor_meta := GameState.current_floor()
-	night = GameState.tower()["id"]
+	night = GameState.night()
 	DreamTheme.set_family(floor_meta["family"])
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = floor_meta["seed"]
-	var size_ratio := float(abs(GameState.floor_index)) / (GameState.floor_count() - 1)
+	var size_ratio := GameState.size_ratio()
 	var floor_data := FloorGenerator.generate(floor_meta["family"], floor_meta["intensity"], rng, size_ratio)
 	family = floor_meta["family"]
 
@@ -72,7 +72,7 @@ func _ready() -> void:
 	_spawn_npc(floor_data, floor_meta)
 	_spawn_decor(floor_data, floor_meta["seed"])
 	_setup_ambience(floor_data)
-	hud.set_place("%s  -  Étage %d / %d\n%s" % [GameState.tower()["name"], GameState.floor_index, GameState.floor_count() - 1, FAMILY_NAMES[floor_meta["family"]]])
+	hud.set_place(place_text(floor_meta["family"]))
 	$UI.add_child(InventoryPanel.new())
 	$UI.add_child(SpeedrunTimer.new())
 
@@ -109,9 +109,17 @@ func _ready() -> void:
 			await get_tree().create_timer(MESSAGE_DURATION + 0.3, false).timeout
 		_show_message(WANDERER_HINT)
 
+# Nom du lieu dans le HUD. Tour sans fin : pas de dernier etage, mais le record et la nuit du lieu.
+func place_text(floor_family: int) -> String:
+	if GameState.is_endless():
+		var record := "  (record %d)" % GameState.endless_best if GameState.endless_best >= 0 else ""
+		var place: String = Towers.LIST.filter(func(t): return t["id"] == night).front()["name"]
+		return "%s  -  Étage %d%s\n%s  ·  %s" % [GameState.tower()["name"], GameState.floor_index, record, place, FAMILY_NAMES[floor_family]]
+	return "%s  -  Étage %d / %d\n%s" % [GameState.tower()["name"], GameState.floor_index, GameState.floor_count() - 1, FAMILY_NAMES[floor_family]]
+
 # La regle monte au fil de la nuit : 0 au premier etage, 1 au dernier (et dans les profondeurs).
 static func rule_strength() -> float:
-	return clampf(absf(GameState.floor_index) / maxf(1.0, GameState.floor_count() - 1.0), 0.0, 1.0)
+	return GameState.night_progress()
 
 func _start_rule(floor_meta: Dictionary, floor_data) -> void:
 	rule = Places.rule(night)
@@ -173,7 +181,7 @@ func _spawn_floor_exit(floor_data) -> void:
 	exit.position = exit_position
 	generated_root.add_child(exit)
 
-	if GameState.floor_index == 0 and GameState.negative_dive_available:
+	if GameState.floor_index == 0 and GameState.negative_dive_available and not GameState.is_endless():
 		var descent: Area2D = FloorExitScene.instantiate()
 		descent.force_descend = true
 		descent.position = _cell_to_world(floor_data.secondary_cell)
@@ -400,7 +408,7 @@ func _spawn_wanderers(floor_data, floor_meta: Dictionary, size_ratio: float) -> 
 	var cells: Array = floor_data.floor_cells.keys()
 	var far := cells.filter(func(c: Vector2i): return _cell_to_world(c).distance_to(player.global_position) >= WANDERER_MIN_DISTANCE and c != floor_data.exit_cell)
 	far.shuffle()
-	var creatures: Array = Bestiary.NIGHTS[night]["creatures"]
+	var creatures: Array = Bestiary.creatures(GameState.mob_night())
 	for i in mini(alive, far.size()):
 		var wanderer := DreamWanderer.new()
 		wanderer.path = creatures.pick_random()

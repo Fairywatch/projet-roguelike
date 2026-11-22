@@ -224,9 +224,42 @@ def motifs(rows_list, name):
     print("motifs", name, img.size)
 
 
+# --- Le reveur ---------------------------------------------------------------------------------
+
+def oreiller():
+    """Petit oreiller du Lance-pierre (scripts/combat/pellet.gd, assets/sprites/player/) : il tournoie d'un huitieme de tour
+    par image (symetrique : 4 images font un demi-tour, la boucle ne saute pas), coins pointus, bords
+    creuses, bouton au centre et plis qui partent des coins."""
+    from proj_art import blank, dots, hexc, ink, mask_of, ramp, rot, shade, strip as strip_of
+    size = 16
+    c = 7.5
+    linen = ramp("6f6aa8", "aeaadc", "e2e0f6", "ffffff")
+    a, b = 5.6, 3.9
+    body = []  # rectangle bombe (super-ellipse), avec une petite pointe a chaque coin
+    for i in range(48):
+        t = i / 48 * math.tau
+        ct, st = math.cos(t), math.sin(t)
+        k = 1.0 + 0.32 * max(0.0, abs(math.sin(2 * t)) - 0.86) / 0.14  # pointe vers 45 degres
+        body.append((c + a * k * math.copysign(abs(ct) ** 0.6, ct), c + b * k * math.copysign(abs(st) ** 0.6, st)))
+    tips = [(sx, sy) for sx in (-1, 1) for sy in (-1, 1)]
+
+    def make(f):
+        img = blank(size)
+        angle = f * math.pi / 4
+        shade(img, mask_of(size, [rot(body, angle, c, c)]), linen)
+        for sx, sy in tips:  # plis : des coins vers le centre
+            dots(img, rot([(c + sx * 4.2, c + sy * 2.7), (c + sx * 3.2, c + sy * 2.0)], angle, c, c), linen[1])
+        dots(img, rot([(c, c)], angle, c, c), hexc("7f95c9"))  # le bouton
+        ink(img, hexc("2e2a58"))
+        return img
+    return strip_of(size, FRAMES, make)
+
+
 SETS = {
     "lundi": {"veilleuse": veilleuse, "reveil_grincheux": reveil_grincheux},
 }
+# Les tirs du reveur vont avec ses sprites (projectiles/<nuit>/ ne garde que ceux des mobs).
+PLAYER_OUT = os.path.join(os.path.dirname(__file__), "..", "assets", "sprites", "player")
 
 if __name__ == "__main__":
     import night_projectiles
@@ -240,3 +273,5 @@ if __name__ == "__main__":
             img = make()
             img.save(os.path.join(OUT, night, name + ".png"))
             print(night, name, img.size)
+    oreiller().save(os.path.join(PLAYER_OUT, "oreiller.png"))
+    print("reveur oreiller")

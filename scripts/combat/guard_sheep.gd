@@ -67,6 +67,6 @@ func _process(_delta: float) -> void:
 	if dizzy <= 0.0:
 		sprite.frame = int(Time.get_ticks_msec() / 160) % sprite.hframes
 
-# Tir ennemi (projectile qui peut blesser) ; pas les plumes ni les billes du joueur.
+# Tir ennemi (projectile qui peut blesser) ; pas les plumes ni les oreillers du joueur.
 static func _is_enemy_shot(area: Area2D) -> bool:
 	return area.get("harmless") == false and not area.is_queued_for_deletion()

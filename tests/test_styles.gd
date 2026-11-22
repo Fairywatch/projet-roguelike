@@ -87,7 +87,7 @@ func _initialize() -> void:
 	assert(back.hp == 98 and side.hp == 98)
 	await _clear()
 
-	# Fronde (Lance-pierre) : une bille touche de loin ; pas de coup au corps a corps.
+	# Fronde (Lance-pierre) : un oreiller touche de loin ; pas de coup au corps a corps.
 	_take(a, "lance_pierre")
 	var target = _dummy(a, Vector2(220, 0))
 	await _swing(a, Vector2.RIGHT, 40)

@@ -53,7 +53,7 @@ func _ready() -> void:
 
 	var floor_meta := GameState.current_floor()
 	DreamTheme.set_family(floor_meta["family"])
-	var night: String = GameState.tower()["id"]
+	var night: String = GameState.night()
 	background.veiled = true
 	background.setup(floor_meta["family"], floor_meta["intensity"], night)
 	var ambient := CanvasModulate.new()
@@ -120,10 +120,10 @@ func _on_player_hp_changed(hp: int) -> void:
 
 # Ennemis du combat (pas encore dans l'arbre), tires du bestiaire de la nuit (scripts/combat/bestiary.gd).
 func _pick_mobs() -> Array:
-	var night: String = GameState.tower()["id"]
+	var night: String = GameState.mob_night()
 	var nightmare_floor: bool = GameState.current_floor()["intensity"] == FloorGenerator.Intensity.CAUCHEMAR
 	if GameState.guardian_fight:
-		if GameState.is_last_floor() and not GameState.guardian_exit_down:
+		if (GameState.is_last_floor() and not GameState.guardian_exit_down) or GameState.endless_final_guardian():
 			picked_boss = true
 			return [Bestiary.final_boss(night)]
 		if GameState.floor_has_boss():
@@ -145,7 +145,7 @@ func _pick_mobs() -> Array:
 
 # Meme progression que la regle sur la carte : 0 au premier etage, 1 au dernier.
 func rule_strength() -> float:
-	return clampf(absf(GameState.floor_index) / maxf(1.0, GameState.floor_count() - 1.0), 0.0, 1.0)
+	return GameState.night_progress()
 
 func _encounter_size() -> int:
 	var size := mini(MAX_MOBS, 2 + abs(GameState.floor_index) / FLOORS_PER_EXTRA_MOB + randi() % 2)

@@ -73,7 +73,7 @@ const PASSIVES := [
 	# lenteur est dans PlayerStats.STYLES : elle ne compte que pour le style actif.
 	{"id": "aiguille_a_tricoter", "name": "Aiguille à tricoter", "desc": "Style estoc : coups longs et droits qui transpercent toute une ligne (un peu plus lents)", "mods": {}, "style": "estoc", "rarity": RARE, "tier": "A"},
 	{"id": "toupie", "name": "Toupie", "desc": "Style toupie : l'attaque tourne tout autour de toi, plus courte et plus lente", "mods": {}, "style": "toupie", "rarity": RARE, "tier": "B"},
-	{"id": "lance_pierre", "name": "Lance-pierre", "desc": "Style fronde : l'attaque tire une bille de loin, le 3e coup trois billes (plus lent, pas de corps à corps)", "mods": {}, "style": "fronde", "rarity": RARE, "tier": "A"},
+	{"id": "lance_pierre", "name": "Lance-pierre", "desc": "Style fronde : l'attaque lance un petit oreiller de loin, le 3e coup trois oreillers (plus lent, pas de corps à corps)", "mods": {}, "style": "fronde", "rarity": RARE, "tier": "A"},
 	{"id": "maillet_de_morphee", "name": "Maillet de Morphée", "desc": "Style maillet : un seul coup lourd et large, double dégâts, assomme (bien plus lent, pas d'enchaînement)", "mods": {}, "style": "maillet", "rarity": RARE, "tier": "B"},
 	# Deplacement et defense autrement.
 	{"id": "pantoufles_fusees", "name": "Pantoufles-fusées", "desc": "Le dash blesse les ennemis qu'il touche, et toucher le recharge (recharge de base 25 % plus lente)", "mods": {"dash_hits": 1, "dash_cooldown": 0.25}, "rarity": RARE, "tier": "A"},

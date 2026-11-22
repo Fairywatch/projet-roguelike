@@ -51,6 +51,17 @@ const WEEK_DIFFICULTY := 0.25
 const WEEK_REWARD := 0.5
 # Mode speedrun (GDD section 6) : un chrono pour toute la nuit, qui ne tourne qu'en jeu.
 const SPEEDRUN_SECONDS_PER_FLOOR := 75.0
+# Tour sans fin (Towers.ENDLESS) : chaque etage prend le lieu d'une nuit tiree au hasard et des
+# creatures de toutes les nuits. Elle monte comme une nuit sur ENDLESS_RAMP_FLOORS etages (taille
+# des etages, regle du lieu, butin), puis la difficulte continue de grimper, deux fois moins vite
+# apres ENDLESS_LATE_FLOOR. Un boss tous les 3 etages, un boss final tous les 9. La mort met fin a
+# la partie : des pieces par etage atteint, et le record d'etage est garde.
+const ENDLESS_RAMP_FLOORS := 9
+const ENDLESS_FINAL_EVERY := 9
+const ENDLESS_LATE_FLOOR := 18
+const ENDLESS_NIGHTMARE_PER_FLOOR := 0.05
+const ENDLESS_NIGHTMARE_MAX := 0.95
+const ENDLESS_COINS_PER_FLOOR := 3
 const GAMEPLAY_SCENES := ["Map", "CombatArena"]
 
 const MENU_PATH := "res://scenes/menu/MainMenu.tscn"
@@ -65,7 +76,7 @@ const SAVED_FIELDS := [
 	"boss_history", "nightmare_mode", "curses", "legendaries_seen", "run_stats",
 ]
 const META_FIELDS := ["coins", "unlocked_towers", "completed_towers", "start_bag", "shop_offers", "best_times", "intro_seen", "wanderer_hint_seen",
-	"upgrades", "week", "tutorial_done"]
+	"upgrades", "week", "tutorial_done", "endless_best"]
 
 var save_path := "user://run.save"
 var meta_path := "user://meta.save"
@@ -137,6 +148,7 @@ var cutscene_next: String = MENU_PATH
 var start_bag: Array = []  # passifs achetes hors partie, donnes au debut de la prochaine nuit
 var shop_offers: Array = []  # ids proposes par la boutique ; "" = deja vendu
 var best_times: Dictionary = {}  # id de tour -> meilleur temps en mode speedrun (secondes)
+var endless_best := -1  # record de la tour sans fin : etage atteint (-1 : jamais jouee)
 var pad_watch: PadWatch
 
 # Les aides a l'ecran montrent les boutons de l'appareil utilise en dernier (clavier ou manette) :
@@ -291,7 +303,9 @@ func apply_combat_death() -> void:
 	note("deaths")
 	in_combat = false
 	guardian_fight = false
-	if floor_index < 0:
+	if is_endless():
+		end_endless_run()
+	elif floor_index < 0:
 		apply_negative_death()
 	else:
 		apply_death_setback()
@@ -332,8 +346,12 @@ func get_or_create_floor_data(index: int) -> Dictionary:
 		floor_data_by_index[index] = {
 			"seed": randi(),
 			"family": randi() % 2,
-			"intensity": FloorGenerator.Intensity.CAUCHEMAR if randf() < tower()["nightmare_chance"] else FloorGenerator.Intensity.REVE,
+			"intensity": FloorGenerator.Intensity.CAUCHEMAR if randf() < _nightmare_chance(index) else FloorGenerator.Intensity.REVE,
 		}
+		if is_endless():  # le lieu d'une nuit, jamais le meme que l'etage d'en dessous
+			var below: String = floor_data_by_index.get(index - 1, {}).get("night", "")
+			var nights := Towers.LIST.map(func(t): return t["id"]).filter(func(id): return id != below)
+			floor_data_by_index[index]["night"] = nights.pick_random()
 	var data: Dictionary = floor_data_by_index[index]
 	# Les compteurs sont completes a chaque lecture : un etage enregistre avant l'ajout d'une cle
 	# (partie commencee avec une version plus ancienne du jeu) la recoit ici au lieu de planter.
@@ -345,10 +363,18 @@ func get_or_create_floor_data(index: int) -> Dictionary:
 func current_floor() -> Dictionary:
 	return get_or_create_floor_data(floor_index)
 
+func _nightmare_chance(index: int) -> float:
+	if is_endless():
+		return minf(ENDLESS_NIGHTMARE_MAX, tower()["nightmare_chance"] + index * ENDLESS_NIGHTMARE_PER_FLOOR)
+	return tower()["nightmare_chance"]
+
 # Palier (numero d'etage, profondeur comprise pour les etages negatifs) + surcouche de type.
 func difficulty() -> float:
 	var family: int = current_floor()["family"]
 	var bonus := PROFOND_DIFFICULTY_BONUS if family == FloorGenerator.Family.PROFOND else 0.0
+	if is_endless():  # pas de bonus de semaine : la tour a sa propre pente
+		var steps := mini(floor_index, ENDLESS_LATE_FLOOR) + maxi(0, floor_index - ENDLESS_LATE_FLOOR) * 0.5
+		return 1.0 + steps * DIFFICULTY_PER_FLOOR + bonus + tower()["difficulty"]
 	return 1.0 + abs(floor_index) * DIFFICULTY_PER_FLOOR + bonus + tower()["difficulty"] + (week - 1) * WEEK_DIFFICULTY
 
 func tower_reward() -> int:
@@ -401,14 +427,49 @@ func needs_tutorial() -> bool:
 func tower() -> Dictionary:
 	return Towers.get_tower(tower_index)
 
+func is_endless() -> bool:
+	return tower_index == Towers.ENDLESS
+
+# La tour sans fin s'ouvre quand la premiere semaine est finie (les sept nuits terminees).
+func endless_unlocked() -> bool:
+	return week >= 2
+
+# Nuit dont l'etage prend le lieu, la regle et les PNJ : celle de la tour, ou celle tiree pour
+# l'etage dans la tour sans fin.
+func night() -> String:
+	if is_endless():
+		return current_floor().get("night", Towers.LIST[0]["id"])
+	return tower()["id"]
+
+# Nuit d'ou viennent les ennemis : toutes a la fois dans la tour sans fin.
+func mob_night() -> String:
+	return Bestiary.ALL if is_endless() else night()
+
 func floor_count() -> int:
 	return tower()["floors"]
 
 func is_last_floor() -> bool:
-	return floor_index == floor_count() - 1
+	return not is_endless() and floor_index == floor_count() - 1
+
+# Avancee dans la nuit, de 0 (premier etage) a 1 (dernier) : regle d'etage, butin, arene. La
+# tour sans fin y arrive en ENDLESS_RAMP_FLOORS etages.
+func night_progress() -> float:
+	return clampf(size_ratio(), 0.0, 1.0)
+
+# Taille de l'etage : comme night_progress, mais depasse 1 dans les profondeurs (etages plus grands).
+func size_ratio() -> float:
+	if is_endless():
+		return minf(1.0, floor_index / float(ENDLESS_RAMP_FLOORS))
+	return absf(floor_index) / maxf(1.0, floor_count() - 1.0)
+
+# Tour sans fin : le portail est garde par le boss final d'une nuit tous les ENDLESS_FINAL_EVERY etages.
+func endless_final_guardian(index: int = floor_index) -> bool:
+	return is_endless() and (index + 1) % ENDLESS_FINAL_EVERY == 0
 
 # Vrai si le portail de cet etage est garde par un boss (sinon : une meute menee par une elite).
 func floor_has_boss(index: int = floor_index) -> bool:
+	if is_endless():
+		return (index + 1) % GUARDIAN_EVERY == 0
 	if index < 0:
 		return index == MIN_FLOOR_INDEX or -index % GUARDIAN_EVERY == 0
 	return index == floor_count() - 1 or (index + 1) % GUARDIAN_EVERY == 0
@@ -434,7 +495,7 @@ func tick_speedrun(delta: float) -> bool:
 
 func new_run(index: int = tower_index, speedrun_mode: bool = false, nightmare: bool = false) -> void:
 	tower_index = index
-	speedrun = speedrun_mode
+	speedrun = speedrun_mode and not is_endless()  # pas de reveil dans la tour sans fin
 	nightmare_mode = nightmare
 	time_left = floor_count() * SPEEDRUN_SECONDS_PER_FLOOR
 	run_time = 0.0
@@ -563,6 +624,22 @@ func apply_negative_death() -> void:
 	return_position = Vector2.ZERO
 	menu_message = "Tu t'es perdu dans les profondeurs... le passage s'est refermé pour de bon. Il te reste %s." % lose_items_on_death().trim_prefix("avec ")
 
+# Mort dans la tour sans fin : la partie s'arrete, avec des pieces selon l'etage atteint.
+func end_endless_run() -> void:
+	var reached := floor_index
+	var reward := reached * ENDLESS_COINS_PER_FLOOR
+	var summary := run_summary()
+	_end_run()
+	coins += reward
+	menu_message = "Le rêveur se réveille enfin... Tour sans fin : étage %d atteint, +%d pièces." % [reached, reward]
+	if reached > endless_best:
+		menu_message += " Nouveau record !" if endless_best >= 0 else ""
+		endless_best = reached
+	else:
+		menu_message += " Record : étage %d." % endless_best
+	menu_message += "\n" + summary
+	save_run()
+
 func complete_negative_run() -> void:
 	for key in floor_data_by_index.keys():
 		if key < 0:
@@ -577,7 +654,7 @@ func complete_negative_run() -> void:
 # Qualite du butin (GDD : double progression). Monte avec l'etage atteint dans la tour et avec
 # les combats gagnes sur l'etage ; bonus selon la source (boss, coffre scelle, quete).
 func loot_quality(bonus: float = 0.0) -> float:
-	var in_tower := clampf(abs(floor_index) / float(floor_count() - 1), 0.0, 1.0)
+	var in_tower := night_progress()
 	var in_floor := minf(current_floor()["wins"], LOOT_WINS_CAP) / float(LOOT_WINS_CAP)
 	return in_tower * 0.6 + in_floor * 0.25 + bonus
 

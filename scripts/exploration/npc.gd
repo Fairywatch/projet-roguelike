@@ -126,12 +126,12 @@ func talk() -> void:
 	refresh()
 
 func story_line() -> String:
-	var lines: Array = Story.NPC_LINES.get(GameState.tower()["id"], [])
+	var lines: Array = Story.NPC_LINES.get(GameState.night(), [])
 	return lines[quest["npc"] % lines.size()] if not lines.is_empty() else "Bonne nuit, voyageur."
 
 # Remerciement propre a la nuit et a l'habitant (scripts/story.gd).
 func thanks() -> String:
-	var lines: Array = Story.NPC_THANKS.get(GameState.tower()["id"], [])
+	var lines: Array = Story.NPC_THANKS.get(GameState.night(), [])
 	return lines[quest["npc"] % lines.size()] if not lines.is_empty() else "Merci, voyageur !"
 
 func _say(text: String) -> void:

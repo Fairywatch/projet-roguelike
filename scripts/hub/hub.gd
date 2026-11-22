@@ -2,9 +2,10 @@ extends Node2D
 
 # Hub de la semaine : le reveur marche jusqu'a la tour de la nuit qu'il veut jouer.
 # Une nuit n'est ouverte qu'une fois celle de la veille terminee. On y trouve aussi la
-# Marchande de lune (boutique) et l'horloge qui active le mode speedrun.
+# Marchande de lune (boutique) et l'horloge qui active le mode speedrun. En contrebas de l'allee,
+# a l'ecart, la Tour sans fin (Towers.ENDLESS), ouverte une fois la premiere semaine finie.
 
-const AREA := Vector2(1400, 540)
+const AREA := Vector2(1400, 820)
 const TOWER_Y := 250.0  # pied des tours
 const TOWER_X0 := 190.0
 const TOWER_STEP := 170.0
@@ -13,6 +14,7 @@ const MERCHANT_POS := Vector2(90, 430)
 const CLOCK_POS := Vector2(1310, 430)
 const BOOK_POS := Vector2(540, 480)
 const TRIGGER_RADIUS := 56.0
+const ENDLESS_FOOT := Vector2(700, 760)  # pied de la tour sans fin
 const PadlockTexture := preload("res://assets/sprites/hub/padlock.png")
 const StarTexture := preload("res://assets/sprites/decor/paradoxal/etoile.png")
 const MerchantTexture := preload("res://assets/sprites/npcs/marchande.png")
@@ -41,6 +43,7 @@ func _ready() -> void:
 	_build_walls()
 	for i in Towers.LIST.size():
 		_build_tower(i)
+	_build_endless_tower()
 	_add_spot("shop", MERCHANT_POS, MerchantTexture, "Marchande de lune", Color(1, 0.9, 0.6))
 	_add_spot("clock", CLOCK_POS, ClockTexture, "Horloge du réveil", Color(1, 0.8, 0.4))
 	_add_spot("book", BOOK_POS, BookTexture, "Livre des songes", Color(0.7, 0.75, 1))
@@ -76,6 +79,8 @@ func _add_solid(rect: Rect2) -> void:
 	add_child(body)
 
 func tower_state(i: int) -> String:
+	if i == Towers.ENDLESS:
+		return "open" if GameState.endless_unlocked() else "locked"
 	if i >= GameState.unlocked_towers:
 		return "locked"
 	return "done" if Towers.LIST[i]["id"] in GameState.completed_towers else "open"
@@ -103,6 +108,32 @@ func _build_tower(i: int) -> void:
 	var name_label := _world_label(Towers.title(i), Vector2(x, TOWER_Y + 8), 10)
 	name_label.modulate = Color(1, 1, 1) if state != "locked" else Color(0.6, 0.6, 0.7)
 	_add_trigger("tower_%d" % i, Vector2(x, TOWER_Y + 10))
+
+# Plus grande que les nuits, faite d'un morceau de chacune (tools/gen_cinematics.py), seule en bas.
+func _build_endless_tower() -> void:
+	var i := Towers.ENDLESS
+	var sprite := Sprite2D.new()
+	sprite.texture = load("res://assets/sprites/hub/tower_sans_fin.png")
+	sprite.centered = false
+	sprite.position = ENDLESS_FOOT - Vector2(sprite.texture.get_width() / 2.0, sprite.texture.get_height() - 4)
+	add_child(sprite)
+	_add_solid(Rect2(ENDLESS_FOOT.x - 32, ENDLESS_FOOT.y - 60, 64, 52))
+	if tower_state(i) == "locked":
+		sprite.modulate = Color(0.35, 0.33, 0.42)
+		_add_icon(PadlockTexture, ENDLESS_FOOT + Vector2(0, -24))
+	else:
+		# Une lueur violette au pied, une doree vers le sommet, qui respirent doucement (trop fortes,
+		# elles blanchissaient le dessin).
+		for glow in [[Color(0.7, 0.45, 1), Vector2(0, -30), 120.0], [Color(1, 0.8, 0.45), Vector2(0, -210), 80.0]]:
+			var light := DreamTheme.make_light(glow[0], glow[2], 0.45)
+			light.position = ENDLESS_FOOT + glow[1]
+			add_child(light)
+			var pulse := light.create_tween().set_loops().set_trans(Tween.TRANS_SINE)
+			pulse.tween_property(light, "energy", 0.25, 1.8)
+			pulse.tween_property(light, "energy", 0.45, 1.8)
+	var name_label := _world_label(Towers.get_tower(i)["name"], ENDLESS_FOOT + Vector2(0, 8), 10)
+	name_label.modulate = Color(1, 1, 1) if tower_state(i) != "locked" else Color(0.6, 0.6, 0.7)
+	_add_trigger("tower_%d" % i, ENDLESS_FOOT + Vector2(0, 10))
 
 func _add_spot(id: String, pos: Vector2, texture: Texture2D, title: String, glow: Color) -> void:
 	var sprite := Sprite2D.new()
@@ -169,6 +200,8 @@ func _refresh_ui() -> void:
 		prompt_label.text = _tower_prompt(near.trim_prefix("tower_").to_int())
 
 func _tower_prompt(i: int) -> String:
+	if i == Towers.ENDLESS:
+		return _endless_prompt()
 	var tower: Dictionary = Towers.LIST[i]
 	var head := "%s  (%d étages)\n%s" % [Towers.title(i), tower["floors"], tower["desc"]]
 	if tower_state(i) == "locked":
@@ -178,8 +211,26 @@ func _tower_prompt(i: int) -> String:
 	if GameState.run_started and GameState.tower_index == i:
 		return head + "\n%s : reprendre la nuit (étage %d)" % [Controls.name_of("interact"), GameState.floor_index]
 	if GameState.run_started and confirm_abandon == i:
-		return head + "\n%s à nouveau : abandonner la nuit de %s en cours" % [Controls.name_of("interact"), GameState.tower()["name"]]
+		return head + "\n%s à nouveau : abandonner %s en cours" % [Controls.name_of("interact"), _run_name()]
 	return head + "\n%s : entrer" % Controls.name_of("interact") + ("  (speedrun)" if speedrun_choice else "")
+
+# Partie en cours, pour la confirmation d'abandon.
+func _run_name() -> String:
+	return "la Tour sans fin" if GameState.is_endless() else "la nuit de %s" % GameState.tower()["name"]
+
+func _endless_prompt() -> String:
+	var i := Towers.ENDLESS
+	var head := "%s  (sans fin)\n%s" % [Towers.title(i), Towers.get_tower(i)["desc"]]
+	if tower_state(i) == "locked":
+		return head + "\nVerrouillée : termine d'abord les sept nuits de la semaine."
+	head += "  La mort y met fin à la partie."
+	if GameState.endless_best >= 0:
+		head += "  Record : étage %d" % GameState.endless_best
+	if GameState.run_started and GameState.tower_index == i:
+		return head + "\n%s : reprendre (étage %d)" % [Controls.name_of("interact"), GameState.floor_index]
+	if GameState.run_started and confirm_abandon == i:
+		return head + "\n%s à nouveau : abandonner %s en cours" % [Controls.name_of("interact"), _run_name()]
+	return head + "\n%s : entrer" % Controls.name_of("interact")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if panel_open:

@@ -33,7 +33,17 @@ const LIST := [
 		"floors": 9, "difficulty": 0.84, "nightmare_chance": 0.95, "reward": 120},
 ]
 
+# Tour sans fin (GDD section 6) : apres la premiere semaine, une tour a part dans le hub ou toutes
+# les nuits se melangent, de plus en plus dures, sans dernier etage ; la mort y met fin a la partie.
+# Son index vient apres les sept nuits. Chaque etage tire le lieu d'une nuit (GameState.night()).
+const ENDLESS := 7
+const ENDLESS_TOWER := {"id": "sans_fin", "name": "Tour sans fin", "emotion": "Insomnie",
+	"desc": "Le rêveur ne se réveille plus : toutes les nuits s'y mélangent, de plus en plus dures.",
+	"floors": 0, "difficulty": 0.3, "nightmare_chance": 0.3, "reward": 0}
+
 static func get_tower(index: int) -> Dictionary:
+	if index == ENDLESS:
+		return ENDLESS_TOWER
 	return LIST[clampi(index, 0, LIST.size() - 1)]
 
 static func title(index: int) -> String:

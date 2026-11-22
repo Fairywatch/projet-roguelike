@@ -42,6 +42,8 @@ const NIGHTS := {
 		"final": "dimanche/derniere_nuit",
 	},
 }
+# Toutes les nuits a la fois (tour sans fin) : a la place d'un id de nuit.
+const ALL := "*"
 const ELITE_CHANCE := 0.1
 const ALT_CHANCE := 0.5
 # Versions d'un boss tire au hasard : 3 boss x 4 versions = 12 combinaisons par nuit.
@@ -50,9 +52,19 @@ const BOSS_VERSIONS := ["normal", "cauchemar", "elite", "comportement"]
 static func make(path: String) -> BaseMob:
 	return load(MOBS_DIR + path + ".gd").new()
 
+static func _nights(night_id: String) -> Array:
+	return NIGHTS.keys() if night_id == ALL else [night_id]
+
+# Creatures ordinaires d'une nuit, ou de toutes (ALL).
+static func creatures(night_id: String) -> Array:
+	var paths := []
+	for night in _nights(night_id):
+		paths.append_array(NIGHTS[night]["creatures"])
+	return paths
+
 # Ennemi ordinaire : cauchemar sur les etages cauchemar, elite et variante de comportement au hasard.
 static func creature(night_id: String, nightmare_floor: bool, path: String = "") -> BaseMob:
-	var mob := make(path if path != "" else NIGHTS[night_id]["creatures"].pick_random())
+	var mob := make(path if path != "" else creatures(night_id).pick_random())
 	mob.nightmare = nightmare_floor
 	mob.elite = randf() < ELITE_CHANCE
 	mob.alt = randf() < ALT_CHANCE
@@ -77,7 +89,10 @@ static func boss(night_id: String, nightmare_floor: bool, history: Array) -> Bas
 
 static func _unused_combos(night_id: String, history: Array) -> Array:
 	var combos := []
-	for path in NIGHTS[night_id]["bosses"]:
+	var bosses := []
+	for night in _nights(night_id):
+		bosses.append_array(NIGHTS[night]["bosses"])
+	for path in bosses:
 		for version in BOSS_VERSIONS:
 			var key: String = path + "|" + version
 			if key not in history:
@@ -85,4 +100,4 @@ static func _unused_combos(night_id: String, history: Array) -> Array:
 	return combos
 
 static func final_boss(night_id: String) -> BaseMob:
-	return make(NIGHTS[night_id]["final"])
+	return make(NIGHTS[_nights(night_id).pick_random()]["final"])
