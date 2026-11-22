@@ -72,7 +72,7 @@ func _close(cell: Vector2i) -> void:
 	gate.add_child(shape)
 	var sprite := Sprite2D.new()
 	sprite.texture = GateTexture
-	sprite.scale = Vector2(3, 3)
+	sprite.scale = Vector2(2, 2)  # pixel d'art = 2 unites, comme les autres decors
 	gate.add_child(sprite)
 	# Zone un peu plus grande que la barriere : explique pourquoi on ne passe pas.
 	var notice := Area2D.new()

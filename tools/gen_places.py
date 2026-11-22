@@ -1326,6 +1326,10 @@ NIGHTS = {"lundi": lundi, "mardi": mardi, "mercredi": mercredi, "jeudi": jeudi, 
           "dimanche": dimanche}
 
 if __name__ == "__main__":
+    import place_art  # decors redessines (tools/place_art.py) : remplacent ceux d'ici
+    redrawn = place_art.places()
     for night in sys.argv[1:] or NIGHTS:
         NIGHTS[night]()
+        if night in redrawn:
+            redrawn[night]()
         print("lieux :", night)
